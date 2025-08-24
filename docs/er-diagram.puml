@@ -1,0 +1,54 @@
+@startuml er-diagram
+entity User {
+  *id: uuid
+  email: varchar
+  role: enum
+  created_at: timestamp
+}
+entity Device {
+  *id: uuid
+  user_id: uuid
+  platform: enum
+  push_token: text
+}
+entity Goal {
+  *id: uuid
+  user_id: uuid
+  title: varchar
+  metric: enum
+  target_value: int
+  schedule_cron: varchar
+}
+entity DailyGoal {
+  *id: uuid
+  goal_id: uuid
+  date: date
+  target_value: int
+  status: enum
+}
+entity ProgressEntry {
+  *id: uuid
+  daily_goal_id: uuid
+  delta: int
+  source: enum
+  created_at: timestamp
+}
+entity BlockList {
+  *id: uuid
+  user_id: uuid
+  package_name: varchar
+}
+entity AuditEvent {
+  *id: uuid
+  device_id: uuid
+  event_type: varchar
+  meta: json
+  created_at: timestamp
+}
+User ||--o{ Device
+User ||--o{ Goal
+Goal ||--o{ DailyGoal
+DailyGoal ||--o{ ProgressEntry
+User ||--o{ BlockList
+Device ||--o{ AuditEvent
+@enduml

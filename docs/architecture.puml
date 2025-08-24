@@ -1,0 +1,38 @@
+@startuml architecture
+skinparam componentStyle rectangle
+package "Mobile App (React Native)" {
+  [UI Layer]
+  [State & Domain]
+  [Sync Manager]
+  [Local DB (Realm)]
+  [Policy Engine]
+  [Bridge: Android Native]
+  [Bridge: iOS Native]
+}
+package "Android Native" {
+  [Accessibility Service]
+  [Overlay Service]
+  [App Usage Monitor]
+  [Foreground Service]
+}
+package "iOS Native" {
+  [Notification Scheduler]
+  [In-App Overlay]
+}
+package "Backend (Express.js)" {
+  [Auth API (Firebase)]
+  [Goals API]
+  [Progress API]
+  [Policy API]
+  [Postgres DB]
+}
+[UI Layer] --> [State & Domain]
+[State & Domain] --> [Policy Engine]
+[State & Domain] --> [Local DB (Realm)]
+[Sync Manager] --> [Auth API (Firebase)]
+[Sync Manager] --> [Goals API]
+[Sync Manager] --> [Progress API]
+[Policy Engine] --> [Bridge: Android Native]
+[Policy Engine] --> [Bridge: iOS Native]
+[Bridge: Android Native] --> [Accessibility Service]
+@enduml

@@ -1,0 +1,27 @@
+{
+  "name": "Oblique backend",
+  "version": "1.0.0",
+  "description": "Backend for the project",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "keywords": ["backend", "oblique", "project"],
+  "author": "Ashrith Yakkali",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.21.2",
+    "mongoose": "^8.10.0",
+    "dotenv": "^16.4.7",
+    "cors": "^2.8.5",
+    "jsonwebtoken": "^9.0.2",
+    "bcrypt": "^5.1.1",
+    "multer": "^1.4.5-lts.1",
+    "axios": "^1.7.9"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
+}
