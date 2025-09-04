@@ -1,28 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/layoutAppList"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:padding="16dp">
 
-    <ListView
-        android:id="@+id/listViewApps"
+    <Button
+        android:id="@+id/btnStartMonitoring"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Start Monitoring"
+        android:layout_marginBottom="8dp" />
+
+    <Button
+        android:id="@+id/btnStopMonitoring"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Stop Monitoring"
+        android:layout_marginBottom="16dp" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"/>
-
-    <Button
-        android:id="@+id/btnBlockApp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Block Selected App"
-        android:layout_marginTop="16dp"/>
-
-    <Button
-        android:id="@+id/btnStartService"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Start Monitoring Service"
-        android:layout_marginTop="8dp"/>
 </LinearLayout>

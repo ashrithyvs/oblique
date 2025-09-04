@@ -1,11 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.oblique_android">
 
+    <!-- Permissions -->
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"/>
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION"/>
 
     <application
         android:allowBackup="true"
@@ -13,23 +16,45 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
 
+        <!-- Launch Activity -->
         <activity
-            android:name=".AppListActivity"
+            android:name=".WelcomeActivity"
             android:exported="true"
-            android:label="Select Apps">
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
+
+        <!-- Main App List -->
+        <activity
+            android:name=".AppListActivity"
+            android:exported="true"
+            android:label="Select Apps"/>
+
+        <!-- PIN Unlock -->
+        <activity
+            android:name=".PinUnlockActivity"
+            android:exported="false"/>
+
+        <!-- Optional prompt dialog -->
+        <activity
+            android:name=".PromptActivity"
+            android:exported="false"/>
+
+        <!-- Services -->
         <service
-            android:name=".BlockedAppsService"
+            android:name=".MonitoringService"
             android:exported="false"
-            android:foregroundServiceType="dataSync"/> <!-- Use the type you actually need -->
+            android:foregroundServiceType="dataSync"/>
 
         <service
             android:name=".OverlayService"
-            android:exported="false"/>
+            android:exported="false"
+            android:foregroundServiceType="dataSync"/>
+
     </application>
+
 </manifest>

@@ -13,10 +13,21 @@ class OverlayService : Service() {
 
     private var windowManager: WindowManager? = null
     private var overlayView: View? = null
+    private var blockedAppPackage: String? = null
 
     override fun onCreate() {
         super.onCreate()
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        blockedAppPackage = intent?.getStringExtra("blockedApp")
+        showOverlay()
+        return START_STICKY
+    }
+
+    private fun showOverlay() {
+        if (overlayView != null) return // already showing
 
         val inflater = LayoutInflater.from(this)
         overlayView = inflater.inflate(R.layout.overlay_blocked_app, null)
@@ -28,29 +39,31 @@ class OverlayService : Service() {
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
             else
                 WindowManager.LayoutParams.TYPE_PHONE,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE.inv() and
-                    (WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
-                            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
-                            WindowManager.LayoutParams.FLAG_FULLSCREEN),
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
             PixelFormat.TRANSLUCENT
         )
 
-        // Prevent interaction with the underlying app
-        overlayView?.setOnTouchListener { _, _ -> true }
-
-        overlayView?.findViewById<TextView>(R.id.blockMessage)?.text = "This app is blocked!"
+        overlayView?.findViewById<TextView>(R.id.blockMessage)?.text =
+            "This app is blocked!"
 
         overlayView?.findViewById<Button>(R.id.btnDismiss)?.setOnClickListener {
+            // Remove overlay temporarily to allow PIN input
             stopSelf()
+            val intent = Intent(this, PinUnlockActivity::class.java)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivity(intent)
         }
 
         windowManager?.addView(overlayView, params)
     }
 
     override fun onDestroy() {
+        if (overlayView != null) {
+            windowManager?.removeView(overlayView)
+            overlayView = null
+        }
         super.onDestroy()
-        overlayView?.let { windowManager?.removeView(it) }
-        overlayView = null
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
