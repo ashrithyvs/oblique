@@ -1,0 +1,215 @@
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:fitsSystemWindows="true"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_gravity="center"
+    android:padding="24dp">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <!-- Icon + badge -->
+        <FrameLayout
+            android:layout_width="96dp"
+            android:layout_height="96dp"
+            android:layout_marginTop="32dp"
+            android:background="@drawable/round_96_dark" />
+
+        <ImageView
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:src="@drawable/ic_shield"
+            android:layout_gravity="center"
+            android:layout_marginTop="-80dp"
+            app:tint="@android:color/white" />
+
+        <View
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:background="@drawable/bg_badge_red"
+            android:layout_marginTop="-10dp"
+            android:layout_gravity="end"
+            android:translationX="32dp" />
+
+        <TextView
+            android:id="@+id/tvTitle"
+            android:text="Regretn't"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:textColor="@color/ink"
+            android:layout_marginTop="24dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:text="Take control of your digital habits"
+            android:textColor="@color/muted"
+            android:textSize="16sp"
+            android:layout_marginTop="8dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <!-- Cards -->
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:gravity="center_horizontal">
+
+            <LinearLayout
+                android:background="@drawable/card_bg"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:padding="20dp"
+                android:gravity="center">
+
+                <FrameLayout
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="@drawable/pill_blue" />
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_shield"
+                    android:layout_marginStart="-28dp"
+                    app:tint="@color/brand" />
+
+                <LinearLayout
+                    android:orientation="vertical"
+                    android:layout_marginStart="16dp"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:text="Block Distracting Apps"
+                        android:textStyle="bold"
+                        android:textColor="@color/ink"
+                        android:textSize="16sp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+
+                    <TextView
+                        android:text="Prevent access to time-wasting applications"
+                        android:textColor="@color/muted"
+                        android:textSize="14sp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:background="@drawable/card_bg"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:padding="20dp"
+                android:gravity="center">
+
+                <FrameLayout
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="@drawable/pill_green" />
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_target"
+                    android:layout_marginStart="-28dp"/>
+
+                <LinearLayout
+                    android:orientation="vertical"
+                    android:layout_marginStart="16dp"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:layout_height="wrap_content"
+                        android:layout_width="wrap_content"
+                        android:text="Set Goals"
+                        android:textStyle="bold"
+                        android:textColor="@color/ink"
+                        android:textSize="16sp"/>
+
+                    <TextView
+                        android:layout_height="wrap_content"
+                        android:layout_width="wrap_content"
+                        android:text="Override blocks only after completing tasks"
+                        android:textColor="@color/muted"
+                        android:textSize="14sp"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:background="@drawable/card_bg"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:padding="20dp"
+                android:gravity="center_vertical">
+
+                <FrameLayout
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="@drawable/pill_lilac" />
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_timer"
+                    android:layout_marginStart="-28dp"/>
+
+                <LinearLayout
+                    android:orientation="vertical"
+                    android:layout_marginStart="16dp"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:layout_height="wrap_content"
+                        android:layout_width="wrap_content"
+                        android:text="Build Better Habits"
+                        android:textStyle="bold"
+                        android:textColor="@color/ink"
+                        android:textSize="16sp"/>
+
+                    <TextView
+                        android:layout_height="wrap_content"
+                        android:layout_width="wrap_content"
+                        android:text="Reduce screen time and increase productivity"
+                        android:textColor="@color/muted"
+                        android:textSize="14sp"/>
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnGetStarted"
+            style="@style/Widget.Material3.Button.IconButton.Filled"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Get Started"
+            android:textAllCaps="false"
+            android:layout_marginTop="28dp"
+            android:backgroundTint="@color/cta"
+            android:textColor="@android:color/white"
+            />
+
+        <TextView
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:text="By continuing, you agree to our terms and privacy policy"
+            android:textColor="@color/muted"
+            android:textSize="12sp"
+            android:layout_marginTop="12dp"/>
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

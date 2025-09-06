@@ -1,41 +1,73 @@
 package com.example.oblique_android
 
-import android.content.pm.ApplicationInfo
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.CheckBox
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
 class AppAdapter(
-    private val apps: List<ApplicationInfo>,
-    private val onCheckedChange: (ApplicationInfo) -> Unit
-) : RecyclerView.Adapter<AppAdapter.ViewHolder>() {
+    private val selectedApps: MutableSet<String>,
+    private val onSelectionChanged: (AppInfo) -> Unit
+) : RecyclerView.Adapter<AppAdapter.AppViewHolder>() {
 
-    private val selectedApps = mutableSetOf<String>()
+    private val apps: MutableList<AppInfo> = mutableListOf()
 
-    inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val appName: TextView = view.findViewById(R.id.tvAppName)
-        val checkBox: CheckBox = view.findViewById(R.id.cbSelect)
-    }
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AppViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_app, parent, false)
-        return ViewHolder(view)
+        return AppViewHolder(view)
     }
 
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: AppViewHolder, position: Int) {
         val app = apps[position]
-        holder.appName.text = app.loadLabel(holder.itemView.context.packageManager)
-        holder.checkBox.isChecked = selectedApps.contains(app.packageName)
-        holder.checkBox.setOnCheckedChangeListener { _, _ ->
-            if (selectedApps.contains(app.packageName)) selectedApps.remove(app.packageName)
-            else selectedApps.add(app.packageName)
-            onCheckedChange(app)
-        }
+        holder.bind(app)
     }
 
     override fun getItemCount(): Int = apps.size
+
+    fun updateList(newList: List<AppInfo>) {
+        apps.clear()
+        apps.addAll(newList)
+        notifyDataSetChanged()
+        Log.d("AppAdapter", "Adapter updated, size = ${apps.size}")
+    }
+
+    inner class AppViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val ivAppIcon: ImageView = itemView.findViewById(R.id.ivAppIcon)
+        private val tvAppName: TextView = itemView.findViewById(R.id.tvAppName)
+        private val tvPackage: TextView = itemView.findViewById(R.id.tvPackage)
+        private val cbSelect: CheckBox = itemView.findViewById(R.id.cbSelect)
+
+        fun bind(app: AppInfo) {
+            ivAppIcon.setImageDrawable(app.icon)
+            tvAppName.text = app.name
+            tvPackage.text = app.packageName
+            cbSelect.isChecked = selectedApps.contains(app.packageName)
+
+            // Avoid duplicate triggers
+            cbSelect.setOnCheckedChangeListener(null)
+            cbSelect.setOnCheckedChangeListener { _, isChecked ->
+                toggleSelection(app, isChecked)
+            }
+
+            itemView.setOnClickListener {
+                val newState = !cbSelect.isChecked
+                cbSelect.isChecked = newState
+                toggleSelection(app, newState)
+            }
+        }
+
+        private fun toggleSelection(app: AppInfo, isChecked: Boolean) {
+            if (isChecked) {
+                selectedApps.add(app.packageName)
+            } else {
+                selectedApps.remove(app.packageName)
+            }
+            onSelectionChanged(app)
+        }
+    }
 }

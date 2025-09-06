@@ -8,19 +8,24 @@ object PINManager {
     private const val PREF_FILE = "secure_prefs"
     private const val KEY_PIN = "user_pin"
 
-    private fun getPrefs(context: Context) =
+    private fun prefs(ctx: Context) =
         EncryptedSharedPreferences.create(
-            context,
+            ctx,
             PREF_FILE,
-            MasterKey.Builder(context).setKeyScheme(MasterKey.KeyScheme.AES256_GCM).build(),
+            MasterKey.Builder(ctx)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build(),
             EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
             EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
         )
 
-    fun setPIN(context: Context, pin: String) {
-        getPrefs(context).edit().putString(KEY_PIN, pin).apply()
+    fun savePin(ctx: Context, pin: String) {
+        prefs(ctx).edit().putString(KEY_PIN, pin).apply()
     }
 
-    fun getPIN(context: Context): String? = getPrefs(context).getString(KEY_PIN, null)
-    fun isPINSet(context: Context): Boolean = getPIN(context) != null
+    fun getPin(ctx: Context): String? = prefs(ctx).getString(KEY_PIN, null)
+
+    fun isPinSet(ctx: Context): Boolean = getPin(ctx) != null
+
+    fun validatePin(ctx: Context, pin: String): Boolean = getPin(ctx) == pin
 }

@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:fitsSystemWindows="true"
+    android:layout_height="match_parent"
+    android:background="@android:color/white"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Header -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/tvAppTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Regretn't"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="@color/ink" />
+
+            <ImageView
+                android:id="@+id/btnSettings"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_settings"
+                app:tint="@color/muted" />
+        </LinearLayout>
+
+        <!-- Protection Toggle Card -->
+        <LinearLayout
+            android:id="@+id/sectionProtection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:padding="16dp"
+            android:background="@drawable/card_bg">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvProtectionStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Protection paused"
+                    android:textSize="16sp"
+                    android:textColor="@color/muted"/>
+
+                <TextView
+                    android:id="@+id/tvProtectionSubtitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Tap to start blocking apps"
+                    android:textSize="13sp"
+                    android:layout_marginTop="6dp"
+                    android:textColor="@color/muted"/>
+            </LinearLayout>
+
+            <Switch
+                android:id="@+id/switchProtection"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="false"/>
+        </LinearLayout>
+
+        <!-- Daily Goals -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="20dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Daily Goals"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:textColor="@color/ink"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:padding="12dp"
+                android:background="@drawable/card_bg">
+
+                <TextView
+                    android:id="@+id/tvGoalPlaceholder"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Duolingo – 0/3 lessons"
+                    android:textColor="@color/muted"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Stats -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:weightSum="3"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:background="@drawable/card_bg"
+                android:padding="12dp"
+                android:layout_marginEnd="8dp">
+
+                <TextView
+                    android:id="@+id/tvAppsBlocked"
+                    android:layout_height="wrap_content"
+                    android:layout_width="wrap_content"
+                    android:text="0"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/ink"/>
+
+                <TextView
+                    android:layout_marginTop="6dp"
+                    android:layout_height="wrap_content"
+                    android:layout_width="wrap_content"
+                    android:text="Apps Blocked"
+                    android:textSize="12sp"
+                    android:textColor="@color/muted"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:background="@drawable/card_bg"
+                android:padding="12dp"
+                android:layout_marginEnd="8dp">
+
+                <TextView
+                    android:id="@+id/tvGoalsDone"
+                    android:layout_height="wrap_content"
+                    android:layout_width="wrap_content"
+                    android:text="0"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/ink"/>
+
+                <TextView
+                    android:layout_marginTop="6dp"
+                    android:layout_height="wrap_content"
+                    android:layout_width="wrap_content"
+                    android:text="Goals Done"
+                    android:textSize="12sp"
+                    android:textColor="@color/muted"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:background="@drawable/card_bg"
+                android:padding="12dp">
+
+                <TextView
+                    android:id="@+id/tvTimeSaved"
+                    android:layout_height="wrap_content"
+                    android:layout_width="wrap_content"
+                    android:text="0h"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/ink"/>
+
+                <TextView
+                    android:layout_marginTop="6dp"
+                    android:layout_height="wrap_content"
+                    android:layout_width="wrap_content"
+                    android:text="Time Saved"
+                    android:textSize="12sp"
+                    android:textColor="@color/muted"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Blocked Apps Title -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Blocked Apps"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:layout_marginTop="18dp"/>
+
+        <!-- Blocked Apps Container -->
+        <LinearLayout
+            android:id="@+id/containerBlockedApps"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="8dp"/>
+
+        <!-- Bottom CTA -->
+        <Button
+            android:id="@+id/btnStartProtection"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="18dp"
+            android:backgroundTint="@color/cta"
+            android:text="Start Protection"
+            android:textColor="@android:color/white"/>
+    </LinearLayout>
+</ScrollView>

@@ -8,27 +8,27 @@
     <LinearLayout
         android:layout_width="280dp"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
         android:background="@drawable/overlay_bg"
-        android:padding="24dp"
-        android:elevation="8dp">
+        android:elevation="8dp"
+        android:orientation="vertical"
+        android:padding="24dp">
 
         <TextView
             android:id="@+id/blockMessage"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:paddingBottom="16dp"
             android:text="This app is blocked!"
-            android:textSize="18sp"
-            android:textColor="#FFFFFF"
             android:textAlignment="center"
-            android:paddingBottom="16dp"/>
+            android:textColor="#FFFFFF"
+            android:textSize="18sp" />
 
         <Button
             android:id="@+id/btnDismiss"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Unlock"
             android:backgroundTint="#FF5722"
-            android:textColor="#FFFFFF"/>
+            android:text="Unlock"
+            android:textColor="#FFFFFF" />
     </LinearLayout>
 </FrameLayout>
