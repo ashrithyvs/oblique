@@ -1,76 +1,56 @@
-<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="com.example.oblique_android">
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Permissions -->
-    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
-        tools:ignore="QueryAllPackagesPermission" />
-    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
-        tools:ignore="ProtectedPermissions" />
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" tools:targetApi="33" />
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" tools:ignore="QueryAllPackagesPermission" />
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <application
+        android:name=".ObliqueApp"
         android:allowBackup="true"
-        android:label="Regretn't"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Regretnt">
-
-    <activity
-            android:name=".PinSetupActivity"
-            android:exported="false" />
-        <activity
-            android:name=".PinConfirmActivity"
-            android:exported="false" />
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:theme="@style/Theme.Oblique">
 
         <activity
-            android:name=".DashboardActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".PermissionsActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".WelcomeActivity"
-            android:exported="true">
+            android:name=".SplashActivity"
+            android:theme="@style/Theme.Oblique.Splash"
+            android:exported="true">   <!-- required for launcher on Android 12+ -->
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
 
-        <!-- Main App List -->
         <activity
-            android:name=".AppListActivity"
-            android:exported="true"
-            android:label="Select Apps"/>
+            android:name=".DashboardActivity"
+            android:theme="@style/Theme.Oblique.NoEdgeToEdge" />
 
-        <!-- PIN Unlock -->
-        <activity
-            android:name=".PinUnlockActivity"
-            android:exported="false"/>
-
-        <!-- Optional prompt dialog -->
         <activity
             android:name=".PromptActivity"
-            android:exported="false"/>
+            android:theme="@style/Theme.Oblique.Dialog" />
 
-        <!-- Services -->
+        <activity android:name=".WelcomeActivity" />
+        <activity android:name=".PermissionsActivity" />
+        <activity android:name=".PinSetupActivity" />
+        <activity android:name=".PinConfirmActivity" />
+        <activity android:name=".PinUnlockActivity" />
+        <activity android:name=".AppListActivity" />
+
         <service
             android:name=".MonitoringService"
             android:exported="false"
-            android:foregroundServiceType="dataSync"/>
+            android:foregroundServiceType="dataSync" />
 
         <service
             android:name=".OverlayService"
-            android:exported="false"
-            android:foregroundServiceType="dataSync"/>
-
-        </application>
-
+            android:exported="false" />
+    </application>
 </manifest>

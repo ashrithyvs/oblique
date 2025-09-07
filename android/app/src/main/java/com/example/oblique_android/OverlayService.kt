@@ -27,7 +27,7 @@ class OverlayService : Service() {
     }
 
     private fun showOverlay() {
-        if (overlayView != null) return // already showing
+        if (overlayView != null) return
 
         val inflater = LayoutInflater.from(this)
         overlayView = inflater.inflate(R.layout.overlay_blocked_app, null)
@@ -48,9 +48,9 @@ class OverlayService : Service() {
             "This app is blocked!"
 
         overlayView?.findViewById<Button>(R.id.btnDismiss)?.setOnClickListener {
-            // Remove overlay temporarily to allow PIN input
             stopSelf()
             val intent = Intent(this, PinUnlockActivity::class.java)
+            intent.putExtra("blockedApp", blockedAppPackage)
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             startActivity(intent)
         }

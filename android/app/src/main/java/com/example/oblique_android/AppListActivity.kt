@@ -1,165 +1,101 @@
 package com.example.oblique_android
 
-import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
-import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class AppListActivity : AppCompatActivity() {
 
-    private lateinit var recyclerView: RecyclerView
-    private lateinit var etSearch: EditText
-    private lateinit var btnConfirm: Button
-
-    private val allApps = mutableListOf<AppInfo>()
-    private val selectedApps = mutableSetOf<String>()
-
+    private lateinit var repo: AppRepository
     private lateinit var adapter: AppAdapter
-    private lateinit var repo: BlockedAppRepository
+    private lateinit var selectedApps: MutableSet<String>
+    private lateinit var btnConfirm: Button
+    private lateinit var etSearch: EditText
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_app_list)
 
-        recyclerView = findViewById(R.id.recyclerViewApps)
-        etSearch = findViewById(R.id.etSearch)
+        repo = AppRepository.getInstance(this)
+        selectedApps = loadSelectedApps()
+
         btnConfirm = findViewById(R.id.btnConfirm)
+        etSearch = findViewById(R.id.etSearch)
 
-        repo = BlockedAppRepository.getInstance(this)
-
-        recyclerView.layoutManager = LinearLayoutManager(this)
-        adapter = AppAdapter(selectedApps) { _ ->
-            updateConfirmButton()
-        }
-        recyclerView.adapter = adapter
-
-        // Load apps
-        loadInstalledApps()
-
-        // preload previously blocked
-        lifecycleScope.launch {
-            preloadSelections()
-        }
-
-        etSearch.imeOptions = EditorInfo.IME_ACTION_SEARCH
-        etSearch.addTextChangedListener(object : TextWatcher {
-            override fun afterTextChanged(s: Editable?) {
-                val query = s?.toString()?.trim()?.lowercase() ?: ""
-                filterList(query)
+        val rv = findViewById<RecyclerView>(R.id.recyclerViewApps)
+        rv.layoutManager = LinearLayoutManager(this)
+        adapter = AppAdapter(
+            selectedApps = selectedApps,
+            onSelectionChanged = { app ->
+                toggleSelection(app.packageName)
+                updateConfirmButton()
             }
+        )
+        rv.adapter = adapter
+
+        etSearch.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                adapter.filter(s.toString())
+            }
+            override fun afterTextChanged(s: Editable?) {}
         })
 
+        lifecycleScope.launch {
+            val apps = repo.getInstalledApps()
+            adapter.setOriginalList(apps)
+            adapter.updateList(apps)
+            updateConfirmButton()
+        }
+
         btnConfirm.setOnClickListener {
-            lifecycleScope.launch {
-                val entities = selectedApps.mapNotNull { pkg ->
-                    val appInfo = allApps.find { it.packageName == pkg }
-                    appInfo?.let {
-                        BlockedAppEntity(
-                            packageName = it.packageName,
-                            appName = it.name,
-                            isBlocked = true,
-                            icon = it.icon.toByteArray()
-                        )
-                    }
-                }
-                repo.saveBlockedApps(entities)
-
-                startActivity(Intent(this@AppListActivity, DashboardActivity::class.java))
-                finish()
-            }
+            saveSelectedApps(selectedApps)
+            finish()
         }
     }
 
-    private suspend fun preloadSelections() {
-        val blocked = repo.getBlockedApps()
-        selectedApps.clear()
-        selectedApps.addAll(blocked.map { it.packageName })
-        updateConfirmButton()
-        adapter.notifyDataSetChanged()
-    }
-
-    private fun loadInstalledApps() {
-        lifecycleScope.launch(Dispatchers.IO) {
-            val cached = AppCache.getCachedApps()
-            if (cached != null) {
-                Log.d("AppList", "Using cached apps (${cached.size})")
-                withContext(Dispatchers.Main) {
-                    allApps.clear()
-                    allApps.addAll(cached)
-                    filteredApps.clear()
-                    filteredApps.addAll(allApps)
-                    adapter.updateList(filteredApps)
-                }
-                return@launch
-            }
-
-            // fallback: load from package manager
-            val pm = packageManager
-            val installed = pm.getInstalledApplications(PackageManager.GET_META_DATA)
-                .filter { pm.getLaunchIntentForPackage(it.packageName) != null }
-                .filter { it.packageName != packageName }
-
-            val apps = installed.sortedWith(compareBy { it.loadLabel(pm).toString().lowercase() })
-                .map { appInfo ->
-                    val name = appInfo.loadLabel(pm).toString()
-                    val icon = appInfo.loadIcon(pm)
-                    val pkg = appInfo.packageName
-                    AppInfo(name, pkg, icon, false)
-                }
-
-            // Save in cache
-            AppCache.setCachedApps(apps)
-
-            Log.d("AppList", "Loaded ${apps.size} apps from system")
-            withContext(Dispatchers.Main) {
-                allApps.clear()
-                allApps.addAll(apps)
-                filteredApps.clear()
-                filteredApps.addAll(allApps)
-                adapter.updateList(filteredApps)
-            }
-        }
-    }
-
-
-    private fun filterList(query: String) {
-        val filtered = if (query.isEmpty()) {
-            allApps
+    private fun toggleSelection(pkg: String) {
+        if (selectedApps.contains(pkg)) {
+            Log.d("AppListActivity", "Removing $pkg from selection")
+            selectedApps.remove(pkg)
         } else {
-            allApps.filter {
-                it.name.lowercase().contains(query) || it.packageName.lowercase().contains(query)
-            }
+            Log.d("AppListActivity", "Adding $pkg to selection")
+            selectedApps.add(pkg)
         }
-        adapter.updateList(filtered)
+        saveSelectedApps(selectedApps)
+    }
+
+    private fun loadSelectedApps(): MutableSet<String> {
+        val p = getSharedPreferences("blocked_apps", MODE_PRIVATE)
+        val set = p.getStringSet("pkgs", emptySet())!!.toMutableSet()
+        Log.d("AppListActivity", "Loaded selected apps: $set")
+        return set
+    }
+
+    private fun saveSelectedApps(set: Set<String>) {
+        val p = getSharedPreferences("blocked_apps", MODE_PRIVATE)
+        p.edit().putStringSet("pkgs", set.toSet()).apply()
+        Log.d("AppListActivity", "Saved selected apps: $set")
     }
 
     private fun updateConfirmButton() {
         if (selectedApps.isEmpty()) {
-            btnConfirm.isEnabled = false
             btnConfirm.text = "Select at least one app"
-            btnConfirm.setBackgroundTintList(
-                android.content.res.ColorStateList.valueOf(0xFF8E8E93.toInt())
-            )
+            btnConfirm.isEnabled = false
+            btnConfirm.setBackgroundColor(ContextCompat.getColor(this, R.color.gray))
         } else {
+            btnConfirm.text = "Confirm (${selectedApps.size})"
             btnConfirm.isEnabled = true
-            btnConfirm.text = "Block ${selectedApps.size} app(s)"
-            btnConfirm.setBackgroundTintList(
-                android.content.res.ColorStateList.valueOf(0xFF6A5ACD.toInt())
-            )
+            btnConfirm.setBackgroundColor(ContextCompat.getColor(this, R.color.green))
         }
     }
 }

@@ -2,7 +2,10 @@ package com.example.oblique_android
 
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -14,9 +17,9 @@ import android.widget.Switch
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-
+import java.io.ByteArrayOutputStream
+import com.example.oblique_android.MonitoringService
 class DashboardActivity : AppCompatActivity() {
 
     private lateinit var switchProtection: Switch
@@ -27,14 +30,11 @@ class DashboardActivity : AppCompatActivity() {
     private lateinit var containerBlockedApps: LinearLayout
     private lateinit var btnStartProtection: Button
     private lateinit var btnSettings: Button
-    private lateinit var repo: BlockedAppRepository
     private var protectionActive = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_dashboard)
-
-        repo = BlockedAppRepository.getInstance(this)
 
         switchProtection = findViewById(R.id.switchProtection)
         tvProtectionStatus = findViewById(R.id.tvProtectionStatus)
@@ -44,6 +44,7 @@ class DashboardActivity : AppCompatActivity() {
         containerBlockedApps = findViewById(R.id.containerBlockedApps)
         btnStartProtection = findViewById(R.id.btnStartProtection)
         btnSettings = findViewById(R.id.btnSettings)
+
         btnSettings.setOnClickListener {
             val intent = Intent(this, AppListActivity::class.java)
             startActivity(intent)
@@ -51,33 +52,10 @@ class DashboardActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             loadAndShowBlockedApps()
-            // simple placeholders for goals/time saved
             tvGoalsDone.text = "0"
             tvTimeSaved.text = "0h"
         }
 
-        // Preload apps in background (only if cache empty)
-        if (BlockedAppRepository.AppCache.getCachedApps() == null) {
-            lifecycleScope.launch(Dispatchers.IO) {
-                val pm = packageManager
-                val installed = pm.getInstalledApplications(PackageManager.GET_META_DATA)
-                    .filter { pm.getLaunchIntentForPackage(it.packageName) != null }
-                    .filter { it.packageName != packageName }
-
-                val apps = installed.sortedWith(compareBy { it.loadLabel(pm).toString().lowercase() })
-                    .map { appInfo ->
-                        val name = appInfo.loadLabel(pm).toString()
-                        val icon = appInfo.loadIcon(pm)
-                        val pkg = appInfo.packageName
-                        AppInfo(name, pkg, icon, false)
-                    }
-
-                BlockedAppRepository.AppCache.setCachedApps(apps)
-                Log.d("Dashboard", "Preloaded ${apps.size} apps")
-            }
-        }
-
-        // CTA -> start protection
         btnStartProtection.setOnClickListener {
             protectionActive = true
             tvProtectionStatus.text = "Protection active"
@@ -102,6 +80,13 @@ class DashboardActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        lifecycleScope.launch {
+            loadAndShowBlockedApps()
+        }
+    }
+
     private fun startMonitoring() {
         val intent = Intent(this, MonitoringService::class.java)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(intent)
@@ -113,10 +98,37 @@ class DashboardActivity : AppCompatActivity() {
     }
 
     private suspend fun loadAndShowBlockedApps() {
-        val apps = repo.getBlockedApps()
+        val prefs = getSharedPreferences("blocked_apps", MODE_PRIVATE)
+        val pkgs = prefs.getStringSet("pkgs", emptySet()) ?: emptySet()
+        val pm = packageManager
+
+        Log.d("Dashboard", "Blocked packages from prefs: $pkgs")
+
+        val apps = pkgs.mapNotNull { pkg ->
+            try {
+                val ai = pm.getApplicationInfo(pkg, 0)
+                val name = ai.loadLabel(pm).toString()
+                val icon = ai.loadIcon(pm)
+
+                Log.d("Dashboard", "Loaded app: $name ($pkg)")
+
+                BlockedAppEntity(
+                    packageName = pkg,
+                    appName = name,
+                    isBlocked = true,
+                    icon = BitmapUtils.drawableToByteArray(icon)
+                )
+            } catch (e: Exception) {
+                Log.e("Dashboard", "Package not found or failed to load: $pkg", e)
+                null
+            }
+        }
+
         tvAppsBlocked.text = apps.size.toString()
         showBlockedApps(apps)
     }
+
+
 
     private fun showBlockedApps(apps: List<BlockedAppEntity>) {
         containerBlockedApps.removeAllViews()
@@ -130,10 +142,9 @@ class DashboardActivity : AppCompatActivity() {
             val tvStatus = view.findViewById<TextView>(R.id.tvBlockedStatus)
 
             tvName.text = app.appName
-            tvSubtitle.text = "Not protected"
+            tvSubtitle.text = app.packageName
             tvStatus.text = if (protectionActive) "Active" else "Paused"
 
-            // Load from DB blob
             if (app.icon != null) {
                 val bmp = BitmapFactory.decodeByteArray(app.icon, 0, app.icon.size)
                 iv.setImageBitmap(bmp)
@@ -141,17 +152,16 @@ class DashboardActivity : AppCompatActivity() {
                 iv.setImageResource(R.mipmap.ic_launcher) // fallback
             }
 
+
             containerBlockedApps.addView(view)
         }
     }
 
     private fun refreshBlockedStatuses() {
-        // simply re-update statuses shown on each blocked-app card
         for (i in 0 until containerBlockedApps.childCount) {
             val v = containerBlockedApps.getChildAt(i)
             val tvStatus = v.findViewById<TextView>(R.id.tvBlockedStatus)
             tvStatus.text = if (protectionActive) "Active" else "Paused"
         }
     }
-
 }

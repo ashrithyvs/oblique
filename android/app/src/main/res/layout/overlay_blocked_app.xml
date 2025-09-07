@@ -1,34 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="#AA000000"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#B3000000"
-    android:gravity="center">
+    android:padding="24dp">
 
-    <LinearLayout
-        android:layout_width="280dp"
+    <ImageView
+        android:id="@+id/ivBlockedAppIcon"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_marginBottom="16dp"
+        android:src="@mipmap/ic_launcher" />
+
+    <TextView
+        android:id="@+id/blockMessage"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@drawable/overlay_bg"
-        android:elevation="8dp"
-        android:orientation="vertical"
-        android:padding="24dp">
+        android:text="This app is blocked!"
+        android:textSize="20sp"
+        android:textColor="@android:color/white"
+        android:layout_marginBottom="24dp" />
 
-        <TextView
-            android:id="@+id/blockMessage"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingBottom="16dp"
-            android:text="This app is blocked!"
-            android:textAlignment="center"
-            android:textColor="#FFFFFF"
-            android:textSize="18sp" />
-
-        <Button
-            android:id="@+id/btnDismiss"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:backgroundTint="#FF5722"
-            android:text="Unlock"
-            android:textColor="#FFFFFF" />
-    </LinearLayout>
-</FrameLayout>
+    <Button
+        android:id="@+id/btnDismiss"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Unlock with PIN" />
+</LinearLayout>

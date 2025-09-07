@@ -14,60 +14,74 @@ class AppAdapter(
     private val onSelectionChanged: (AppInfo) -> Unit
 ) : RecyclerView.Adapter<AppAdapter.AppViewHolder>() {
 
-    private val apps: MutableList<AppInfo> = mutableListOf()
+    private val apps = mutableListOf<AppInfo>()
+    private val originalApps = mutableListOf<AppInfo>()
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AppViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_app, parent, false)
-        return AppViewHolder(view)
+    fun setOriginalList(list: List<AppInfo>) {
+        Log.d("AppAdapter", "Original list set with ${list.size} apps")
+        originalApps.clear()
+        originalApps.addAll(list)
     }
-
-    override fun onBindViewHolder(holder: AppViewHolder, position: Int) {
-        val app = apps[position]
-        holder.bind(app)
-    }
-
-    override fun getItemCount(): Int = apps.size
 
     fun updateList(newList: List<AppInfo>) {
+        Log.d("AppAdapter", "Updating list with ${newList.size} apps")
         apps.clear()
         apps.addAll(newList)
         notifyDataSetChanged()
-        Log.d("AppAdapter", "Adapter updated, size = ${apps.size}")
     }
 
-    inner class AppViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val ivAppIcon: ImageView = itemView.findViewById(R.id.ivAppIcon)
-        private val tvAppName: TextView = itemView.findViewById(R.id.tvAppName)
-        private val tvPackage: TextView = itemView.findViewById(R.id.tvPackage)
-        private val cbSelect: CheckBox = itemView.findViewById(R.id.cbSelect)
-
-        fun bind(app: AppInfo) {
-            ivAppIcon.setImageDrawable(app.icon)
-            tvAppName.text = app.name
-            tvPackage.text = app.packageName
-            cbSelect.isChecked = selectedApps.contains(app.packageName)
-
-            // Avoid duplicate triggers
-            cbSelect.setOnCheckedChangeListener(null)
-            cbSelect.setOnCheckedChangeListener { _, isChecked ->
-                toggleSelection(app, isChecked)
-            }
-
-            itemView.setOnClickListener {
-                val newState = !cbSelect.isChecked
-                cbSelect.isChecked = newState
-                toggleSelection(app, newState)
+    fun filter(query: String) {
+        val lower = query.lowercase()
+        val filtered = if (lower.isEmpty()) {
+            originalApps
+        } else {
+            originalApps.filter {
+                it.name.lowercase().contains(lower) ||
+                        it.packageName.lowercase().contains(lower)
             }
         }
+        Log.d("AppAdapter", "Filter applied: '$query' -> ${filtered.size} results")
+        updateList(filtered)
+    }
 
-        private fun toggleSelection(app: AppInfo, isChecked: Boolean) {
-            if (isChecked) {
-                selectedApps.add(app.packageName)
-            } else {
-                selectedApps.remove(app.packageName)
-            }
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AppViewHolder {
+        val v = LayoutInflater.from(parent.context).inflate(R.layout.item_app, parent, false)
+        return AppViewHolder(v)
+    }
+
+    override fun getItemCount() = apps.size
+
+    override fun onBindViewHolder(holder: AppViewHolder, position: Int) {
+        val app = apps[position]
+        holder.bind(app, selectedApps.contains(app.packageName)) {
             onSelectionChanged(app)
+            Log.d("AppAdapter", "Selection changed: ${app.packageName}, selected=${selectedApps.contains(app.packageName)}")
+        }
+    }
+
+    class AppViewHolder(v: View) : RecyclerView.ViewHolder(v) {
+        private val icon: ImageView = v.findViewById(R.id.ivAppIcon)
+        private val name: TextView = v.findViewById(R.id.tvAppName)
+        private val pkg: TextView = v.findViewById(R.id.tvPackage)
+        private val checkBox: CheckBox = v.findViewById(R.id.cbSelect)
+
+        fun bind(app: AppInfo, isSelected: Boolean, onSelectionChanged: () -> Unit) {
+            icon.setImageDrawable(app.icon)
+            name.text = app.name
+            pkg.text = app.packageName
+            checkBox.isChecked = isSelected
+
+            // Make row click toggle only the checkbox
+            itemView.setOnClickListener {
+                checkBox.toggle()
+            }
+
+            // Handle actual selection updates here
+            checkBox.setOnCheckedChangeListener { _, checked ->
+                Log.d("AppViewHolder", "Checkbox changed for ${app.packageName}: $checked")
+                onSelectionChanged()
+            }
         }
     }
 }
+

@@ -10,7 +10,6 @@ import com.chaos.view.PinView
 import com.google.android.material.button.MaterialButton
 
 class PinSetupActivity : AppCompatActivity() {
-
     private var isPasswordVisible = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -21,20 +20,16 @@ class PinSetupActivity : AppCompatActivity() {
         val togglePassword = findViewById<ImageView>(R.id.togglePassword)
         val btnContinue = findViewById<MaterialButton>(R.id.btnContinuePinSetup)
 
-        // Toggle show/hide PIN
         togglePassword.setOnClickListener {
             isPasswordVisible = !isPasswordVisible
-            if (isPasswordVisible) {
-                pinView.inputType = InputType.TYPE_CLASS_NUMBER
-                togglePassword.setImageResource(R.drawable.ic_eye)
+            pinView.inputType = if (isPasswordVisible) {
+                InputType.TYPE_CLASS_NUMBER
             } else {
-                pinView.inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
-                togglePassword.setImageResource(R.drawable.ic_eye)
+                InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
             }
             pinView.setSelection(pinView.text?.length ?: 0)
         }
 
-        // Continue to confirm
         btnContinue.setOnClickListener {
             val pin = pinView.text?.toString()?.trim()
 
@@ -43,7 +38,6 @@ class PinSetupActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            // Send entered PIN to confirmation screen
             val intent = Intent(this, PinConfirmActivity::class.java)
             intent.putExtra("PIN", pin)
             startActivity(intent)

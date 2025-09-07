@@ -13,6 +13,9 @@ class PinConfirmActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_pin_confirm)
 
+        // Ensure Prefs is initialized
+        Prefs.init(this)
+
         val pinViewConfirm = findViewById<PinView>(R.id.pinViewConfirm)
         val btnSave = findViewById<MaterialButton>(R.id.btnSavePin)
 
@@ -33,10 +36,10 @@ class PinConfirmActivity : AppCompatActivity() {
 
             // ✅ Save PIN securely only after confirmation
             PINManager.savePin(this, confirmPin)
+            Prefs.setPinSet(true) // now works properly
             Toast.makeText(this, "PIN saved successfully", Toast.LENGTH_SHORT).show()
 
-            // Next: go to Dashboard or AppList
-            prefs.edit().putBoolean("pin_set", true).apply()
+            // Move to selecting apps
             startActivity(Intent(this, AppListActivity::class.java))
             finish()
         }
