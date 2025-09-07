@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:paddingHorizontal="20dp"
     android:background="@android:color/white"
     tools:context=".PermissionsActivity">
 
@@ -13,7 +14,7 @@
         android:layout_width="64dp"
         android:layout_height="64dp"
         android:src="@drawable/ic_shield"
-        android:layout_marginTop="64dp"
+        android:layout_marginTop="52dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
@@ -96,9 +97,9 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="0dp"
                 android:background="#F0F0F0"
-                android:padding="6dp"
+                android:padding="12dp"
                 android:text="This allows us to display a full-screen overlay that prevents app usage"
                 android:textSize="12sp"
                 android:textColor="@android:color/black" />
@@ -154,7 +155,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="12dp"
                 android:background="#F0F0F0"
                 android:padding="6dp"
                 android:text="We only monitor apps you've selected to block - no personal data is collected"
