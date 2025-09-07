@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="@android:color/white"
     android:fitsSystemWindows="true"
-    tools:context=".PinSetupActivity">
+    tools:context=".PinUnlockActivity">
 
     <!-- Lock icon -->
     <ImageView
@@ -40,7 +40,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:text="Choose a 6-digit PIN to secure your app settings"
+        android:text="Enter your 6-digit PIN to continue"
         android:textSize="14sp"
         android:textColor="@android:color/darker_gray"
         app:layout_constraintTop_toBottomOf="@id/titleText"
@@ -84,8 +84,7 @@
             app:tint="@color/primaryColor" />
     </LinearLayout>
 
-
-    <!-- Continue Button -->
+    <!-- Unlock Button -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnUnlock"
         android:layout_width="wrap_content"

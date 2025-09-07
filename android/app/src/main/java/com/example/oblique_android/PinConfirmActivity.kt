@@ -2,12 +2,15 @@ package com.example.oblique_android
 
 import android.content.Intent
 import android.os.Bundle
+import android.text.InputType
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.chaos.view.PinView
 import com.google.android.material.button.MaterialButton
 
 class PinConfirmActivity : AppCompatActivity() {
+    private var isPasswordVisible = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -17,9 +20,21 @@ class PinConfirmActivity : AppCompatActivity() {
         Prefs.init(this)
 
         val pinViewConfirm = findViewById<PinView>(R.id.pinViewConfirm)
+        val togglePassword = findViewById<ImageView>(R.id.togglePasswordConfirm)
         val btnSave = findViewById<MaterialButton>(R.id.btnSavePin)
 
         val originalPin = intent.getStringExtra("PIN")
+
+        // 👁️ toggle visibility
+        togglePassword.setOnClickListener {
+            isPasswordVisible = !isPasswordVisible
+            pinViewConfirm.inputType = if (isPasswordVisible) {
+                InputType.TYPE_CLASS_NUMBER
+            } else {
+                InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
+            }
+            pinViewConfirm.setSelection(pinViewConfirm.text?.length ?: 0)
+        }
 
         btnSave.setOnClickListener {
             val confirmPin = pinViewConfirm.text?.toString()?.trim()
@@ -36,10 +51,9 @@ class PinConfirmActivity : AppCompatActivity() {
 
             // ✅ Save PIN securely only after confirmation
             PINManager.savePin(this, confirmPin)
-            Prefs.setPinSet(true) // now works properly
+            Prefs.setPinSet(true)
             Toast.makeText(this, "PIN saved successfully", Toast.LENGTH_SHORT).show()
 
-            // Move to selecting apps
             startActivity(Intent(this, AppListActivity::class.java))
             finish()
         }
