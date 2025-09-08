@@ -1,4 +1,4 @@
-package com.example.oblique_android
+package com.example.oblique_android.activity
 
 import android.os.Bundle
 import android.text.InputType
@@ -7,6 +7,8 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.chaos.view.PinView
+import com.example.oblique_android.services.PINManager
+import com.example.oblique_android.R
 import com.google.android.material.button.MaterialButton
 
 class PinUnlockActivity : AppCompatActivity() {

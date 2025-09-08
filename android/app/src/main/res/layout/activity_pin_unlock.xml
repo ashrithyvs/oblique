@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="@android:color/white"
     android:fitsSystemWindows="true"
-    tools:context=".PinUnlockActivity">
+    tools:context=".activity.PinUnlockActivity">
 
     <!-- Lock icon -->
     <ImageView

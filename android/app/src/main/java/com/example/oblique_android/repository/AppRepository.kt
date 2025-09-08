@@ -1,11 +1,11 @@
-// app/src/main/java/com/example/oblique_android/AppRepository.kt
-package com.example.oblique_android
+package com.example.oblique_android.repository
 
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import android.util.LruCache
+import com.example.oblique_android.models.AppInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -27,7 +27,8 @@ class AppRepository private constructor(private val appContext: Context) {
                 .filter { it.flags and ApplicationInfo.FLAG_SYSTEM == 0 } // user apps only
                 .map { ai ->
                     val pkg = ai.packageName
-                    val icon = iconCache[pkg] ?: pm.getApplicationIcon(ai).also { iconCache.put(pkg, it) }
+                    val icon =
+                        iconCache[pkg] ?: pm.getApplicationIcon(ai).also { iconCache.put(pkg, it) }
                     val label = pm.getApplicationLabel(ai).toString()
                     AppInfo(name = label, packageName = pkg, icon = icon)
                 }

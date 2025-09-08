@@ -1,4 +1,4 @@
-package com.example.oblique_android
+package com.example.oblique_android.activity
 
 import android.content.Intent
 import android.os.Bundle
@@ -7,6 +7,7 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.chaos.view.PinView
+import com.example.oblique_android.R
 import com.google.android.material.button.MaterialButton
 
 class PinSetupActivity : AppCompatActivity() {

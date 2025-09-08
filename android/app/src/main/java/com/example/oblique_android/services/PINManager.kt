@@ -1,4 +1,4 @@
-package com.example.oblique_android
+package com.example.oblique_android.services
 
 import android.content.Context
 import androidx.security.crypto.EncryptedSharedPreferences

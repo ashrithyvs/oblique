@@ -1,11 +1,7 @@
-package com.example.oblique_android
+package com.example.oblique_android.activity
 
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.drawable.BitmapDrawable
-import android.graphics.drawable.Drawable
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -17,9 +13,11 @@ import android.widget.Switch
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.example.oblique_android.BlockedAppEntity
 import kotlinx.coroutines.launch
-import java.io.ByteArrayOutputStream
-import com.example.oblique_android.MonitoringService
+import com.example.oblique_android.services.MonitoringService
+import com.example.oblique_android.R
+
 class DashboardActivity : AppCompatActivity() {
 
     private lateinit var switchProtection: Switch

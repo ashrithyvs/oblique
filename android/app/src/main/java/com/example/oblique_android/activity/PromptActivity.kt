@@ -1,8 +1,9 @@
-package com.example.oblique_android
+package com.example.oblique_android.activity
 
 import android.os.Bundle
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
+import com.example.oblique_android.R
 
 class PromptActivity : AppCompatActivity() {
 

@@ -1,8 +1,12 @@
-package com.example.oblique_android
+package com.example.oblique_android.activity
 
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import com.example.oblique_android.services.PINManager
+import com.example.oblique_android.utils.PermissionUtils
+import com.example.oblique_android.services.Prefs
+import com.example.oblique_android.R
 import com.google.android.material.button.MaterialButton
 
 class WelcomeActivity : AppCompatActivity() {

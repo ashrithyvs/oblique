@@ -1,4 +1,4 @@
-package com.example.oblique_android
+package com.example.oblique_android.adapters
 
 import android.util.Log
 import android.view.LayoutInflater
@@ -8,6 +8,8 @@ import android.widget.CheckBox
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.example.oblique_android.models.AppInfo
+import com.example.oblique_android.R
 
 class AppAdapter(
     private val selectedApps: MutableSet<String>,
@@ -84,4 +86,3 @@ class AppAdapter(
         }
     }
 }
-

@@ -1,4 +1,4 @@
-package com.example.oblique_android
+package com.example.oblique_android.models
 
 import android.graphics.Bitmap
 import android.graphics.Canvas

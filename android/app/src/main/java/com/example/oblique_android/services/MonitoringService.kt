@@ -1,7 +1,6 @@
-package com.example.oblique_android
+package com.example.oblique_android.services
 
 import android.app.*
-import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Handler
@@ -9,6 +8,7 @@ import android.os.IBinder
 import android.os.Looper
 import android.app.usage.UsageStatsManager
 import android.util.Log
+import com.example.oblique_android.R
 
 class MonitoringService : Service() {
 
@@ -19,7 +19,7 @@ class MonitoringService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        usageStatsManager = getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+        usageStatsManager = getSystemService(USAGE_STATS_SERVICE) as UsageStatsManager
         startForeground(1, createNotification())
         handler.post(checkRunnable)
     }

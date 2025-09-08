@@ -1,4 +1,4 @@
-package com.example.oblique_android
+package com.example.oblique_android.services
 
 import android.app.Service
 import android.content.Intent
@@ -8,6 +8,8 @@ import android.os.IBinder
 import android.view.*
 import android.widget.Button
 import android.widget.TextView
+import com.example.oblique_android.R
+import com.example.oblique_android.activity.PinUnlockActivity
 
 class OverlayService : Service() {
 

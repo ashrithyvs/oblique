@@ -1,6 +1,10 @@
-package com.example.oblique_android
+package com.example.oblique_android.repository
 
 import android.content.Context
+import com.example.oblique_android.models.AppInfo
+import com.example.oblique_android.BlockedAppDao
+import com.example.oblique_android.BlockedAppDatabase
+import com.example.oblique_android.BlockedAppEntity
 
 class BlockedAppRepository private constructor(private val dao: BlockedAppDao) {
     object AppCache {
@@ -28,7 +32,7 @@ class BlockedAppRepository private constructor(private val dao: BlockedAppDao) {
 
         fun getInstance(context: Context): BlockedAppRepository {
             return INSTANCE ?: synchronized(this) {
-                val db = BlockedAppDatabase.getDatabase(context.applicationContext)
+                val db = BlockedAppDatabase.Companion.getDatabase(context.applicationContext)
                 val instance = BlockedAppRepository(db.blockedAppDao())
                 INSTANCE = instance
                 instance

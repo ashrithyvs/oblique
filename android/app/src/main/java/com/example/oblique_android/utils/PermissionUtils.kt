@@ -1,10 +1,13 @@
-package com.example.oblique_android
+package com.example.oblique_android.utils
 
+import android.Manifest
 import android.app.AppOpsManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import android.os.Process
 import android.provider.Settings
 import androidx.core.app.NotificationManagerCompat
 
@@ -14,7 +17,7 @@ object PermissionUtils {
         val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
         val mode = appOps.checkOpNoThrow(
             AppOpsManager.OPSTR_GET_USAGE_STATS,
-            android.os.Process.myUid(),
+            Process.myUid(),
             context.packageName
         )
         return mode == AppOpsManager.MODE_ALLOWED
@@ -42,8 +45,8 @@ object PermissionUtils {
 
     fun hasNotificationPermission(context: Context): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            context.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) ==
-                    android.content.pm.PackageManager.PERMISSION_GRANTED
+            context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) ==
+                    PackageManager.PERMISSION_GRANTED
         } else {
             true // older versions auto-grant
         }

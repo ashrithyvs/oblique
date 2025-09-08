@@ -1,8 +1,9 @@
-package com.example.oblique_android
+package com.example.oblique_android.activity
 
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import com.example.oblique_android.services.Prefs
 
 class SplashActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

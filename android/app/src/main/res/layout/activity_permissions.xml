@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:paddingHorizontal="20dp"
     android:background="@android:color/white"
-    tools:context=".PermissionsActivity">
+    tools:context=".activity.PermissionsActivity">
 
     <!-- Shield Icon -->
     <ImageView

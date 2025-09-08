@@ -1,4 +1,4 @@
-package com.example.oblique_android
+package com.example.oblique_android.activity
 
 import android.os.Bundle
 import android.text.Editable
@@ -11,6 +11,9 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.oblique_android.adapters.AppAdapter
+import com.example.oblique_android.R
+import com.example.oblique_android.repository.AppRepository
 import kotlinx.coroutines.launch
 
 class AppListActivity : AppCompatActivity() {

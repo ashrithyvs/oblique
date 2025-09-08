@@ -19,7 +19,7 @@
         android:theme="@style/Theme.Oblique">
 
         <activity
-            android:name=".SplashActivity"
+            android:name=".activity.SplashActivity"
             android:theme="@style/Theme.Oblique.Splash"
             android:exported="true">   <!-- required for launcher on Android 12+ -->
             <intent-filter>
@@ -27,30 +27,31 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".activity.GoalsActivity" />
 
 
         <activity
-            android:name=".DashboardActivity"
+            android:name=".activity.DashboardActivity"
             android:theme="@style/Theme.Oblique.NoEdgeToEdge" />
 
         <activity
-            android:name=".PromptActivity"
+            android:name=".activity.PromptActivity"
             android:theme="@style/Theme.Oblique.Dialog" />
 
-        <activity android:name=".WelcomeActivity" />
-        <activity android:name=".PermissionsActivity" />
-        <activity android:name=".PinSetupActivity" />
-        <activity android:name=".PinConfirmActivity" />
-        <activity android:name=".PinUnlockActivity" />
-        <activity android:name=".AppListActivity" />
+        <activity android:name=".activity.WelcomeActivity" />
+        <activity android:name=".activity.PermissionsActivity" />
+        <activity android:name=".activity.PinSetupActivity" />
+        <activity android:name=".activity.PinConfirmActivity" />
+        <activity android:name=".activity.PinUnlockActivity" />
+        <activity android:name=".activity.AppListActivity" />
 
         <service
-            android:name=".MonitoringService"
+            android:name=".services.MonitoringService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
 
         <service
-            android:name=".OverlayService"
+            android:name=".services.OverlayService"
             android:exported="false" />
     </application>
 </manifest>

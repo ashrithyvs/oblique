@@ -1,5 +1,5 @@
 // app/src/main/java/com/example/oblique_android/Prefs.kt
-package com.example.oblique_android
+package com.example.oblique_android.services
 
 import android.content.Context
 import android.content.SharedPreferences

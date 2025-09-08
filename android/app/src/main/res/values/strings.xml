@@ -2,4 +2,6 @@
 <resources>
     <string name="app_name">Oblique</string>
     <string name="accessibility_service_description">Blocks selected apps and shows a prompt until you unblock them in Oblique.</string>
+    <string name="delete">delete</string>
+    <string name="app_icon">App Icon</string>
 </resources>

@@ -1,5 +1,6 @@
-package com.example.oblique_android
+package com.example.oblique_android.activity
 
+import android.Manifest
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
@@ -7,6 +8,9 @@ import android.widget.Button
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import com.example.oblique_android.services.PINManager
+import com.example.oblique_android.utils.PermissionUtils
+import com.example.oblique_android.R
 
 class PermissionsActivity : AppCompatActivity() {
 
@@ -54,7 +58,7 @@ class PermissionsActivity : AppCompatActivity() {
                     overlayLauncher.launch(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION))
                 }
                 !PermissionUtils.hasNotificationPermission(this) -> {
-                    notificationLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                    notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                 }
                 else -> checkAndProceed()
             }

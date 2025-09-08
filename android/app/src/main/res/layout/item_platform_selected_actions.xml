@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_marginTop="8dp"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="2dp">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:padding="12dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:id="@+id/ivPlatformIcon"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:contentDescription="TODO"
+                android:src="@drawable/ic_placeholder"/>
+
+            <TextView
+                android:id="@+id/tvPlatformSelected"
+                android:layout_marginStart="12dp"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="LeetCode"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:layout_weight="1"/>
+
+            <Button
+                android:id="@+id/btnChangePlatform"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Change"/>
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnOption1"
+            android:layout_marginTop="10dp"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="Option 1"/>
+
+        <Button
+            android:id="@+id/btnOption2"
+            android:layout_marginTop="8dp"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="Option 2"/>
+    </LinearLayout>
+</androidx.cardview.widget.CardView>
