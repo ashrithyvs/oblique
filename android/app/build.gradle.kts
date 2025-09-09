@@ -75,4 +75,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.2")
 // Room already in your project; the GoalDatabase I added uses Room
+
+        implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.6") // latest stable as of 2025
+
 }

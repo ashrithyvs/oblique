@@ -13,4 +13,13 @@
         <item name="android:textColor">@color/black</item>
     </style>
 
+    <!-- Poppins or system fallback -->
+    <string name="font_family_poppins">sans-serif</string>
+
+    <!-- If you have a theme override, keep AppTheme light -->
+    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:colorBackground">@color/bg_white</item>
+        <item name="android:windowBackground">@color/bg_white</item>
+    </style>
+
 </resources>

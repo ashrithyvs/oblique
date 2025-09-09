@@ -1,20 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/rootCard"
     android:layout_width="match_parent"
     android:layout_height="72dp"
-    android:layout_marginStart="12dp"
-    android:layout_marginEnd="12dp"
     android:layout_marginTop="8dp"
     android:layout_marginBottom="8dp"
     app:cardCornerRadius="12dp"
-    app:cardUseCompatPadding="true"
-    app:strokeWidth="2dp"
-    app:strokeColor="@android:color/transparent"
-    android:padding="10dp"
-    android:foreground="?selectableItemBackground">
+    app:strokeWidth="0dp"
+    android:padding="12dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -22,15 +16,11 @@
         android:orientation="horizontal"
         android:gravity="center_vertical">
 
-        <!-- Left avatar -->
         <FrameLayout
             android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:layout_marginEnd="12dp"
-            android:foreground="?selectableItemBackgroundBorderless">
+            android:layout_height="44dp">
 
             <View
-                android:id="@+id/leftAvatarBg"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:background="@drawable/circle_avatar_bg" />
@@ -40,67 +30,60 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:layout_gravity="center"
-                android:src="@drawable/ic_launcher_foreground"
-                android:contentDescription="@string/app_icon" />
+                android:src="@drawable/ic_launcher_foreground" />
         </FrameLayout>
 
-        <!-- Title + subtitle -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:layout_marginStart="12dp">
 
             <TextView
-                android:id="@+id/tvPlatformName"
-                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:id="@+id/tvPlatformName"
                 android:text="LeetCode"
                 android:textStyle="bold"
                 android:textSize="15sp"
-                android:textColor="@color/textPrimary"/>
+                android:textColor="@color/text_primary"/>
 
             <TextView
-                android:id="@+id/tvGoalSummary"
-                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:id="@+id/tvGoalSummary"
                 android:text="2 problems daily"
                 android:textSize="13sp"
                 android:layout_marginTop="4dp"
-                android:textColor="@color/textSecondary"/>
+                android:textColor="@color/text_muted"/>
         </LinearLayout>
 
-        <!-- Progress text -->
         <TextView
             android:id="@+id/tvProgress"
-            android:layout_width="48dp"
+            android:layout_width="56dp"
             android:layout_height="wrap_content"
+            android:gravity="center"
             android:text="0/2"
             android:textSize="13sp"
-            android:gravity="center"
-            android:textColor="@color/textSecondary"
-            android:layout_marginEnd="8dp"/>
+            android:textColor="@color/text_muted" />
 
-        <!-- Verify button (pill) -->
         <Button
             android:id="@+id/btnVerify"
             android:layout_width="88dp"
             android:layout_height="36dp"
-            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
             android:background="@drawable/btn_verify"
             android:text="Verify"
             android:textAllCaps="false"
-            android:textColor="@android:color/white"
-            android:textSize="13sp"/>
+            android:textColor="@color/white" />
 
-        <!-- Delete icon -->
         <ImageButton
             android:id="@+id/btnDelete"
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:src="@drawable/ic_delete_black_24dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/delete" />
+            android:contentDescription="@string/delete"/>
     </LinearLayout>
-
 </com.google.android.material.card.MaterialCardView>

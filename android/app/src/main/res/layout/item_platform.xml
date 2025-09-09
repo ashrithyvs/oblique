@@ -1,16 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_margin="8dp"
+    xmlns:card="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cardPlatform"
     android:layout_width="match_parent"
-    android:layout_height="110dp"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="2dp"
+    android:layout_height="wrap_content"
+    card:cardCornerRadius="12dp"
+    card:cardElevation="0dp"
+    android:layout_margin="8dp"
     android:foreground="?android:attr/selectableItemBackground">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="100dp"
         android:orientation="vertical"
         android:gravity="center"
         android:padding="12dp">
@@ -19,15 +20,17 @@
             android:id="@+id/ivPlatformIcon"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:contentDescription="TODO"
-            android:src="@drawable/ic_placeholder" />
+            android:src="@drawable/circle_gray"
+            android:contentDescription="platform icon"
+            android:scaleType="centerInside"/>
 
         <TextView
             android:id="@+id/tvPlatformName"
-            android:layout_marginTop="8dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Platform"
-            android:textSize="14sp"/>
+            android:textSize="14sp"
+            android:layout_marginTop="8dp"
+            android:textColor="@color/ink" />
     </LinearLayout>
 </androidx.cardview.widget.CardView>

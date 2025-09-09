@@ -2,7 +2,6 @@
     <color name="ink80">#99101A2B</color>
     <color name="card">#FFFFFF</color>
     <color name="brand">#111327</color>
-    <color name="accent_blue">#E9F2FF</color>
     <color name="accent_green">#EAFBF2</color>
     <color name="accent_lilac">#F3ECFF</color>
         <color name="primaryColor">#4A6CF7</color>
@@ -10,7 +9,6 @@
         <color name="ink">#111827</color>
         <color name="cta">#22C55E</color>
         <color name="gray">#8E8E93</color>
-        <color name="white">#FFFFFF</color>
         <color name="black">#000000</color>
         <color name="green">#0CAF60</color>
     <color name="purple_500">#673AB7FF</color>
@@ -19,5 +17,21 @@
     <color name="textPrimary">#0F1724</color>
     <color name="textSecondary">#8A8F98</color>
     <color name="muted">#9AA0A6</color>
+    <color name="bg_white">#FFFFFF</color>
+    <color name="header_blue_bg">#E6F0FF</color>
+    <color name="text_primary">#0F1724</color>
+    <color name="text_muted">#9AA0A6</color>
+    <color name="divider_light">#F0F0F2</color>
+    <color name="selected_card_bg">#F5F5F6</color>
+    <color name="platform_icon_bg">#EEF6FF</color>
+    <color name="input_stroke">#E6E6E6</color>
+    <color name="btn_dark">#000000</color>
+    <color name="btn_verify_purple">#6E42C1</color>
+    <color name="white">#FFFFFF</color>
+    <color name="accent_blue">#3A78FF</color>
+    <color name="avatar_bg">#F1F1F6</color>
+    <color name="badge_bg_color">#F2F6FF</color>
+    <color name="card_bg">#FAFBFC</color>
+    <color name="cta_green">#00B050</color>
 
 </resources>

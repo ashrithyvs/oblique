@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- path: app/src/main/res/layout/activity_settings.xml -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/rootSettings"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_white"
+    android:padding="24dp">
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvHeader"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Settings"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary" />
+
+        <TextView
+            android:id="@+id/tvSubtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Manage goals and blocked apps"
+            android:textSize="13sp"
+            android:layout_marginTop="4dp"
+            android:textColor="@color/text_muted" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="14dp"
+        android:background="@color/divider_light" />
+
+    <!-- Tabs -->
+    <LinearLayout
+        android:id="@+id/tabsRow"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:orientation="horizontal"
+        android:layout_marginTop="12dp">
+
+        <LinearLayout
+            android:layout_height="wrap_content"
+            android:id="@+id/tabGoals"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/tvGoals"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Goals"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary" />
+
+            <View
+                android:id="@+id/indicatorGoals"
+                android:layout_width="28dp"
+                android:layout_height="3dp"
+                android:layout_marginTop="6dp"
+                android:background="@color/text_primary" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/tabApps"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/tvApps"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Apps"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_muted" />
+
+            <View
+                android:id="@+id/indicatorApps"
+                android:layout_width="28dp"
+                android:layout_height="3dp"
+                android:layout_marginTop="6dp"
+                android:background="@color/text_primary"
+                android:visibility="gone" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Goals header + add button -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="8dp"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/settingsTabLabel"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="Daily Goals"
+            android:textSize="24dp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnAddGoal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="+ Add"
+            android:insetLeft="12dp"
+            android:insetRight="12dp"
+            android:textAllCaps="false"
+            app:cornerRadius="18dp"
+            android:backgroundTint="@color/btn_dark"
+            android:textColor="@color/white" />
+    </LinearLayout>
+
+    <!-- Content area: both RecyclerViews exist; we toggle visibility in activity -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="12dp">
+
+        <!-- Goals list -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvGoals"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingBottom="8dp"
+            android:visibility="visible" />
+
+        <!-- Apps list (initially hidden) -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewApps"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingBottom="8dp"
+            android:visibility="gone" />
+    </FrameLayout>
+
+    <!-- Save button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnSave"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginTop="12dp"
+        android:text="Save Settings"
+        android:textAllCaps="false"
+        android:layout_gravity="bottom"
+        app:cornerRadius="12dp"
+        android:backgroundTint="@color/btn_dark"
+        android:textColor="@color/white" />
+
+</LinearLayout>

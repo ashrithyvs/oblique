@@ -1,29 +1,74 @@
 package com.example.oblique_android.repository
 
-import com.example.oblique_android.data.GoalDao
+import android.content.Context
 import com.example.oblique_android.models.Goal
-import kotlinx.coroutines.flow.Flow
+import org.json.JSONArray
+import java.util.concurrent.atomic.AtomicInteger
 
-class GoalRepository(private val dao: GoalDao) {
+class GoalsRepository private constructor(private val ctx: Context) {
 
-    // Continuous stream of all goals
-    fun getAll(): Flow<List<Goal>> = dao.getAllGoals()
+    companion object {
+        private const val PREFS = "goals_prefs"
+        private const val KEY_GOALS = "goals_json"
+        @Volatile
+        private var INSTANCE: GoalsRepository? = null
 
-    // One-shot (suspend) query of all goals
-    suspend fun getAllOnce(): List<Goal> = dao.getAllGoalsOnce()
-
-    suspend fun addGoal(goal: Goal) {
-        dao.insert(goal)
+        fun getInstance(context: Context): GoalsRepository {
+            return INSTANCE ?: synchronized(this) {
+                INSTANCE ?: GoalsRepository(context.applicationContext).also { INSTANCE = it }
+            }
+        }
     }
 
-    suspend fun update(goal: Goal) {
-        dao.update(goal)
+    private val idCounter = AtomicInteger(calculateInitialId())
+
+    private fun calculateInitialId(): Int {
+        val list = getAll()
+        return list.maxOfOrNull { it.id }?.plus(1) ?: 1
     }
 
-    suspend fun deleteById(id: Int) {
-        val g = dao.getGoalById(id)
-        if (g != null) {
-            dao.delete(g)
+    fun getAll(): List<Goal> {
+        val prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val s = prefs.getString(KEY_GOALS, "[]") ?: "[]"
+        val arr = JSONArray(s)
+        val out = mutableListOf<Goal>()
+        for (i in 0 until arr.length()) {
+            val obj = arr.optJSONObject(i) ?: continue
+            out.add(Goal.fromJson(obj))
+        }
+        return out
+    }
+
+    private fun persist(list: List<Goal>) {
+        val arr = JSONArray()
+        list.forEach { arr.put(it.toJson()) }
+        val prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        prefs.edit().putString(KEY_GOALS, arr.toString()).apply()
+    }
+
+    fun add(goal: Goal): Goal {
+        val current = getAll().toMutableList()
+        goal.id = idCounter.getAndIncrement()
+        current.add(goal)
+        persist(current)
+        return goal
+    }
+
+    fun update(goal: Goal) {
+        val current = getAll().toMutableList()
+        val idx = current.indexOfFirst { it.id == goal.id }
+        if (idx >= 0) {
+            current[idx] = goal
+            persist(current)
+        }
+    }
+
+    fun delete(goal: Goal) {
+        val current = getAll().toMutableList()
+        val idx = current.indexOfFirst { it.id == goal.id }
+        if (idx >= 0) {
+            current.removeAt(idx)
+            persist(current)
         }
     }
 }

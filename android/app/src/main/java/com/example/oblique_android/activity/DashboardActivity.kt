@@ -6,17 +6,18 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.Switch
-import android.widget.TextView
+import android.view.View
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.example.oblique_android.BlockedAppEntity
-import kotlinx.coroutines.launch
-import com.example.oblique_android.services.MonitoringService
 import com.example.oblique_android.R
+import com.example.oblique_android.models.GoalsViewModel
+import com.example.oblique_android.services.MonitoringService
+import com.example.oblique_android.utils.BitmapUtils
+import com.example.oblique_android.viewmodel.GoalsViewModelFactory
+import kotlinx.coroutines.launch
 
 class DashboardActivity : AppCompatActivity() {
 
@@ -26,9 +27,12 @@ class DashboardActivity : AppCompatActivity() {
     private lateinit var tvGoalsDone: TextView
     private lateinit var tvTimeSaved: TextView
     private lateinit var containerBlockedApps: LinearLayout
+    private lateinit var containerGoals: LinearLayout
     private lateinit var btnStartProtection: Button
-    private lateinit var btnSettings: Button
+    private lateinit var btnSettings: View
+
     private var protectionActive = false
+    private lateinit var vm: GoalsViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,12 +44,21 @@ class DashboardActivity : AppCompatActivity() {
         tvGoalsDone = findViewById(R.id.tvGoalsDone)
         tvTimeSaved = findViewById(R.id.tvTimeSaved)
         containerBlockedApps = findViewById(R.id.containerBlockedApps)
+        containerGoals = findViewById(R.id.containerGoals)
         btnStartProtection = findViewById(R.id.btnStartProtection)
         btnSettings = findViewById(R.id.btnSettings)
 
+        // ViewModel
+        vm = ViewModelProvider(this, GoalsViewModelFactory(application)).get(GoalsViewModel::class.java)
+
         btnSettings.setOnClickListener {
-            val intent = Intent(this, AppListActivity::class.java)
+            val intent = Intent(this, SettingsActivity::class.java)
             startActivity(intent)
+        }
+
+        // Observe goals
+        vm.allGoals.observe(this) { goals ->
+            updateGoalsUI(goals)
         }
 
         lifecycleScope.launch {
@@ -56,8 +69,8 @@ class DashboardActivity : AppCompatActivity() {
 
         btnStartProtection.setOnClickListener {
             protectionActive = true
-            tvProtectionStatus.text = "Protection active"
-            btnStartProtection.visibility = Button.GONE
+            tvProtectionStatus.text = getString(R.string.protection_active)
+            btnStartProtection.visibility = View.GONE
             switchProtection.isChecked = true
             startMonitoring()
             refreshBlockedStatuses()
@@ -66,12 +79,12 @@ class DashboardActivity : AppCompatActivity() {
         switchProtection.setOnCheckedChangeListener { _, isChecked ->
             protectionActive = isChecked
             if (isChecked) {
-                tvProtectionStatus.text = "Protection active"
-                btnStartProtection.visibility = Button.GONE
+                tvProtectionStatus.text = getString(R.string.protection_active)
+                btnStartProtection.visibility = View.GONE
                 startMonitoring()
             } else {
-                tvProtectionStatus.text = "Protection paused"
-                btnStartProtection.visibility = Button.VISIBLE
+                tvProtectionStatus.text = getString(R.string.protection_paused)
+                btnStartProtection.visibility = View.VISIBLE
                 stopMonitoring()
             }
             refreshBlockedStatuses()
@@ -100,15 +113,11 @@ class DashboardActivity : AppCompatActivity() {
         val pkgs = prefs.getStringSet("pkgs", emptySet()) ?: emptySet()
         val pm = packageManager
 
-        Log.d("Dashboard", "Blocked packages from prefs: $pkgs")
-
         val apps = pkgs.mapNotNull { pkg ->
             try {
                 val ai = pm.getApplicationInfo(pkg, 0)
                 val name = ai.loadLabel(pm).toString()
                 val icon = ai.loadIcon(pm)
-
-                Log.d("Dashboard", "Loaded app: $name ($pkg)")
 
                 BlockedAppEntity(
                     packageName = pkg,
@@ -116,8 +125,7 @@ class DashboardActivity : AppCompatActivity() {
                     isBlocked = true,
                     icon = BitmapUtils.drawableToByteArray(icon)
                 )
-            } catch (e: Exception) {
-                Log.e("Dashboard", "Package not found or failed to load: $pkg", e)
+            } catch (_: Exception) {
                 null
             }
         }
@@ -126,7 +134,50 @@ class DashboardActivity : AppCompatActivity() {
         showBlockedApps(apps)
     }
 
+    private fun updateGoalsUI(goals: List<com.example.oblique_android.models.Goal>) {
+        containerGoals.removeAllViews()
+        val inflater = LayoutInflater.from(this)
 
+        if (goals.isEmpty()) {
+            val tv = TextView(this)
+            tv.text = getString(R.string.no_goals_yet)
+            tv.setTextColor(resources.getColor(R.color.text_primary))
+            containerGoals.addView(tv)
+            tvGoalsDone.text = "0"
+            return
+        }
+
+        var doneCount = 0
+        for (g in goals) {
+            val view = inflater.inflate(R.layout.item_dashboard_goal, containerGoals, false)
+
+            val ivIcon = view.findViewById<ImageView>(R.id.ivGoalIcon)
+            val tvTitle = view.findViewById<TextView>(R.id.tvGoalTitle)
+            val tvProgress = view.findViewById<TextView>(R.id.tvGoalProgress)
+
+            val unitLabel = when (g.unit) {
+                "minutes" -> "minutes"
+                "pages" -> "pages"
+                else -> g.unit
+            }
+            tvTitle.text = "${g.platform} • ${g.targetValue} $unitLabel"
+            tvProgress.text = "${g.progress}/${g.targetValue}"
+
+            if (g.progress >= g.targetValue) doneCount++
+
+            // pick icon
+            val iconRes = when (g.platform) {
+                "LeetCode" -> R.drawable.ic_leetcode
+                "Duolingo" -> R.drawable.ic_duolingo
+                else -> R.drawable.ic_meditation
+            }
+            ivIcon.setImageResource(iconRes)
+
+            containerGoals.addView(view)
+        }
+
+        tvGoalsDone.text = doneCount.toString()
+    }
 
     private fun showBlockedApps(apps: List<BlockedAppEntity>) {
         containerBlockedApps.removeAllViews()
@@ -140,16 +191,15 @@ class DashboardActivity : AppCompatActivity() {
             val tvStatus = view.findViewById<TextView>(R.id.tvBlockedStatus)
 
             tvName.text = app.appName
-            tvSubtitle.text = app.packageName
-            tvStatus.text = if (protectionActive) "Active" else "Paused"
+            tvSubtitle.text = getString(R.string.not_protected)
+            tvStatus.text = if (protectionActive) getString(R.string.active) else getString(R.string.paused)
 
             if (app.icon != null) {
                 val bmp = BitmapFactory.decodeByteArray(app.icon, 0, app.icon.size)
                 iv.setImageBitmap(bmp)
             } else {
-                iv.setImageResource(R.mipmap.ic_launcher) // fallback
+                iv.setImageResource(R.mipmap.ic_launcher)
             }
-
 
             containerBlockedApps.addView(view)
         }
@@ -159,7 +209,7 @@ class DashboardActivity : AppCompatActivity() {
         for (i in 0 until containerBlockedApps.childCount) {
             val v = containerBlockedApps.getChildAt(i)
             val tvStatus = v.findViewById<TextView>(R.id.tvBlockedStatus)
-            tvStatus.text = if (protectionActive) "Active" else "Paused"
+            tvStatus.text = if (protectionActive) getString(R.string.active) else getString(R.string.paused)
         }
     }
 }
