@@ -6,18 +6,27 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.View
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Switch
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.example.oblique_android.BlockedAppEntity
-import kotlinx.coroutines.launch
-import com.example.oblique_android.services.MonitoringService
 import com.example.oblique_android.R
+import com.example.oblique_android.services.MonitoringService
+import com.example.oblique_android.utils.BitmapUtils
+import com.example.oblique_android.models.GoalsViewModel
+import com.example.oblique_android.viewmodel.GoalsViewModelFactory
+import kotlinx.coroutines.launch
 
+/**
+ * DashboardActivity — shows protection state, today's goals, stats and blocked apps.
+ * Works with GoalsViewModel (LiveData) and SharedPreferences-stored blocked apps list.
+ */
 class DashboardActivity : AppCompatActivity() {
 
     private lateinit var switchProtection: Switch
@@ -27,8 +36,13 @@ class DashboardActivity : AppCompatActivity() {
     private lateinit var tvTimeSaved: TextView
     private lateinit var containerBlockedApps: LinearLayout
     private lateinit var btnStartProtection: Button
-    private lateinit var btnSettings: Button
+    private lateinit var btnSettings: View
+    private lateinit var tvGoalTitle: TextView
+    private lateinit var tvGoalProgressText: TextView
+    private lateinit var progressBarGoal: View
+
     private var protectionActive = false
+    private lateinit var vm: GoalsViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,22 +56,35 @@ class DashboardActivity : AppCompatActivity() {
         containerBlockedApps = findViewById(R.id.containerBlockedApps)
         btnStartProtection = findViewById(R.id.btnStartProtection)
         btnSettings = findViewById(R.id.btnSettings)
+        tvGoalTitle = findViewById(R.id.tvGoalPlaceholder)
+        tvGoalProgressText = findViewById(R.id.tvGoalProgress)
+        progressBarGoal = findViewById(R.id.viewGoalProgressBar)
+
+        // ViewModel
+        vm = ViewModelProvider(this, GoalsViewModelFactory(application)).get(GoalsViewModel::class.java)
 
         btnSettings.setOnClickListener {
-            val intent = Intent(this, AppListActivity::class.java)
+            // Open settings (two tab screen) so user can edit goals and apps
+            val intent = Intent(this, SettingsActivity::class.java)
             startActivity(intent)
+        }
+
+        // Observe goals from ViewModel to show today's goals
+        vm.allGoals.observe(this) { goals ->
+            updateGoalsUI(goals)
         }
 
         lifecycleScope.launch {
             loadAndShowBlockedApps()
+            // initialize stats
             tvGoalsDone.text = "0"
             tvTimeSaved.text = "0h"
         }
 
         btnStartProtection.setOnClickListener {
             protectionActive = true
-            tvProtectionStatus.text = "Protection active"
-            btnStartProtection.visibility = Button.GONE
+            tvProtectionStatus.text = getString(R.string.protection_active)
+            btnStartProtection.visibility = View.GONE
             switchProtection.isChecked = true
             startMonitoring()
             refreshBlockedStatuses()
@@ -66,12 +93,12 @@ class DashboardActivity : AppCompatActivity() {
         switchProtection.setOnCheckedChangeListener { _, isChecked ->
             protectionActive = isChecked
             if (isChecked) {
-                tvProtectionStatus.text = "Protection active"
-                btnStartProtection.visibility = Button.GONE
+                tvProtectionStatus.text = getString(R.string.protection_active)
+                btnStartProtection.visibility = View.GONE
                 startMonitoring()
             } else {
-                tvProtectionStatus.text = "Protection paused"
-                btnStartProtection.visibility = Button.VISIBLE
+                tvProtectionStatus.text = getString(R.string.protection_paused)
+                btnStartProtection.visibility = View.VISIBLE
                 stopMonitoring()
             }
             refreshBlockedStatuses()
@@ -126,7 +153,29 @@ class DashboardActivity : AppCompatActivity() {
         showBlockedApps(apps)
     }
 
-
+    private fun updateGoalsUI(goals: List<com.example.oblique_android.models.Goal>) {
+        if (goals.isEmpty()) {
+            tvGoalTitle.text = getString(R.string.no_goals_yet)
+            tvGoalProgressText.visibility = View.GONE
+            progressBarGoal.visibility = View.GONE
+            tvGoalsDone.text = "0"
+        } else {
+            // For now show first goal as "Today's primary goal"
+            val g = goals.first()
+            val unitLabel = when (g.unit) {
+                "minutes" -> "minutes"
+                "pages" -> "pages"
+                else -> g.unit
+            }
+            tvGoalTitle.text = "${g.platform} • ${g.targetValue} $unitLabel"
+            tvGoalProgressText.visibility = View.VISIBLE
+            progressBarGoal.visibility = View.VISIBLE
+            tvGoalProgressText.text = "${g.progress}/${g.targetValue}"
+            // Goals done stat
+            val doneCount = goals.count { it.progress >= it.targetValue }
+            tvGoalsDone.text = doneCount.toString()
+        }
+    }
 
     private fun showBlockedApps(apps: List<BlockedAppEntity>) {
         containerBlockedApps.removeAllViews()
@@ -140,8 +189,8 @@ class DashboardActivity : AppCompatActivity() {
             val tvStatus = view.findViewById<TextView>(R.id.tvBlockedStatus)
 
             tvName.text = app.appName
-            tvSubtitle.text = app.packageName
-            tvStatus.text = if (protectionActive) "Active" else "Paused"
+            tvSubtitle.text = getString(R.string.not_protected)
+            tvStatus.text = if (protectionActive) getString(R.string.active) else getString(R.string.paused)
 
             if (app.icon != null) {
                 val bmp = BitmapFactory.decodeByteArray(app.icon, 0, app.icon.size)
@@ -149,7 +198,6 @@ class DashboardActivity : AppCompatActivity() {
             } else {
                 iv.setImageResource(R.mipmap.ic_launcher) // fallback
             }
-
 
             containerBlockedApps.addView(view)
         }
@@ -159,7 +207,7 @@ class DashboardActivity : AppCompatActivity() {
         for (i in 0 until containerBlockedApps.childCount) {
             val v = containerBlockedApps.getChildAt(i)
             val tvStatus = v.findViewById<TextView>(R.id.tvBlockedStatus)
-            tvStatus.text = if (protectionActive) "Active" else "Paused"
+            tvStatus.text = if (protectionActive) getString(R.string.active) else getString(R.string.paused)
         }
     }
 }

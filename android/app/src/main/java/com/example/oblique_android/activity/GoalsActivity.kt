@@ -1,6 +1,7 @@
 package com.example.oblique_android.activity
 
 import android.app.Application
+import android.content.Intent
 import android.os.Bundle
 import android.text.InputType
 import android.view.View
@@ -11,12 +12,13 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.oblique_android.GoalsViewModel
-import com.example.oblique_android.PlatformsAdapter
-import com.example.oblique_android.R
+import com.example.oblique_android.adapters.PlatformsAdapter
 import com.example.oblique_android.adapters.GoalTypeAdapter
 import com.example.oblique_android.adapters.GoalsAdapter
 import com.example.oblique_android.models.Goal
+import com.example.oblique_android.models.GoalType
+import com.example.oblique_android.models.GoalsViewModel
+import com.example.oblique_android.R
 import kotlinx.coroutines.launch
 
 class GoalsActivity : ComponentActivity(), PlatformsAdapter.PlatformClickListener {
@@ -36,14 +38,19 @@ class GoalsActivity : ComponentActivity(), PlatformsAdapter.PlatformClickListene
     private lateinit var goalTypeAdapter: GoalTypeAdapter
     private lateinit var vm: GoalsViewModel
 
+    // ← CHANGED: selectedGoalType should hold the GoalType object, not a String
     private var selectedPlatform: String? = null
-    private var selectedGoalType: GoalTypeAdapter.GoalType? = null
+    private var selectedGoalType: GoalType? = null
+
+    companion object {
+        private const val PREFS_NAME = "app_prefs"
+        private const val PREF_GOALS_SHOWN = "goals_shown"
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_goals)
 
-        // find views (no viewBinding required)
         rvPlatforms = findViewById(R.id.rvPlatforms)
         rvGoalTypes = findViewById(R.id.rvGoalTypes)
         rvGoals = findViewById(R.id.rvGoals)
@@ -55,36 +62,40 @@ class GoalsActivity : ComponentActivity(), PlatformsAdapter.PlatformClickListene
         scrollView = findViewById(R.id.scrollView)
         tvTargetLabel = findViewById(R.id.tvTargetLabel)
 
-        // ViewModel: use normal provider to avoid custom factory mismatch
-        vm = ViewModelProvider(this, ViewModelProvider.AndroidViewModelFactory.getInstance(application as Application))
-            .get(GoalsViewModel::class.java)
+        vm = ViewModelProvider(
+            this,
+            ViewModelProvider.AndroidViewModelFactory.getInstance(application as Application)
+        ).get(GoalsViewModel::class.java)
 
         // Platforms grid
         rvPlatforms.layoutManager = GridLayoutManager(this, 2)
-        val platformsAdapter = PlatformsAdapter(this)
+        val platformsAdapter = PlatformsAdapter(listener = this) // ✅ FIX
         rvPlatforms.adapter = platformsAdapter
 
-        // Goal types
-        goalTypeAdapter = GoalTypeAdapter { goalType ->
-            onGoalTypeSelected(goalType)
-        }
+        // ---------- FIX: create a concrete list of GoalType items and pass into adapter ----------
+        // Use your models.GoalType (you already provided that data class)
+        val goalTypesList = listOf(
+            GoalType(id = "lessons", title = "Lessons", subtitle = "Complete lessons", unit = "lessons", suggested = 1),
+            GoalType(id = "minutes", title = "Focused time", subtitle = "Minutes spent", unit = "minutes", suggested = 10),
+            GoalType(id = "pages", title = "Reading", subtitle = "Pages read", unit = "pages", suggested = 5)
+        )
+
+        // Goal types — pass items list + click lambda
+        goalTypeAdapter = GoalTypeAdapter(items = goalTypesList) { goalType -> onGoalTypeSelected(goalType) }
         rvGoalTypes.layoutManager = LinearLayoutManager(this)
         rvGoalTypes.adapter = goalTypeAdapter
+        // --------------------------------------------------------------------------
 
         // Goals list
-        goalsAdapter = GoalsAdapter(onDelete = { goal ->
-            // PASS the Goal object (not id) to match repository signature
-            lifecycleScope.launch { vm.deleteGoal(goal) }
-        }, onVerify = { goal ->
-            lifecycleScope.launch { vm.markGoalComplete(goal) }
-        })
+        goalsAdapter = GoalsAdapter(
+            onDelete = { goal -> lifecycleScope.launch { vm.deleteGoal(goal) } },
+            onVerify = { goal -> lifecycleScope.launch { vm.markGoalComplete(goal) } }
+        )
         rvGoals.layoutManager = LinearLayoutManager(this)
         rvGoals.adapter = goalsAdapter
 
-        // Observe goals — prefer LiveData if exists, otherwise Flow:
-        // Try LiveData field "allGoals" first (many repos expose this), fallback to Flow if present.
+        // Observe goals (same as you had)
         try {
-            // If your ViewModel provides LiveData<List<Goal>> named `allGoals`, use this:
             val liveDataField = vm::class.java.getDeclaredField("allGoals")
             @Suppress("UNCHECKED_CAST")
             val ld = liveDataField.get(vm) as? androidx.lifecycle.LiveData<List<Goal>>
@@ -95,7 +106,6 @@ class GoalsActivity : ComponentActivity(), PlatformsAdapter.PlatformClickListene
                 updateBottomCTA(list.size)
             }
         } catch (_: Exception) {
-            // Fallback: check for Flow method named getAllGoalsFlow()
             lifecycleScope.launch {
                 try {
                     val method = vm::class.java.methods.firstOrNull { it.name.contains("getAll") && it.returnType.name.contains("Flow") }
@@ -111,9 +121,7 @@ class GoalsActivity : ComponentActivity(), PlatformsAdapter.PlatformClickListene
                             }
                         }
                     }
-                } catch (_: Exception) {
-                    // If neither exists, skip; you may wire observing manually depending on your VM API
-                }
+                } catch (_: Exception) { }
             }
         }
 
@@ -126,23 +134,16 @@ class GoalsActivity : ComponentActivity(), PlatformsAdapter.PlatformClickListene
                 toast("Pick a goal type")
                 return@setOnClickListener
             }
+
             val targetText = etTarget.text.toString().trim()
-            if (targetText.isEmpty()) {
-                toast("Enter target")
-                return@setOnClickListener
-            }
             val target = targetText.toIntOrNull()
             if (target == null || target <= 0) {
-                toast("Invalid target number")
+                toast("Enter a valid target")
                 return@setOnClickListener
             }
 
-            val goal = Goal(
-                platform = platform,
-                unit = gt.unit,
-                targetValue = target,
-                progress = 0
-            )
+            // ---------- FIX: now gt is a GoalType, so gt.unit is valid ----------
+            val goal = Goal(platform = platform, unit = gt.unit, targetValue = target, progress = 0)
             lifecycleScope.launch {
                 vm.addGoal(goal)
                 clearSelectionAfterAdd()
@@ -151,22 +152,27 @@ class GoalsActivity : ComponentActivity(), PlatformsAdapter.PlatformClickListene
         }
 
         btnStart.setOnClickListener {
+            val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+            prefs.edit().putBoolean(PREF_GOALS_SHOWN, true).apply()
+
+            val intent = Intent(this, DashboardActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            startActivity(intent)
             finish()
         }
 
-        // Seed if VM has a seeding method (if not present this try/catch is safe)
         lifecycleScope.launch {
             try {
-                val seedMethod = vm::class.java.methods.firstOrNull { it.name.contains("seed") || it.name.contains("Seed") }
+                val seedMethod = vm::class.java.methods.firstOrNull { it.name.contains("seed", true) }
                 seedMethod?.invoke(vm)
-            } catch (_: Exception) { /* ignore */ }
+            } catch (_: Exception) { }
         }
 
-        // Hide selected card until platform chosen
         cardSelectedPlatform.visibility = View.GONE
     }
 
-    private fun onGoalTypeSelected(goalType: GoalTypeAdapter.GoalType) {
+    // Accept models.GoalType so selectedGoalType and usage are consistent
+    private fun onGoalTypeSelected(goalType: GoalType) {
         selectedGoalType = goalType
         tvTargetLabel.text = when (goalType.unit) {
             "minutes" -> "Target (minutes)"
@@ -175,6 +181,7 @@ class GoalsActivity : ComponentActivity(), PlatformsAdapter.PlatformClickListene
         }
         etTarget.hint = goalType.suggested.toString()
         etTarget.inputType = InputType.TYPE_CLASS_NUMBER
+        // adapter.select expects the adapter's GoalType type — this assumes adapter uses same model type
         goalTypeAdapter.select(goalType)
     }
 
@@ -190,7 +197,6 @@ class GoalsActivity : ComponentActivity(), PlatformsAdapter.PlatformClickListene
         selectedPlatform = platform
         tvSelectedPlatformName.text = platform
         cardSelectedPlatform.visibility = View.VISIBLE
-        // scroll to selected platform
         scrollView.post { scrollView.smoothScrollTo(0, cardSelectedPlatform.top) }
     }
 

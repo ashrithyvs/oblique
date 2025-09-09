@@ -4,15 +4,18 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import androidx.room.migration.Migration
-import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.oblique_android.BlockedAppDao
 import com.example.oblique_android.BlockedAppEntity
-import com.example.oblique_android.models.Goal
+import com.example.oblique_android.data.GoalDao
+import com.example.oblique_android.entities.GoalEntity
 
+/**
+ * Single app-wide RoomDatabase. Make sure GoalEntity is listed here.
+ * For dev speed we use fallbackToDestructiveMigration(); replace with proper migrations later.
+ */
 @Database(
-    entities = [BlockedAppEntity::class, Goal::class],
-    version = 2, // bumped version
+    entities = [BlockedAppEntity::class, GoalEntity::class],
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -30,28 +33,11 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "app_database"
                 )
-                    .addMigrations(MIGRATION_1_2)
+                    // Use destructive for dev to unblock builds. Replace with migrations in prod.
+                    .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance
                 instance
-            }
-        }
-
-        // Migration: add goals table
-        private val MIGRATION_1_2 = object : Migration(1, 2) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL(
-                    """
-                    CREATE TABLE IF NOT EXISTS `goals` (
-                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-                        `type` TEXT NOT NULL,
-                        `target` INTEGER NOT NULL,
-                        `progress` INTEGER NOT NULL,
-                        `createdAt` INTEGER NOT NULL,
-                        `deadline` INTEGER NOT NULL
-                    )
-                    """.trimIndent()
-                )
             }
         }
     }

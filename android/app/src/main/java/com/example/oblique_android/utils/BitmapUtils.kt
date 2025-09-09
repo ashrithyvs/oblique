@@ -1,3 +1,5 @@
+package com.example.oblique_android.utils
+
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.AdaptiveIconDrawable

@@ -1,3 +1,25 @@
 <resources>
     <dimen name="fab_margin">16dp</dimen>
+    <dimen name="screen_horizontal_padding">16dp</dimen>
+    <dimen name="header_top_margin">18dp</dimen>
+    <dimen name="header_icon_spacing">8dp</dimen>
+    <dimen name="header_sub_spacing">6dp</dimen>
+    <dimen name="header_divider_top">12dp</dimen>
+    <dimen name="card_radius">12dp</dimen>
+    <dimen name="card_top_margin">12dp</dimen>
+    <dimen name="card_padding">16dp</dimen>
+    <dimen name="section_spacing">12dp</dimen>
+    <dimen name="tiles_margin_top">12dp</dimen>
+    <dimen name="selected_platform_margin_top">12dp</dimen>
+    <dimen name="selected_card_radius">10dp</dimen>
+    <dimen name="selected_card_padding">12dp</dimen>
+    <dimen name="target_margin_top">8dp</dimen>
+    <dimen name="input_padding">12dp</dimen>
+    <dimen name="btn_add_margin_top">12dp</dimen>
+    <dimen name="section_big_margin">20dp</dimen>
+    <dimen name="empty_card_margin_top">12dp</dimen>
+    <dimen name="card_inner_padding">18dp</dimen>
+    <dimen name="bottom_cta_margin_top">20dp</dimen>
+    <dimen name="badge_padding">6dp</dimen>
+
 </resources>

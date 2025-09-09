@@ -4,4 +4,12 @@
     <string name="accessibility_service_description">Blocks selected apps and shows a prompt until you unblock them in Oblique.</string>
     <string name="delete">delete</string>
     <string name="app_icon">App Icon</string>
+    <string name="platform_icon">Platform Icon</string>
+    <string name="protection_active">Protection active</string>
+    <string name="protection_paused">Protection paused</string>
+    <string name="no_goals_yet">No goals yet</string>
+    <string name="not_protected">Not protected</string>
+    <string name="active">Active</string>
+    <string name="paused">Paused</string>
+
 </resources>
