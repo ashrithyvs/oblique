@@ -4,12 +4,16 @@
     android:id="@+id/scrollRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="18dp"
-    android:background="@color/white">
+    android:background="@color/white"
+    android:fillViewport="true"
+    android:scrollbars="none"
+    android:clipToPadding="false"
+    >
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:padding="18dp"
         android:orientation="vertical">
 
         <!-- Header -->

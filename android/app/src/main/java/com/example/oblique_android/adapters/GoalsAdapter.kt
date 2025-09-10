@@ -21,7 +21,7 @@ class GoalsAdapter(
         val tvPlatformName: TextView = view.findViewById(R.id.tvPlatformName)
         val tvGoalSummary: TextView = view.findViewById(R.id.tvGoalSummary)
         val tvProgress: TextView = view.findViewById(R.id.tvProgress)
-        val btnVerify: Button = view.findViewById(R.id.btnVerify)
+//        val btnVerify: Button = view.findViewById(R.id.btnVerify)
         val btnDelete: ImageButton = view.findViewById(R.id.btnDelete)
     }
 
@@ -50,7 +50,7 @@ class GoalsAdapter(
         }
         holder.ivIcon.setImageResource(iconRes)
 
-        holder.btnVerify.setOnClickListener { onVerify(g) }
+//        holder.btnVerify.setOnClickListener { onVerify(g) }
         holder.btnDelete.setOnClickListener { onDelete(g) }
 
         // optional: show outline if selected or completed
