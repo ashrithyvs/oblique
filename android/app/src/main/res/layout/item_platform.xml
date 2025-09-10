@@ -1,36 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- item_platform.xml — a compact tile card for platform grid -->
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:card="http://schemas.android.com/apk/res-auto"
     android:id="@+id/cardPlatform"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    card:cardCornerRadius="12dp"
-    card:cardElevation="0dp"
     android:layout_margin="8dp"
-    android:foreground="?android:attr/selectableItemBackground">
+    card:cardCornerRadius="12dp"
+    card:cardElevation="2dp"
+    android:foreground="?android:attr/selectableItemBackground"
+    android:background="@drawable/bg_platform_selector"
+    android:padding="12dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="100dp"
         android:orientation="vertical"
         android:gravity="center"
-        android:padding="12dp">
+        android:padding="8dp">
 
-        <ImageView
-            android:id="@+id/ivPlatformIcon"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:src="@drawable/circle_gray"
-            android:contentDescription="platform icon"
-            android:scaleType="centerInside"/>
+        <!-- Circular icon container -->
+        <FrameLayout
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:background="@drawable/circle_gray"
+            android:layout_gravity="center">
+
+            <ImageView
+                android:id="@+id/ivPlatformIcon"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_gravity="center"
+                android:contentDescription="@string/platform_icon"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_launcher_foreground" />
+        </FrameLayout>
 
         <TextView
             android:id="@+id/tvPlatformName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
             android:text="Platform"
-            android:textSize="14sp"
-            android:layout_marginTop="8dp"
-            android:textColor="@color/ink" />
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary" />
     </LinearLayout>
 </androidx.cardview.widget.CardView>

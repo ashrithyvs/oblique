@@ -35,6 +35,8 @@ class GoalsActivity : ComponentActivity(), PlatformsAdapter.PlatformClickListene
     private lateinit var scrollView: ScrollView
     private lateinit var tvTargetLabel: TextView
     private lateinit var emptyStateCard: View
+    private lateinit var platformsAdapter: PlatformsAdapter
+
 
     private lateinit var goalsAdapter: GoalsAdapter
     private lateinit var goalTypeAdapter: GoalTypeAdapter
@@ -73,7 +75,8 @@ class GoalsActivity : ComponentActivity(), PlatformsAdapter.PlatformClickListene
 
         // Platforms
         rvPlatforms.layoutManager = GridLayoutManager(this, 2)
-        rvPlatforms.adapter = PlatformsAdapter(listener = this)
+        platformsAdapter = PlatformsAdapter(listener = this)
+        rvPlatforms.adapter = platformsAdapter
 
         // Goal types
         val goalTypesList = listOf(
@@ -143,11 +146,21 @@ class GoalsActivity : ComponentActivity(), PlatformsAdapter.PlatformClickListene
     }
 
     override fun onPlatformSelected(platform: String) {
-        selectedPlatform = platform
-        tvSelectedPlatformName.text = platform
-        cardSelectedPlatform.visibility = View.VISIBLE
-        scrollView.post { scrollView.smoothScrollTo(0, cardSelectedPlatform.top) }
+        // adapter passes empty string when user toggles the currently selected tile off
+        if (platform.isEmpty()) {
+            selectedPlatform = null
+            // hide the selected-platform card if you show one
+            cardSelectedPlatform.visibility = View.GONE
+            tvSelectedPlatformName.text = ""
+        } else {
+            selectedPlatform = platform
+            tvSelectedPlatformName.text = platform
+            cardSelectedPlatform.visibility = View.VISIBLE
+            // scroll to selected UI if you want
+            scrollView.post { scrollView.smoothScrollTo(0, cardSelectedPlatform.top) }
+        }
     }
+
 
     private fun updateBottomCTA(totalGoals: Int) {
         btnStart.apply {

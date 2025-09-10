@@ -5,6 +5,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
+    android:scrollbars="none"
+    android:fadeScrollbars="false"
     android:background="@color/bg_white"
     android:paddingStart="@dimen/screen_horizontal_padding"
     android:paddingEnd="@dimen/screen_horizontal_padding">

@@ -33,5 +33,6 @@
     <color name="badge_bg_color">#F2F6FF</color>
     <color name="card_bg">#FAFBFC</color>
     <color name="cta_green">#00B050</color>
+    <color name="platform_selected_bg">#F5F5F5</color> <!-- light gray -->
 
 </resources>
