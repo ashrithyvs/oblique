@@ -1,0 +1,1763 @@
+Index: app/src/main/java/com/example/oblique_android/MonitoringService.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.example.oblique_android\n\nimport android.app.*\nimport android.content.Context\nimport android.content.Intent\nimport android.os.Build\nimport android.os.Handler\nimport android.os.IBinder\nimport android.os.Looper\nimport android.app.usage.UsageStatsManager\nimport android.util.Log\n\nclass MonitoringService : Service() {\n\n    private val handler = Handler(Looper.getMainLooper())\n    private val interval: Long = 1000 // check every 1 second\n    private lateinit var usageStatsManager: UsageStatsManager\n    private var currentBlockedApp: String? = null\n\n    override fun onCreate() {\n        super.onCreate()\n        usageStatsManager = getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager\n        startForeground(1, createNotification())\n        handler.post(checkRunnable)\n    }\n\n    private val checkRunnable = object : Runnable {\n        override fun run() {\n            val blockedApps = getBlockedAppsFromPrefs()\n            val foregroundApp = getForegroundApp()\n\n            if (foregroundApp != null && blockedApps.contains(foregroundApp)) {\n                if (!isTempUnlocked(foregroundApp)) {\n                    // app is blocked AND not temporarily unlocked\n                    if (currentBlockedApp != foregroundApp) {\n                        currentBlockedApp = foregroundApp\n                        Log.d(\"MonitoringService\", \"Blocking $foregroundApp\")\n                        val intent = Intent(this@MonitoringService, OverlayService::class.java)\n                        intent.putExtra(\"blockedApp\", foregroundApp)\n                        startService(intent)\n                    }\n                } else {\n                    Log.d(\"MonitoringService\", \"Skipping $foregroundApp (temporarily unlocked)\")\n                }\n            } else {\n                if (currentBlockedApp != null) {\n                    Log.d(\"MonitoringService\", \"No longer blocking $currentBlockedApp\")\n                    stopService(Intent(this@MonitoringService, OverlayService::class.java))\n                    currentBlockedApp = null\n                }\n            }\n            handler.postDelayed(this, interval)\n        }\n    }\n\n    private fun getBlockedAppsFromPrefs(): Set<String> {\n        val prefs = getSharedPreferences(\"blocked_apps\", MODE_PRIVATE)\n        return prefs.getStringSet(\"pkgs\", emptySet()) ?: emptySet()\n    }\n\n    private fun getForegroundApp(): String? {\n        val endTime = System.currentTimeMillis()\n        val beginTime = endTime - 2000\n        val usageStats = usageStatsManager.queryUsageStats(\n            UsageStatsManager.INTERVAL_DAILY, beginTime, endTime\n        )\n        return usageStats?.maxByOrNull { it.lastTimeUsed }?.packageName\n    }\n\n    private fun isTempUnlocked(pkg: String): Boolean {\n        val prefs = getSharedPreferences(\"temp_unlocked\", MODE_PRIVATE)\n        return prefs.getBoolean(pkg, false)\n    }\n\n    override fun onDestroy() {\n        handler.removeCallbacks(checkRunnable)\n        super.onDestroy()\n    }\n\n    override fun onBind(intent: Intent?): IBinder? = null\n\n    private fun createNotification(): Notification {\n        val channelId = \"monitor_channel\"\n        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {\n            val channel = NotificationChannel(\n                channelId,\n                \"App Monitoring\",\n                NotificationManager.IMPORTANCE_LOW\n            )\n            getSystemService(NotificationManager::class.java).createNotificationChannel(channel)\n        }\n        return Notification.Builder(this, channelId)\n            .setContentTitle(\"Oblique Monitoring\")\n            .setContentText(\"Watching your blocked apps\")\n            .setSmallIcon(R.drawable.ic_launcher_foreground)\n            .setOngoing(true)\n            .build()\n    }\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/example/oblique_android/MonitoringService.kt b/app/src/main/java/com/example/oblique_android/MonitoringService.kt
+--- a/app/src/main/java/com/example/oblique_android/MonitoringService.kt	(revision 5f5887fc81d55063a706f9b53c44b8b3809968d1)
++++ b/app/src/main/java/com/example/oblique_android/MonitoringService.kt	(date 1757359538945)
+@@ -8,79 +8,98 @@
+ import android.os.IBinder
+ import android.os.Looper
+ import android.app.usage.UsageStatsManager
++import android.app.usage.UsageEvents
++import android.provider.Settings
+ import android.util.Log
+ 
+ class MonitoringService : Service() {
+ 
+     private val handler = Handler(Looper.getMainLooper())
+     private val interval: Long = 1000 // check every 1 second
+-    private lateinit var usageStatsManager: UsageStatsManager
++
+     private var currentBlockedApp: String? = null
+ 
+-    override fun onCreate() {
+-        super.onCreate()
+-        usageStatsManager = getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+-        startForeground(1, createNotification())
+-        handler.post(checkRunnable)
+-    }
+-
+-    private val checkRunnable = object : Runnable {
++    private val checker = object : Runnable {
+         override fun run() {
+-            val blockedApps = getBlockedAppsFromPrefs()
+-            val foregroundApp = getForegroundApp()
+-
+-            if (foregroundApp != null && blockedApps.contains(foregroundApp)) {
+-                if (!isTempUnlocked(foregroundApp)) {
+-                    // app is blocked AND not temporarily unlocked
+-                    if (currentBlockedApp != foregroundApp) {
+-                        currentBlockedApp = foregroundApp
+-                        Log.d("MonitoringService", "Blocking $foregroundApp")
+-                        val intent = Intent(this@MonitoringService, OverlayService::class.java)
+-                        intent.putExtra("blockedApp", foregroundApp)
+-                        startService(intent)
+-                    }
+-                } else {
+-                    Log.d("MonitoringService", "Skipping $foregroundApp (temporarily unlocked)")
+-                }
+-            } else {
+-                if (currentBlockedApp != null) {
+-                    Log.d("MonitoringService", "No longer blocking $currentBlockedApp")
+-                    stopService(Intent(this@MonitoringService, OverlayService::class.java))
+-                    currentBlockedApp = null
+-                }
+-            }
+-            handler.postDelayed(this, interval)
+-        }
+-    }
+-
+-    private fun getBlockedAppsFromPrefs(): Set<String> {
+-        val prefs = getSharedPreferences("blocked_apps", MODE_PRIVATE)
+-        return prefs.getStringSet("pkgs", emptySet()) ?: emptySet()
++            try {
++                val foreground = getForegroundAppPackage()
++                if (foreground != null) {
++                    val blockedSet = getBlockedAppsFromPrefs()
++                    val tempPrefs = getSharedPreferences("temp_unlocked", MODE_PRIVATE)
++                    val isTempUnlocked = tempPrefs.getBoolean(foreground, false)
++                    if (blockedSet.contains(foreground) && !isTempUnlocked) {
++                        // show overlay if not already showing for same package
++                        if (currentBlockedApp != foreground) {
++                            currentBlockedApp = foreground
++                            Log.d("MonitoringService", "Blocking foreground app: $foreground")
++                            val intent = Intent(this@MonitoringService, OverlayService::class.java)
++                            intent.putExtra("pkg", foreground)
++                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
++                                startForegroundService(intent)
++                            } else {
++                                startService(intent)
++                            }
++                        }
++                    } else {
++                        // if previously blocking, stop overlay
++                        if (currentBlockedApp != null && currentBlockedApp != foreground) {
++                            Log.d("MonitoringService", "No longer blocking $currentBlockedApp")
++                            stopService(Intent(this@MonitoringService, OverlayService::class.java))
++                            currentBlockedApp = null
++                        }
++                    }
++                }
++            } catch (ex: Exception) {
++                Log.w("MonitoringService", "Exception in checker: ${ex.message}")
++            } finally {
++                handler.postDelayed(this, interval)
++            }
++        }
+     }
+ 
+-    private fun getForegroundApp(): String? {
+-        val endTime = System.currentTimeMillis()
+-        val beginTime = endTime - 2000
+-        val usageStats = usageStatsManager.queryUsageStats(
+-            UsageStatsManager.INTERVAL_DAILY, beginTime, endTime
+-        )
+-        return usageStats?.maxByOrNull { it.lastTimeUsed }?.packageName
+-    }
+-
+-    private fun isTempUnlocked(pkg: String): Boolean {
+-        val prefs = getSharedPreferences("temp_unlocked", MODE_PRIVATE)
+-        return prefs.getBoolean(pkg, false)
++    override fun onCreate() {
++        super.onCreate()
++        startForeground(911, createNotification())
++        handler.post(checker)
+     }
+ 
+     override fun onDestroy() {
+-        handler.removeCallbacks(checkRunnable)
++        handler.removeCallbacks(checker)
++        stopService(Intent(this, OverlayService::class.java))
+         super.onDestroy()
+     }
+ 
+     override fun onBind(intent: Intent?): IBinder? = null
+ 
++    private fun getForegroundAppPackage(): String? {
++        // First try UsageStats (requires PACKAGE_USAGE_STATS granted)
++        try {
++            val usageStatsManager = getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
++            val now = System.currentTimeMillis()
++            // query events for last 5 seconds
++            val events = usageStatsManager.queryEvents(now - 5000, now)
++            var lastForeground: String? = null
++            val ev = UsageEvents.Event()
++            while (events.hasNextEvent()) {
++                events.getNextEvent(ev)
++                if (ev.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND) {
++                    lastForeground = ev.packageName
++                }
++            }
++            if (lastForeground != null) return lastForeground
++        } catch (e: Exception) {
++            Log.w("MonitoringService", "UsageStats error: ${e.message}")
++        }
++        return null
++    }
++
++    private fun getBlockedAppsFromPrefs(): Set<String> {
++        val prefs = getSharedPreferences("blocked_apps", MODE_PRIVATE)
++        return prefs.getStringSet("pkgs", emptySet()) ?: emptySet()
++    }
++
+     private fun createNotification(): Notification {
+-        val channelId = "monitor_channel"
++        val channelId = "oblique_monitor_channel"
+         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+             val channel = NotificationChannel(
+                 channelId,
+@@ -89,11 +108,20 @@
+             )
+             getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+         }
+-        return Notification.Builder(this, channelId)
+-            .setContentTitle("Oblique Monitoring")
+-            .setContentText("Watching your blocked apps")
+-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+-            .setOngoing(true)
+-            .build()
++        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
++            Notification.Builder(this, channelId)
++                .setContentTitle("Oblique Monitoring")
++                .setContentText("Watching your blocked apps")
++                .setSmallIcon(R.drawable.ic_launcher_foreground)
++                .setOngoing(true)
++                .build()
++        } else {
++            Notification.Builder(this)
++                .setContentTitle("Oblique Monitoring")
++                .setContentText("Watching your blocked apps")
++                .setSmallIcon(R.drawable.ic_launcher_foreground)
++                .setOngoing(true)
++                .build()
++        }
+     }
+ }
+Index: app/src/main/java/com/example/oblique_android/OverlayService.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.example.oblique_android\n\nimport android.app.Service\nimport android.content.Intent\nimport android.graphics.PixelFormat\nimport android.os.Build\nimport android.os.IBinder\nimport android.view.*\nimport android.widget.Button\nimport android.widget.TextView\n\nclass OverlayService : Service() {\n\n    private var windowManager: WindowManager? = null\n    private var overlayView: View? = null\n    private var blockedAppPackage: String? = null\n\n    override fun onCreate() {\n        super.onCreate()\n        windowManager = getSystemService(WINDOW_SERVICE) as WindowManager\n    }\n\n    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {\n        blockedAppPackage = intent?.getStringExtra(\"blockedApp\")\n        showOverlay()\n        return START_STICKY\n    }\n\n    private fun showOverlay() {\n        if (overlayView != null) return\n\n        val inflater = LayoutInflater.from(this)\n        overlayView = inflater.inflate(R.layout.overlay_blocked_app, null)\n\n        val params = WindowManager.LayoutParams(\n            WindowManager.LayoutParams.MATCH_PARENT,\n            WindowManager.LayoutParams.MATCH_PARENT,\n            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)\n                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY\n            else\n                WindowManager.LayoutParams.TYPE_PHONE,\n            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or\n                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,\n            PixelFormat.TRANSLUCENT\n        )\n\n        overlayView?.findViewById<TextView>(R.id.blockMessage)?.text =\n            \"This app is blocked!\"\n\n        overlayView?.findViewById<Button>(R.id.btnDismiss)?.setOnClickListener {\n            stopSelf()\n            val intent = Intent(this, PinUnlockActivity::class.java)\n            intent.putExtra(\"blockedApp\", blockedAppPackage)\n            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)\n            startActivity(intent)\n        }\n\n        windowManager?.addView(overlayView, params)\n    }\n\n    override fun onDestroy() {\n        if (overlayView != null) {\n            windowManager?.removeView(overlayView)\n            overlayView = null\n        }\n        super.onDestroy()\n    }\n\n    override fun onBind(intent: Intent?): IBinder? = null\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/example/oblique_android/OverlayService.kt b/app/src/main/java/com/example/oblique_android/OverlayService.kt
+--- a/app/src/main/java/com/example/oblique_android/OverlayService.kt	(revision 5f5887fc81d55063a706f9b53c44b8b3809968d1)
++++ b/app/src/main/java/com/example/oblique_android/OverlayService.kt	(date 1757359547584)
+@@ -7,7 +7,10 @@
+ import android.os.IBinder
+ import android.view.*
+ import android.widget.Button
++import android.widget.ImageView
+ import android.widget.TextView
++import android.content.pm.PackageManager
++import android.util.Log
+ 
+ class OverlayService : Service() {
+ 
+@@ -15,53 +18,76 @@
+     private var overlayView: View? = null
+     private var blockedAppPackage: String? = null
+ 
+-    override fun onCreate() {
+-        super.onCreate()
+-        windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+-    }
+-
+     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+-        blockedAppPackage = intent?.getStringExtra("blockedApp")
+-        showOverlay()
++        blockedAppPackage = intent?.getStringExtra("pkg")
++        showOverlay(blockedAppPackage)
+         return START_STICKY
+     }
+ 
+-    private fun showOverlay() {
++    private fun showOverlay(pkg: String?) {
+         if (overlayView != null) return
+ 
++        windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+         val inflater = LayoutInflater.from(this)
+-        overlayView = inflater.inflate(R.layout.overlay_blocked_app, null)
++        val view = inflater.inflate(R.layout.overlay_blocked_app, null)
++        overlayView = view
++
++        val iconView = view.findViewById<ImageView>(R.id.ivBlockedAppIcon)
++        val message = view.findViewById<TextView>(R.id.blockMessage)
++        val btn = view.findViewById<Button>(R.id.btnDismiss)
++
++        message.text = "This app is blocked."
++
++        // try to load app icon
++        try {
++            if (pkg != null) {
++                val pm = packageManager
++                val icon = pm.getApplicationIcon(pkg)
++                iconView.setImageDrawable(icon)
++            }
++        } catch (e: PackageManager.NameNotFoundException) {
++            Log.w("OverlayService", "App icon not found for $pkg")
++        }
++
++        btn.setOnClickListener {
++            // launch PinUnlockActivity for unlocking
++            val unlock = Intent(this, PinUnlockActivity::class.java)
++            unlock.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
++            unlock.putExtra("pkg", pkg)
++            startActivity(unlock)
++        }
++
++        val layoutFlag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
++            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
++        } else {
++            WindowManager.LayoutParams.TYPE_PHONE
++        }
+ 
+         val params = WindowManager.LayoutParams(
+             WindowManager.LayoutParams.MATCH_PARENT,
+             WindowManager.LayoutParams.MATCH_PARENT,
+-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+-                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+-            else
+-                WindowManager.LayoutParams.TYPE_PHONE,
++            layoutFlag,
+             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+-                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
++                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
++                    WindowManager.LayoutParams.FLAG_FULLSCREEN,
+             PixelFormat.TRANSLUCENT
+         )
+ 
+-        overlayView?.findViewById<TextView>(R.id.blockMessage)?.text =
+-            "This app is blocked!"
+-
+-        overlayView?.findViewById<Button>(R.id.btnDismiss)?.setOnClickListener {
+-            stopSelf()
+-            val intent = Intent(this, PinUnlockActivity::class.java)
+-            intent.putExtra("blockedApp", blockedAppPackage)
+-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+-            startActivity(intent)
++        try {
++            windowManager?.addView(view, params)
++        } catch (ex: Exception) {
++            Log.w("OverlayService", "Failed to add overlay: ${ex.message}")
+         }
+-
+-        windowManager?.addView(overlayView, params)
+     }
+ 
+     override fun onDestroy() {
+-        if (overlayView != null) {
+-            windowManager?.removeView(overlayView)
+-            overlayView = null
++        try {
++            if (overlayView != null) {
++                windowManager?.removeView(overlayView)
++                overlayView = null
++            }
++        } catch (ex: Exception) {
++            // ignore
+         }
+         super.onDestroy()
+     }
+Index: app/src/main/java/com/example/oblique_android/utils/BlockedAppDatabase.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.example.oblique_android\n\nimport android.content.Context\nimport androidx.room.Database\nimport androidx.room.Room\nimport androidx.room.RoomDatabase\n\n@Database(entities = [BlockedAppEntity::class], version = 2, exportSchema = false)\nabstract class BlockedAppDatabase : RoomDatabase() {\n    abstract fun blockedAppDao(): BlockedAppDao\n\n    companion object {\n        @Volatile\n        private var INSTANCE: BlockedAppDatabase? = null\n\n        fun getDatabase(context: Context): BlockedAppDatabase {\n            return INSTANCE ?: synchronized(this) {\n                val instance = Room.databaseBuilder(\n                    context.applicationContext,\n                    BlockedAppDatabase::class.java,\n                    \"blocked_apps_db\"\n                )\n                    // TODO: For production, handle migrations properly\n                    .fallbackToDestructiveMigration()\n                    .build()\n                INSTANCE = instance\n                instance\n            }\n        }\n    }\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/example/oblique_android/utils/BlockedAppDatabase.kt b/app/src/main/java/com/example/oblique_android/utils/BlockedAppDatabase.kt
+--- a/app/src/main/java/com/example/oblique_android/utils/BlockedAppDatabase.kt	(revision 5f5887fc81d55063a706f9b53c44b8b3809968d1)
++++ b/app/src/main/java/com/example/oblique_android/utils/BlockedAppDatabase.kt	(date 1757359564365)
+@@ -20,7 +20,7 @@
+                     BlockedAppDatabase::class.java,
+                     "blocked_apps_db"
+                 )
+-                    // TODO: For production, handle migrations properly
++                    // In production, replace with proper migrations
+                     .fallbackToDestructiveMigration()
+                     .build()
+                 INSTANCE = instance
+Index: app/src/main/java/com/example/oblique_android/BlockedAppsAdapter.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/example/oblique_android/BlockedAppsAdapter.kt b/app/src/main/java/com/example/oblique_android/BlockedAppsAdapter.kt
+new file mode 100644
+--- /dev/null	(date 1757359695798)
++++ b/app/src/main/java/com/example/oblique_android/BlockedAppsAdapter.kt	(date 1757359695798)
+@@ -0,0 +1,31 @@
++package com.example.oblique_android
++
++import android.content.Context
++import androidx.room.Database
++import androidx.room.Room
++import androidx.room.RoomDatabase
++
++@Database(entities = [BlockedAppEntity::class], version = 2, exportSchema = false)
++abstract class BlockedAppDatabase : RoomDatabase() {
++    abstract fun blockedAppDao(): BlockedAppDao
++
++    companion object {
++        @Volatile
++        private var INSTANCE: BlockedAppDatabase? = null
++
++        fun getDatabase(context: Context): BlockedAppDatabase {
++            return INSTANCE ?: synchronized(this) {
++                val instance = Room.databaseBuilder(
++                    context.applicationContext,
++                    BlockedAppDatabase::class.java,
++                    "blocked_apps_db"
++                )
++                    // In production, replace with proper migrations
++                    .fallbackToDestructiveMigration()
++                    .build()
++                INSTANCE = instance
++                instance
++            }
++        }
++    }
++}
+Index: app/src/main/java/com/example/oblique_android/GoalsAdapter.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/example/oblique_android/GoalsAdapter.kt b/app/src/main/java/com/example/oblique_android/GoalsAdapter.kt
+new file mode 100644
+--- /dev/null	(date 1757358850683)
++++ b/app/src/main/java/com/example/oblique_android/GoalsAdapter.kt	(date 1757358850683)
+@@ -0,0 +1,67 @@
++package com.example.oblique_android
++
++import android.graphics.BitmapFactory
++import android.view.LayoutInflater
++import android.view.View
++import android.view.ViewGroup
++import android.widget.ImageButton
++import android.widget.ImageView
++import android.widget.ProgressBar
++import android.widget.TextView
++import androidx.cardview.widget.CardView
++import androidx.recyclerview.widget.RecyclerView
++
++class GoalsAdapter(private val listener: Listener) : RecyclerView.Adapter<GoalsAdapter.VH>() {
++
++    interface Listener {
++        fun onEdit(goal: GoalEntity)
++        fun onDelete(goal: GoalEntity)
++    }
++
++    private val items = mutableListOf<GoalEntity>()
++
++    fun submit(list: List<GoalEntity>) {
++        items.clear()
++        items.addAll(list)
++        notifyDataSetChanged()
++    }
++
++    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
++        val v = LayoutInflater.from(parent.context).inflate(R.layout.item_goal_card, parent, false)
++        return VH(v)
++    }
++
++    override fun onBindViewHolder(holder: VH, position: Int) {
++        val g = items[position]
++        holder.tvTitle.text = g.platformName
++        holder.tvSubtitle.text = "${g.dailyTarget} ${when (g.unit) {
++            "MINUTES" -> "minutes Daily"
++            "PROBLEMS" -> "problems Daily"
++            else -> "daily"
++        }}"
++        // progress
++        val prog = g.progress.coerceAtLeast(0)
++        holder.progressBar.max = g.dailyTarget.coerceAtLeast(1)
++        holder.progressBar.progress = prog.coerceAtMost(holder.progressBar.max)
++        holder.tvProgress.text = "${prog}/${holder.progressBar.max}"
++
++        holder.btnEdit.setOnClickListener { listener.onEdit(g) }
++        holder.btnDelete.setOnClickListener { listener.onDelete(g) }
++
++        // optional icon from blocked apps database (attempt to show)
++        holder.ivIcon.setImageResource(R.mipmap.ic_launcher)
++    }
++
++    override fun getItemCount(): Int = items.size
++
++    class VH(v: View) : RecyclerView.ViewHolder(v) {
++        val card: CardView = v.findViewById(R.id.cardGoal)
++        val ivIcon: ImageView = v.findViewById(R.id.ivIcon)
++        val tvTitle: TextView = v.findViewById(R.id.tvTitle)
++        val tvSubtitle: TextView = v.findViewById(R.id.tvSubtitle)
++        val progressBar: ProgressBar = v.findViewById(R.id.progressBar)
++        val tvProgress: TextView = v.findViewById(R.id.tvProgress)
++        val btnEdit: ImageButton = v.findViewById(R.id.btnEdit)
++        val btnDelete: ImageButton = v.findViewById(R.id.btnDelete)
++    }
++}
+Index: app/src/main/java/com/example/oblique_android/GoalsActivity.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/example/oblique_android/GoalsActivity.kt b/app/src/main/java/com/example/oblique_android/GoalsActivity.kt
+new file mode 100644
+--- /dev/null	(date 1757358850673)
++++ b/app/src/main/java/com/example/oblique_android/GoalsActivity.kt	(date 1757358850673)
+@@ -0,0 +1,180 @@
++package com.example.oblique_android
++
++import android.app.Activity
++import android.app.TimePickerDialog
++import android.os.Bundle
++import android.view.View
++import android.view.inputmethod.EditorInfo
++import android.widget.*
++import androidx.appcompat.app.AppCompatActivity
++import androidx.core.view.isVisible
++import androidx.lifecycle.lifecycleScope
++import androidx.recyclerview.widget.GridLayoutManager
++import androidx.recyclerview.widget.LinearLayoutManager
++import kotlinx.coroutines.launch
++import java.util.*
++
++class GoalsActivity : AppCompatActivity(),
++    PlatformAdapter.OnPlatformClickListener,
++    GoalTypeAdapter.OnGoalTypeClickListener {
++
++    private lateinit var rvPlatforms: RecyclerView
++    private lateinit var rvGoalTypes: RecyclerView
++    private lateinit var inputTarget: EditText
++    private lateinit var btnTime: Button
++    private lateinit var btnAddThisGoal: Button
++    private lateinit var selectedPlatformCard: View
++    private lateinit var tvPlatformName: TextView
++    private lateinit var tvPlatformEmoji: TextView
++
++    private val repo by lazy { GoalRepository.getInstance(this) }
++    private var platforms = samplePlatforms()
++    private var selectedPlatform: Platform? = null
++    private var selectedGoalType: GoalType? = null
++    private var chosenDeadline: String? = null
++    private var editGoalId: Long? = null
++
++    override fun onCreate(savedInstanceState: Bundle?) {
++        super.onCreate(savedInstanceState)
++        setContentView(R.layout.activity_goals)
++
++        rvPlatforms = findViewById(R.id.rvPlatforms)
++        rvGoalTypes = findViewById(R.id.rvGoalTypes)
++        inputTarget = findViewById(R.id.inputTarget)
++        btnTime = findViewById(R.id.btnTime)
++        btnAddThisGoal = findViewById(R.id.btnAddThisGoal)
++        selectedPlatformCard = findViewById(R.id.selectedPlatformRow)
++        tvPlatformName = findViewById(R.id.platformName)
++        tvPlatformEmoji = findViewById(R.id.platformEmoji)
++
++        rvPlatforms.layoutManager = GridLayoutManager(this, 2)
++        rvPlatforms.adapter = PlatformAdapter(platforms, this)
++
++        rvGoalTypes.layoutManager = LinearLayoutManager(this)
++        rvGoalTypes.adapter = GoalTypeAdapter(emptyList(), this)
++
++        // time picker
++        btnTime.setOnClickListener {
++            val cal = Calendar.getInstance()
++            TimePickerDialog(this, { _, h, m ->
++                chosenDeadline = String.format("%02d:%02d", h, m)
++                btnTime.text = chosenDeadline
++            }, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), true).show()
++        }
++
++        btnAddThisGoal.setOnClickListener {
++            val platform = selectedPlatform
++            val gtype = selectedGoalType
++            if (platform == null || gtype == null) {
++                Toast.makeText(this, "Select platform and goal type", Toast.LENGTH_SHORT).show()
++                return@setOnClickListener
++            }
++            val raw = inputTarget.text?.toString()?.trim()
++            val t = raw?.toIntOrNull()
++            if (t == null || t <= 0) {
++                Toast.makeText(this, "Enter a valid target", Toast.LENGTH_SHORT).show()
++                return@setOnClickListener
++            }
++
++            lifecycleScope.launch {
++                if (editGoalId != null) {
++                    // update existing
++                    val existing = repo.getById(editGoalId!!)
++                    if (existing != null) {
++                        val updated = existing.copy(
++                            platformName = platform.name,
++                            platformPackage = null,
++                            title = gtype.title,
++                            unit = gtype.unit.name,
++                            dailyTarget = t,
++                            deadline = chosenDeadline,
++                            progress = existing.progress // preserve progress
++                        )
++                        repo.update(updated)
++                    }
++                } else {
++                    val newGoal = GoalEntity(
++                        platformName = platform.name,
++                        platformPackage = null,
++                        title = gtype.title,
++                        unit = gtype.unit.name,
++                        dailyTarget = t,
++                        deadline = chosenDeadline,
++                        progress = 0
++                    )
++                    repo.insert(newGoal)
++                }
++                setResult(Activity.RESULT_OK)
++                finish()
++            }
++        }
++
++        // if editing
++        editGoalId = intent.getLongExtra("edit_goal_id", -1L).takeIf { it != -1L }
++        if (editGoalId != null) {
++            lifecycleScope.launch {
++                val g = repo.getById(editGoalId!!)
++                g?.let { loadForEdit(it) }
++            }
++        }
++    }
++
++    private fun loadForEdit(goal: GoalEntity) {
++        // pre-select platform if found by name
++        selectedPlatform = platforms.firstOrNull { it.name.equals(goal.platformName, true) }
++        selectedPlatform?.let {
++            tvPlatformEmoji.text = it.emoji
++            tvPlatformName.text = it.name
++            selectedPlatformCard.isVisible = true
++            (rvPlatforms.adapter as? PlatformAdapter)?.setSelected(it)
++            (rvGoalTypes.adapter as? GoalTypeAdapter)?.update(it.suggestions)
++            selectedGoalType = it.suggestions.firstOrNull { s -> s.title == goal.title }
++            (rvGoalTypes.adapter as? GoalTypeAdapter)?.setSelected(selectedGoalType)
++        }
++
++        inputTarget.setText(goal.dailyTarget.toString())
++        chosenDeadline = goal.deadline
++        btnTime.text = chosenDeadline ?: "--:-- --"
++    }
++
++    // Platform clicks
++    override fun onPlatformClick(platform: Platform) {
++        selectedPlatform = platform
++        // show selected row UI
++        selectedPlatformCard.isVisible = true
++        tvPlatformEmoji.text = platform.emoji
++        tvPlatformName.text = platform.name
++
++        (rvGoalTypes.adapter as? GoalTypeAdapter)?.update(platform.suggestions)
++        // scroll to goal types
++        rvGoalTypes.post { rvGoalTypes.scrollToPosition(0) }
++    }
++
++    // Goal type clicks
++    override fun onGoalTypeClick(goalType: GoalType) {
++        selectedGoalType = goalType
++        // prefill suggestion
++        inputTarget.setText(goalType.suggested.toString())
++    }
++
++    // Sample platforms (use your real icons if available)
++    private fun samplePlatforms(): List<Platform> {
++        return listOf(
++            Platform("LeetCode","💻", listOf(
++                GoalType("Solve coding problems", "Suggested: 2 problems", TargetUnit.PROBLEMS, 2),
++                GoalType("Study time", "Suggested: 30 minutes", TargetUnit.MINUTES, 30)
++            )),
++            Platform("Duolingo","🧠", listOf(
++                GoalType("Complete lessons","Suggested: 2 lessons", TargetUnit.COUNT, 2),
++                GoalType("Study time","Suggested: 20 minutes", TargetUnit.MINUTES, 20)
++            )),
++            Platform("Reading","📖", listOf(
++                GoalType("Read pages","Suggested: 10 pages", TargetUnit.COUNT, 10),
++                GoalType("Reading time","Suggested: 30 minutes", TargetUnit.MINUTES, 30)
++            )),
++            Platform("Exercise","💪", listOf(
++                GoalType("Workout time","Suggested: 30 minutes", TargetUnit.MINUTES, 30)
++            ))
++        )
++    }
++}
+Index: app/src/main/java/com/example/oblique_android/GoalTypeAdapter.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/example/oblique_android/GoalTypeAdapter.kt b/app/src/main/java/com/example/oblique_android/GoalTypeAdapter.kt
+new file mode 100644
+--- /dev/null	(date 1757358850663)
++++ b/app/src/main/java/com/example/oblique_android/GoalTypeAdapter.kt	(date 1757358850663)
+@@ -0,0 +1,55 @@
++package com.example.oblique_android.ui.adapters
++
++import android.view.LayoutInflater
++import android.view.View
++import android.view.ViewGroup
++import android.widget.TextView
++import androidx.recyclerview.widget.RecyclerView
++import com.example.oblique_android.R
++import com.example.oblique_android.models.GoalType
++
++class GoalTypeAdapter(private var items: List<GoalType>, private val listener: OnGoalTypeClick)
++    : RecyclerView.Adapter<GoalTypeAdapter.VH>() {
++
++    private var selected: GoalType? = null
++
++    interface OnGoalTypeClick { fun onGoalTypeClick(goalType: GoalType) }
++
++    fun update(list: List<GoalType>) {
++        items = list
++        notifyDataSetChanged()
++    }
++
++    fun setSelected(goalType: GoalType?) {
++        selected = goalType
++        notifyDataSetChanged()
++    }
++
++    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
++        val v = LayoutInflater.from(parent.context).inflate(R.layout.item_goal_type, parent, false)
++        return VH(v)
++    }
++
++    override fun getItemCount() = items.size
++    override fun onBindViewHolder(holder: VH, position: Int) {
++        val gt = items[position]
++        holder.bind(gt, gt == selected)
++        holder.itemView.setOnClickListener {
++            selected = gt
++            notifyDataSetChanged()
++            listener.onGoalTypeClick(gt)
++        }
++    }
++
++    class VH(v: View): RecyclerView.ViewHolder(v) {
++        private val title = v.findViewById<TextView>(R.id.tvGoalTitle)
++        private val subtitle = v.findViewById<TextView>(R.id.tvGoalSubtitle)
++        fun bind(gt: GoalType, isSelected: Boolean) {
++            title.text = gt.title
++            subtitle.text = gt.subtitle
++            itemView.alpha = if (isSelected) 1f else 0.98f
++            itemView.background = if (isSelected) itemView.context.getDrawable(R.drawable.goal_type_selected_bg)
++            else itemView.context.getDrawable(R.drawable.goal_type_bg)
++        }
++    }
++}
+Index: app/src/main/java/com/example/oblique_android/GoalListAdapter.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/example/oblique_android/GoalListAdapter.kt b/app/src/main/java/com/example/oblique_android/GoalListAdapter.kt
+new file mode 100644
+--- /dev/null	(date 1757358850653)
++++ b/app/src/main/java/com/example/oblique_android/GoalListAdapter.kt	(date 1757358850653)
+@@ -0,0 +1,61 @@
++package com.example.oblique_android.ui.adapters
++
++import android.view.LayoutInflater
++import android.view.View
++import android.view.ViewGroup
++import android.widget.ImageButton
++import android.widget.ProgressBar
++import android.widget.TextView
++import androidx.recyclerview.widget.RecyclerView
++import com.example.oblique_android.R
++import com.example.oblique_android.models.UserGoal
++
++class GoalsListAdapter(
++    private val listener: OnGoalItemAction
++) : RecyclerView.Adapter<GoalsListAdapter.VH>() {
++
++    private var items = listOf<UserGoal>()
++
++    interface OnGoalItemAction {
++        fun onEdit(goal: UserGoal)
++        fun onDelete(goal: UserGoal)
++    }
++
++    fun submitList(list: List<UserGoal>) {
++        items = list
++        notifyDataSetChanged()
++    }
++
++    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
++        val v = LayoutInflater.from(parent.context).inflate(R.layout.item_user_goal, parent, false)
++        return VH(v)
++    }
++
++    override fun getItemCount() = items.size
++    override fun onBindViewHolder(holder: VH, position: Int) {
++        val g = items[position]
++        holder.bind(g)
++        holder.btnEdit.setOnClickListener { listener.onEdit(g) }
++        holder.btnDelete.setOnClickListener { listener.onDelete(g) }
++    }
++
++    class VH(v: View): RecyclerView.ViewHolder(v) {
++        val title = v.findViewById<TextView>(R.id.tvGoalRowTitle)
++        val subtitle = v.findViewById<TextView>(R.id.tvGoalRowSubtitle)
++        val progress = v.findViewById<ProgressBar>(R.id.pbGoalProgress)
++        val tvProgressText = v.findViewById<TextView>(R.id.tvGoalProgressText)
++        val btnEdit = v.findViewById<ImageButton>(R.id.btnEditGoal)
++        val btnDelete = v.findViewById<ImageButton>(R.id.btnDeleteGoal)
++
++        fun bind(g: UserGoal) {
++            title.text = g.platformName
++            subtitle.text = "${g.dailyTarget} ${when (g.unit) {
++                com.example.oblique_android.models.TargetUnit.MINUTES -> "minutes daily"
++                com.example.oblique_android.models.TargetUnit.PROBLEMS -> "problems daily"
++                com.example.oblique_android.models.TargetUnit.COUNT -> "daily"
++            }}"
++            progress.progress = 0
++            tvProgressText.text = "0/${g.dailyTarget}"
++        }
++    }
++}
+Index: app/src/main/java/com/example/oblique_android/dao/GoalModels.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/example/oblique_android/dao/GoalModels.kt b/app/src/main/java/com/example/oblique_android/dao/GoalModels.kt
+new file mode 100644
+--- /dev/null	(date 1757358850726)
++++ b/app/src/main/java/com/example/oblique_android/dao/GoalModels.kt	(date 1757358850726)
+@@ -0,0 +1,43 @@
++package com.example.oblique_android.models
++
++import android.graphics.drawable.Drawable
++import androidx.room.ColumnInfo
++import androidx.room.Entity
++import androidx.room.PrimaryKey
++
++enum class TargetUnit { MINUTES, PROBLEMS, COUNT }
++
++data class Platform(
++    val name: String,
++    val emoji: String,
++    val suggestions: List<GoalType> = emptyList()
++)
++
++data class GoalType(
++    val title: String,
++    val subtitle: String,
++    val unit: TargetUnit,
++    val suggested: Int
++)
++
++@Entity(tableName = "user_goals")
++data class UserGoalEntity(
++    @PrimaryKey(autoGenerate = true) val id: Long = 0L,
++    @ColumnInfo(name = "platform_name") val platformName: String,
++    @ColumnInfo(name = "platform_emoji") val platformEmoji: String,
++    @ColumnInfo(name = "title") val title: String,
++    @ColumnInfo(name = "unit") val unit: TargetUnit,
++    @ColumnInfo(name = "daily_target") val dailyTarget: Int,
++    @ColumnInfo(name = "deadline") val deadline: String?
++)
++
++// app-level plain model used in memory/UI
++data class UserGoal(
++    val id: Long = 0L,
++    val platformName: String,
++    val platformEmoji: String,
++    val title: String,
++    val unit: TargetUnit,
++    val dailyTarget: Int,
++    val deadline: String?
++)
+Index: app/src/main/java/com/example/oblique_android/dao/GoalDao.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/example/oblique_android/dao/GoalDao.kt b/app/src/main/java/com/example/oblique_android/dao/GoalDao.kt
+new file mode 100644
+--- /dev/null	(date 1757358850715)
++++ b/app/src/main/java/com/example/oblique_android/dao/GoalDao.kt	(date 1757358850715)
+@@ -0,0 +1,28 @@
++package com.example.oblique_android
++
++import androidx.room.*
++import kotlinx.coroutines.flow.Flow
++
++@Dao
++interface GoalDao {
++    @Query("SELECT * FROM goals ORDER BY id DESC")
++    fun getAllFlow(): Flow<List<GoalEntity>>
++
++    @Query("SELECT * FROM goals ORDER BY id DESC")
++    suspend fun getAll(): List<GoalEntity>
++
++    @Query("SELECT * FROM goals WHERE id = :id LIMIT 1")
++    suspend fun getById(id: Long): GoalEntity?
++
++    @Insert(onConflict = OnConflictStrategy.REPLACE)
++    suspend fun insert(goal: GoalEntity): Long
++
++    @Update
++    suspend fun update(goal: GoalEntity)
++
++    @Delete
++    suspend fun delete(goal: GoalEntity)
++
++    @Query("DELETE FROM goals WHERE id = :id")
++    suspend fun deleteById(id: Long)
++}
+Index: app/src/main/java/com/example/oblique_android/PlatformAdapter.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/example/oblique_android/PlatformAdapter.kt b/app/src/main/java/com/example/oblique_android/PlatformAdapter.kt
+new file mode 100644
+--- /dev/null	(date 1757358850694)
++++ b/app/src/main/java/com/example/oblique_android/PlatformAdapter.kt	(date 1757358850694)
+@@ -0,0 +1,57 @@
++package com.example.oblique_android.ui.adapters
++
++import android.view.LayoutInflater
++import android.view.View
++import android.view.ViewGroup
++import android.widget.TextView
++import androidx.recyclerview.widget.RecyclerView
++import com.example.oblique_android.R
++import com.example.oblique_android.models.Platform
++
++class PlatformAdapter(
++    private var items: List<Platform>,
++    private val listener: OnPlatformClick
++) : RecyclerView.Adapter<PlatformAdapter.VH>() {
++
++    private var selected: Platform? = null
++
++    interface OnPlatformClick { fun onPlatformClick(platform: Platform) }
++
++    fun setSelected(platform: Platform?) {
++        selected = platform
++        notifyDataSetChanged()
++    }
++
++    fun update(list: List<Platform>) {
++        items = list
++        notifyDataSetChanged()
++    }
++
++    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
++        val v = LayoutInflater.from(parent.context).inflate(R.layout.item_platform, parent, false)
++        return VH(v)
++    }
++
++    override fun getItemCount() = items.size
++    override fun onBindViewHolder(holder: VH, position: Int) {
++        val p = items[position]
++        holder.bind(p, p == selected)
++        holder.itemView.setOnClickListener {
++            selected = p
++            notifyDataSetChanged()
++            listener.onPlatformClick(p)
++        }
++    }
++
++    class VH(v: View): RecyclerView.ViewHolder(v) {
++        private val title = v.findViewById<TextView>(R.id.tvPlatformTitle)
++        private val emoji = v.findViewById<TextView>(R.id.tvPlatformEmoji)
++        fun bind(p: Platform, isSelected: Boolean) {
++            title.text = p.name
++            emoji.text = p.emoji
++            itemView.alpha = if (isSelected) 1f else 0.96f
++            itemView.background = if (isSelected) itemView.context.getDrawable(R.drawable.platform_selected_bg)
++            else itemView.context.getDrawable(R.drawable.platform_bg)
++        }
++    }
++}
+Index: app/src/main/res/drawable/bg_badge.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/res/drawable/bg_badge.xml b/app/src/main/res/drawable/bg_badge.xml
+new file mode 100644
+--- /dev/null	(date 1757358850762)
++++ b/app/src/main/res/drawable/bg_badge.xml	(date 1757358850762)
+@@ -0,0 +1,4 @@
++<shape xmlns:android="http://schemas.android.com/apk/res/android">
++    <solid android:color="#0B0B0B"/>
++    <corners android:radius="12dp"/>
++</shape>
+Index: app/src/main/java/com/example/oblique_android/utils/GoalsRepository.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/example/oblique_android/utils/GoalsRepository.kt b/app/src/main/java/com/example/oblique_android/utils/GoalsRepository.kt
+new file mode 100644
+--- /dev/null	(date 1757358850754)
++++ b/app/src/main/java/com/example/oblique_android/utils/GoalsRepository.kt	(date 1757358850754)
+@@ -0,0 +1,27 @@
++package com.example.oblique_android
++
++import android.content.Context
++import kotlinx.coroutines.Dispatchers
++import kotlinx.coroutines.withContext
++
++class GoalRepository private constructor(private val db: AppDatabase) {
++    private val dao = db.goalDao()
++
++    companion object {
++        @Volatile private var INSTANCE: GoalRepository? = null
++        fun getInstance(context: Context): GoalRepository {
++            return INSTANCE ?: synchronized(this) {
++                val inst = GoalRepository(AppDatabase.getInstance(context))
++                INSTANCE = inst
++                inst
++            }
++        }
++    }
++
++    suspend fun getAll(): List<GoalEntity> = withContext(Dispatchers.IO) { dao.getAll() }
++    suspend fun getById(id: Long): GoalEntity? = withContext(Dispatchers.IO) { dao.getById(id) }
++    suspend fun insert(goal: GoalEntity): Long = withContext(Dispatchers.IO) { dao.insert(goal) }
++    suspend fun update(goal: GoalEntity) = withContext(Dispatchers.IO) { dao.update(goal) }
++    suspend fun delete(goal: GoalEntity) = withContext(Dispatchers.IO) { dao.delete(goal) }
++    suspend fun deleteById(id: Long) = withContext(Dispatchers.IO) { dao.deleteById(id) }
++}
+Index: app/src/main/java/com/example/oblique_android/entities/GoalEntity.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/example/oblique_android/entities/GoalEntity.kt b/app/src/main/java/com/example/oblique_android/entities/GoalEntity.kt
+new file mode 100644
+--- /dev/null	(date 1757358850745)
++++ b/app/src/main/java/com/example/oblique_android/entities/GoalEntity.kt	(date 1757358850745)
+@@ -0,0 +1,17 @@
++package com.example.oblique_android
++
++import androidx.room.ColumnInfo
++import androidx.room.Entity
++import androidx.room.PrimaryKey
++
++@Entity(tableName = "goals")
++data class GoalEntity(
++    @PrimaryKey(autoGenerate = true) val id: Long = 0,
++    @ColumnInfo(name = "platform_name") val platformName: String,
++    @ColumnInfo(name = "platform_package") val platformPackage: String?, // optional
++    @ColumnInfo(name = "title") val title: String,
++    @ColumnInfo(name = "unit") val unit: String, // "MINUTES","PROBLEMS","COUNT"
++    @ColumnInfo(name = "daily_target") val dailyTarget: Int,
++    @ColumnInfo(name = "deadline") val deadline: String? = null,
++    @ColumnInfo(name = "progress") val progress: Int = 0 // stored daily progress (0..dailyTarget)
++)
+Index: app/src/main/java/com/example/oblique_android/dao/models.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/example/oblique_android/dao/models.kt b/app/src/main/java/com/example/oblique_android/dao/models.kt
+new file mode 100644
+--- /dev/null	(date 1757358850737)
++++ b/app/src/main/java/com/example/oblique_android/dao/models.kt	(date 1757358850737)
+@@ -0,0 +1,25 @@
++package com.example.oblique_android
++
++data class Platform(
++    val name: String,
++    val emoji: String,
++    val suggestions: List<GoalType>
++)
++
++data class GoalType(
++    val title: String,
++    val subtitle: String,
++    val unit: TargetUnit,
++    val suggested: Int
++)
++
++enum class TargetUnit { MINUTES, PROBLEMS, COUNT }
++
++data class UserGoal(
++    val platformName: String,
++    val platformEmoji: String,
++    val title: String,
++    val unit: TargetUnit,
++    val dailyTarget: Int,
++    val deadline: String? = null
++)
+Index: app/src/main/res/drawable/bg_emoji.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/res/drawable/bg_emoji.xml b/app/src/main/res/drawable/bg_emoji.xml
+new file mode 100644
+--- /dev/null	(date 1757358850793)
++++ b/app/src/main/res/drawable/bg_emoji.xml	(date 1757358850793)
+@@ -0,0 +1,4 @@
++<shape xmlns:android="http://schemas.android.com/apk/res/android">
++    <solid android:color="#FFF3E0"/>
++    <corners android:radius="12dp"/>
++</shape>
+Index: app/src/main/res/drawable/bg_check.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/res/drawable/bg_check.xml b/app/src/main/res/drawable/bg_check.xml
+new file mode 100644
+--- /dev/null	(date 1757358850785)
++++ b/app/src/main/res/drawable/bg_check.xml	(date 1757358850785)
+@@ -0,0 +1,4 @@
++<shape xmlns:android="http://schemas.android.com/apk/res/android">
++    <solid android:color="#0B0B0B"/>
++    <corners android:radius="11dp"/>
++</shape>
+Index: app/src/main/res/drawable/bg_card_soft.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/res/drawable/bg_card_soft.xml b/app/src/main/res/drawable/bg_card_soft.xml
+new file mode 100644
+--- /dev/null	(date 1757358850778)
++++ b/app/src/main/res/drawable/bg_card_soft.xml	(date 1757358850778)
+@@ -0,0 +1,4 @@
++<shape xmlns:android="http://schemas.android.com/apk/res/android">
++    <solid android:color="#F6F7FB"/>
++    <corners android:radius="16dp"/>
++</shape>
+Index: app/src/main/res/drawable/bg_card.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/res/drawable/bg_card.xml b/app/src/main/res/drawable/bg_card.xml
+new file mode 100644
+--- /dev/null	(date 1757358850770)
++++ b/app/src/main/res/drawable/bg_card.xml	(date 1757358850770)
+@@ -0,0 +1,5 @@
++<shape xmlns:android="http://schemas.android.com/apk/res/android">
++    <solid android:color="#FFFFFF"/>
++    <corners android:radius="16dp"/>
++    <stroke android:width="1dp" android:color="#E9EAEE"/>
++</shape>
+Index: app/src/main/res/drawable/bg_input.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/res/drawable/bg_input.xml b/app/src/main/res/drawable/bg_input.xml
+new file mode 100644
+--- /dev/null	(date 1757358850840)
++++ b/app/src/main/res/drawable/bg_input.xml	(date 1757358850840)
+@@ -0,0 +1,5 @@
++<shape xmlns:android="http://schemas.android.com/apk/res/android">
++    <solid android:color="#F8F9FC"/>
++    <corners android:radius="12dp"/>
++    <stroke android:width="1dp" android:color="#E9EAEE"/>
++</shape>
+Index: app/src/main/res/drawable/bg_header_icon_soft.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/res/drawable/bg_header_icon_soft.xml b/app/src/main/res/drawable/bg_header_icon_soft.xml
+new file mode 100644
+--- /dev/null	(date 1757358850827)
++++ b/app/src/main/res/drawable/bg_header_icon_soft.xml	(date 1757358850827)
+@@ -0,0 +1,4 @@
++<shape xmlns:android="http://schemas.android.com/apk/res/android">
++    <solid android:color="#EEF2FF"/>
++    <corners android:radius="12dp"/>
++</shape>
+Index: app/src/main/res/drawable/bg_header_icon.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/res/drawable/bg_header_icon.xml b/app/src/main/res/drawable/bg_header_icon.xml
+new file mode 100644
+--- /dev/null	(date 1757358850809)
++++ b/app/src/main/res/drawable/bg_header_icon.xml	(date 1757358850809)
+@@ -0,0 +1,4 @@
++<shape xmlns:android="http://schemas.android.com/apk/res/android">
++    <solid android:color="#E9F0FF"/>
++    <corners android:radius="16dp"/>
++</shape>
+Index: app/src/main/res/drawable/bg_goal_type.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/res/drawable/bg_goal_type.xml b/app/src/main/res/drawable/bg_goal_type.xml
+new file mode 100644
+--- /dev/null	(date 1757358850801)
++++ b/app/src/main/res/drawable/bg_goal_type.xml	(date 1757358850801)
+@@ -0,0 +1,16 @@
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:state_selected="true">
++        <shape>
++            <solid android:color="#FFFFFF"/>
++            <corners android:radius="14dp"/>
++            <stroke android:width="2dp" android:color="#0B0B0B"/>
++        </shape>
++    </item>
++    <item>
++        <shape>
++            <solid android:color="#FFFFFF"/>
++            <corners android:radius="14dp"/>
++            <stroke android:width="1dp" android:color="#E9EAEE"/>
++        </shape>
++    </item>
++</selector>
+Index: app/src/main/res/layout/activity_goals.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/res/layout/activity_goals.xml b/app/src/main/res/layout/activity_goals.xml
+new file mode 100644
+--- /dev/null	(date 1757358850880)
++++ b/app/src/main/res/layout/activity_goals.xml	(date 1757358850880)
+@@ -0,0 +1,348 @@
++<?xml version="1.0" encoding="utf-8"?>
++<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
++    xmlns:app="http://schemas.android.com/apk/res-auto"
++    android:layout_width="match_parent"
++    android:layout_height="match_parent"
++    android:background="#FFFFFF">
++
++    <LinearLayout
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:orientation="vertical"
++        android:paddingStart="20dp"
++        android:paddingEnd="20dp">
++
++        <!-- Header icon -->
++        <TextView
++            android:layout_width="64dp"
++            android:layout_height="64dp"
++            android:layout_gravity="center_horizontal"
++            android:layout_marginTop="24dp"
++            android:background="@drawable/bg_header_icon"
++            android:gravity="center"
++            android:text="🎯"
++            android:textSize="28sp" />
++
++        <TextView
++            android:id="@+id/title"
++            android:layout_width="wrap_content"
++            android:layout_height="wrap_content"
++            android:layout_gravity="center_horizontal"
++            android:layout_marginTop="16dp"
++            android:text="Set your daily goals"
++            android:textColor="#0B0B0B"
++            android:textSize="24sp"
++            android:textStyle="bold" />
++
++        <TextView
++            android:layout_width="wrap_content"
++            android:layout_height="wrap_content"
++            android:layout_gravity="center_horizontal"
++            android:layout_marginTop="6dp"
++            android:text="Complete these to earn temporary app access"
++            android:textColor="#667085"
++            android:textSize="14sp" />
++
++        <View
++            android:layout_width="match_parent"
++            android:layout_height="1dp"
++            android:layout_marginTop="16dp"
++            android:background="#E9EAEE" />
++
++        <!-- Add a new goal card -->
++        <LinearLayout
++            android:id="@+id/cardAddGoal"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:layout_marginTop="16dp"
++            android:background="@drawable/bg_card"
++            android:orientation="vertical"
++            android:padding="16dp">
++
++            <TextView
++                android:layout_width="wrap_content"
++                android:layout_height="wrap_content"
++                android:text="Add a new goal"
++                android:textColor="#0B0B0B"
++                android:textSize="18sp"
++                android:textStyle="bold" />
++
++            <!-- Choose platform -->
++            <TextView
++                android:id="@+id/textChoosePlatform"
++                android:layout_width="wrap_content"
++                android:layout_height="wrap_content"
++                android:layout_marginTop="16dp"
++                android:text="Choose platform"
++                android:textColor="#0B0B0B"
++                android:textSize="16sp" />
++
++            <!-- Selected platform row -->
++            <LinearLayout
++                android:id="@+id/selectedPlatformRow"
++                android:layout_width="match_parent"
++                android:layout_height="48dp"
++                android:layout_marginTop="12dp"
++                android:background="@drawable/bg_platform_row"
++                android:gravity="center_vertical"
++                android:paddingStart="12dp"
++                android:paddingEnd="12dp"
++                android:visibility="gone">
++
++                <TextView
++                    android:id="@+id/platformEmoji"
++                    android:layout_width="36dp"
++                    android:layout_height="36dp"
++                    android:background="@drawable/bg_emoji"
++                    android:gravity="center"
++                    android:text="💻"
++                    android:textSize="18sp" />
++
++                <TextView
++                    android:id="@+id/platformName"
++                    android:layout_width="0dp"
++                    android:layout_height="wrap_content"
++                    android:layout_marginStart="12dp"
++                    android:layout_weight="1"
++                    android:text="LeetCode"
++                    android:textColor="#0B0B0B"
++                    android:textSize="16sp"
++                    android:textStyle="bold" />
++
++                <TextView
++                    android:id="@+id/btnChangePlatform"
++                    android:layout_width="wrap_content"
++                    android:layout_height="wrap_content"
++                    android:text="Change"
++                    android:textColor="#344054"
++                    android:textSize="14sp" />
++            </LinearLayout>
++
++            <LinearLayout
++                android:id="@+id/sectionChoosePlatform"
++                android:layout_width="match_parent"
++                android:layout_height="wrap_content"
++                android:layout_marginTop="12dp"
++                android:orientation="vertical">
++
++                <androidx.recyclerview.widget.RecyclerView
++                    android:id="@+id/rvPlatforms"
++                    android:layout_width="match_parent"
++                    android:layout_height="wrap_content"
++                    android:overScrollMode="never" />
++            </LinearLayout>
++
++            <!-- Goal types -->
++            <LinearLayout
++                android:id="@+id/sectionGoalTypes"
++                android:layout_width="match_parent"
++                android:layout_height="wrap_content"
++                android:layout_marginTop="12dp"
++                android:orientation="vertical"
++                android:visibility="gone">
++
++                <TextView
++                    android:layout_width="wrap_content"
++                    android:layout_height="wrap_content"
++                    android:text="What's your goal?"
++                    android:textColor="#0B0B0B"
++                    android:textSize="16sp" />
++
++                <androidx.recyclerview.widget.RecyclerView
++                    android:id="@+id/rvGoalTypes"
++                    android:layout_width="match_parent"
++                    android:layout_height="wrap_content"
++                    android:layout_marginTop="8dp"
++                    android:overScrollMode="never" />
++            </LinearLayout>
++
++            <!-- Target + deadline -->
++            <LinearLayout
++                android:id="@+id/sectionTarget"
++                android:layout_width="match_parent"
++                android:layout_height="wrap_content"
++                android:layout_marginTop="12dp"
++                android:orientation="vertical"
++                android:visibility="gone">
++
++                <LinearLayout
++                    android:layout_width="match_parent"
++                    android:layout_height="wrap_content"
++                    android:orientation="horizontal">
++
++                    <LinearLayout
++                        android:layout_width="0dp"
++                        android:layout_height="wrap_content"
++                        android:layout_weight="1"
++                        android:orientation="vertical">
++
++                        <TextView
++                            android:id="@+id/labelTarget"
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="Target (problems)"
++                            android:textColor="#0B0B0B"
++                            android:textSize="14sp" />
++
++                        <EditText
++                            android:id="@+id/inputTarget"
++                            android:layout_width="match_parent"
++                            android:layout_height="44dp"
++                            android:layout_marginTop="8dp"
++                            android:background="@drawable/bg_input"
++                            android:gravity="center_vertical"
++                            android:inputType="number"
++                            android:paddingStart="12dp"
++                            android:paddingEnd="12dp"
++                            android:textColor="#0B0B0B" />
++                    </LinearLayout>
++
++                    <Space
++                        android:layout_width="12dp"
++                        android:layout_height="1dp" />
++
++                    <LinearLayout
++                        android:layout_width="0dp"
++                        android:layout_height="wrap_content"
++                        android:layout_weight="1"
++                        android:orientation="vertical">
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="Deadline (optional)"
++                            android:textColor="#0B0B0B"
++                            android:textSize="14sp" />
++
++                        <TextView
++                            android:id="@+id/btnTime"
++                            android:layout_width="match_parent"
++                            android:layout_height="44dp"
++                            android:layout_marginTop="8dp"
++                            android:background="@drawable/bg_input"
++                            android:gravity="center_vertical"
++                            android:paddingStart="12dp"
++                            android:paddingEnd="12dp"
++                            android:text="--:-- --"
++                            android:textColor="#0B0B0B" />
++                    </LinearLayout>
++                </LinearLayout>
++
++                <com.google.android.material.button.MaterialButton
++                    android:id="@+id/btnAddThisGoal"
++                    style="@style/Widget.MaterialComponents.Button"
++                    android:layout_width="match_parent"
++                    android:layout_height="48dp"
++                    android:layout_marginTop="16dp"
++                    android:text="+    Add this goal"
++                    android:textAllCaps="false"
++                    android:textColor="#FFFFFF"
++                    app:cornerRadius="12dp"
++                    app:backgroundTint="#0B0B0B" />
++            </LinearLayout>
++        </LinearLayout>
++
++        <!-- Section: Your goals for today -->
++        <TextView
++            android:layout_width="wrap_content"
++            android:layout_height="wrap_content"
++            android:layout_marginTop="16dp"
++            android:text="Your goals for today"
++            android:textColor="#0B0B0B"
++            android:textSize="18sp"
++            android:textStyle="bold" />
++
++        <!-- Empty state -->
++        <LinearLayout
++            android:id="@+id/emptyGoalsCard"
++            android:layout_width="match_parent"
++            android:layout_height="180dp"
++            android:layout_marginTop="12dp"
++            android:background="@drawable/bg_card_soft"
++            android:gravity="center"
++            android:orientation="vertical">
++
++            <TextView
++                android:layout_width="56dp"
++                android:layout_height="56dp"
++                android:background="@drawable/bg_header_icon_soft"
++                android:gravity="center"
++                android:text="🎯"
++                android:textSize="24sp" />
++
++            <TextView
++                android:layout_width="wrap_content"
++                android:layout_height="wrap_content"
++                android:layout_marginTop="12dp"
++                android:text="No goals yet"
++                android:textColor="#0B0B0B"
++                android:textSize="16sp"
++                android:textStyle="bold" />
++
++            <TextView
++                android:layout_width="wrap_content"
++                android:layout_height="wrap_content"
++                android:layout_marginTop="6dp"
++                android:text="Add some goals to earn app unlock time"
++                android:textColor="#667085"
++                android:textSize="14sp" />
++        </LinearLayout>
++
++        <androidx.recyclerview.widget.RecyclerView
++            android:id="@+id/rvGoals"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:layout_marginTop="12dp"
++            android:overScrollMode="never" />
++
++        <!-- Pro tips card (always visible like in screenshot 6) -->
++        <LinearLayout
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:layout_marginTop="12dp"
++            android:background="@drawable/bg_pro_tips"
++            android:orientation="vertical"
++            android:padding="14dp">
++
++            <TextView
++                android:layout_width="wrap_content"
++                android:layout_height="wrap_content"
++                android:text="💡  Pro tips"
++                android:textColor="#0B0B0B"
++                android:textSize="16sp"
++                android:textStyle="bold" />
++
++            <TextView
++                android:layout_width="wrap_content"
++                android:layout_height="wrap_content"
++                android:layout_marginTop="8dp"
++                android:text="• Start with smaller, achievable goals\n• Set deadlines to create urgency\n• Track progress honestly - it helps build habits"
++                android:textColor="#475467"
++                android:textSize="14sp" />
++        </LinearLayout>
++
++        <!-- Bottom CTA -->
++        <com.google.android.material.button.MaterialButton
++            android:id="@+id/btnBottomCta"
++            style="@style/Widget.MaterialComponents.Button"
++            android:layout_width="match_parent"
++            android:layout_height="52dp"
++            android:layout_marginTop="16dp"
++            android:text="Add at least one goal to continue"
++            android:textAllCaps="false"
++            android:textColor="#FFFFFF"
++            app:cornerRadius="12dp"
++            app:backgroundTint="#0B0B0B" />
++
++        <TextView
++            android:id="@+id/bottomHint"
++            android:layout_width="wrap_content"
++            android:layout_height="wrap_content"
++            android:layout_gravity="center_horizontal"
++            android:layout_marginTop="8dp"
++            android:layout_marginBottom="20dp"
++            android:text="You can always adjust these in settings later"
++            android:textColor="#667085"
++            android:textSize="12sp" />
++    </LinearLayout>
++</ScrollView>
+Index: app/src/main/res/drawable/bg_pro_tips.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/res/drawable/bg_pro_tips.xml b/app/src/main/res/drawable/bg_pro_tips.xml
+new file mode 100644
+--- /dev/null	(date 1757358850869)
++++ b/app/src/main/res/drawable/bg_pro_tips.xml	(date 1757358850869)
+@@ -0,0 +1,4 @@
++<shape xmlns:android="http://schemas.android.com/apk/res/android">
++    <solid android:color="#F2F4F7"/>
++    <corners android:radius="14dp"/>
++</shape>
+Index: app/src/main/res/drawable/bg_platform_row.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/res/drawable/bg_platform_row.xml b/app/src/main/res/drawable/bg_platform_row.xml
+new file mode 100644
+--- /dev/null	(date 1757358850861)
++++ b/app/src/main/res/drawable/bg_platform_row.xml	(date 1757358850861)
+@@ -0,0 +1,4 @@
++<shape xmlns:android="http://schemas.android.com/apk/res/android">
++    <solid android:color="#F8F9FC"/>
++    <corners android:radius="12dp"/>
++</shape>
+Index: app/src/main/res/drawable/bg_platform_cell.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/res/drawable/bg_platform_cell.xml b/app/src/main/res/drawable/bg_platform_cell.xml
+new file mode 100644
+--- /dev/null	(date 1757358850852)
++++ b/app/src/main/res/drawable/bg_platform_cell.xml	(date 1757358850852)
+@@ -0,0 +1,16 @@
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:state_selected="true">
++        <shape>
++            <solid android:color="#EEF2FF"/>
++            <corners android:radius="16dp"/>
++            <stroke android:width="2dp" android:color="#0B0B0B"/>
++        </shape>
++    </item>
++    <item>
++        <shape>
++            <solid android:color="#FFFFFF"/>
++            <corners android:radius="16dp"/>
++            <stroke android:width="1dp" android:color="#E9EAEE"/>
++        </shape>
++    </item>
++</selector>
+Index: app/src/main/res/layout/item_platform.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/res/layout/item_platform.xml b/app/src/main/res/layout/item_platform.xml
+new file mode 100644
+--- /dev/null	(date 1757358850917)
++++ b/app/src/main/res/layout/item_platform.xml	(date 1757358850917)
+@@ -0,0 +1,31 @@
++<?xml version="1.0" encoding="utf-8"?>
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    android:id="@+id/root"
++    android:layout_width="0dp"
++    android:layout_height="92dp"
++    android:layout_margin="8dp"
++    android:layout_weight="1"
++    android:background="@drawable/bg_platform_cell"
++    android:gravity="center"
++    android:orientation="vertical"
++    android:padding="10dp">
++
++    <TextView
++        android:id="@+id/emoji"
++        android:layout_width="44dp"
++        android:layout_height="44dp"
++        android:background="@drawable/bg_emoji"
++        android:gravity="center"
++        android:textSize="22sp"
++        android:text="💻" />
++
++    <TextView
++        android:id="@+id/name"
++        android:layout_width="wrap_content"
++        android:layout_height="wrap_content"
++        android:layout_marginTop="6dp"
++        android:text="LeetCode"
++        android:textColor="#0B0B0B"
++        android:textSize="14sp"
++        android:textStyle="bold" />
++</LinearLayout>
+Index: app/src/main/res/layout/item_goal_type.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/res/layout/item_goal_type.xml b/app/src/main/res/layout/item_goal_type.xml
+new file mode 100644
+--- /dev/null	(date 1757358850908)
++++ b/app/src/main/res/layout/item_goal_type.xml	(date 1757358850908)
+@@ -0,0 +1,43 @@
++<?xml version="1.0" encoding="utf-8"?>
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    android:id="@+id/root"
++    android:layout_width="match_parent"
++    android:layout_height="64dp"
++    android:layout_marginTop="10dp"
++    android:background="@drawable/bg_goal_type"
++    android:gravity="center_vertical"
++    android:paddingStart="14dp"
++    android:paddingEnd="14dp">
++
++    <LinearLayout
++        android:layout_width="0dp"
++        android:layout_height="wrap_content"
++        android:layout_weight="1"
++        android:orientation="vertical">
++
++        <TextView
++            android:id="@+id/title"
++            android:layout_width="wrap_content"
++            android:layout_height="wrap_content"
++            android:text="Solve coding problems"
++            android:textColor="#0B0B0B"
++            android:textSize="16sp"
++            android:textStyle="bold" />
++
++        <TextView
++            android:id="@+id/subtitle"
++            android:layout_width="wrap_content"
++            android:layout_height="wrap_content"
++            android:layout_marginTop="2dp"
++            android:text="Suggested: 2 problems"
++            android:textColor="#667085"
++            android:textSize="13sp" />
++    </LinearLayout>
++
++    <TextView
++        android:id="@+id/check"
++        android:layout_width="22dp"
++        android:layout_height="22dp"
++        android:background="@drawable/bg_check"
++        android:visibility="gone" />
++</LinearLayout>
+Index: app/src/main/res/layout/item_goal_card.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/res/layout/item_goal_card.xml b/app/src/main/res/layout/item_goal_card.xml
+new file mode 100644
+--- /dev/null	(date 1757358850901)
++++ b/app/src/main/res/layout/item_goal_card.xml	(date 1757358850901)
+@@ -0,0 +1,72 @@
++<?xml version="1.0" encoding="utf-8"?>
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    android:layout_width="match_parent"
++    android:layout_height="86dp"
++    android:layout_marginTop="10dp"
++    android:background="@drawable/bg_card"
++    android:gravity="center_vertical"
++    android:orientation="horizontal"
++    android:padding="14dp">
++
++    <TextView
++        android:id="@+id/badge"
++        android:layout_width="24dp"
++        android:layout_height="24dp"
++        android:background="@drawable/bg_badge"
++        android:gravity="center"
++        android:text="1"
++        android:textColor="#FFFFFF"
++        android:textSize="12sp" />
++
++    <TextView
++        android:id="@+id/emoji"
++        android:layout_width="40dp"
++        android:layout_height="40dp"
++        android:layout_marginStart="12dp"
++        android:background="@drawable/bg_emoji"
++        android:gravity="center"
++        android:text="💻"
++        android:textSize="20sp" />
++
++    <LinearLayout
++        android:layout_width="0dp"
++        android:layout_height="wrap_content"
++        android:layout_marginStart="12dp"
++        android:layout_weight="1"
++        android:orientation="vertical">
++
++        <TextView
++            android:id="@+id/title"
++            android:layout_width="wrap_content"
++            android:layout_height="wrap_content"
++            android:text="LeetCode"
++            android:textColor="#0B0B0B"
++            android:textSize="16sp"
++            android:textStyle="bold" />
++
++        <TextView
++            android:id="@+id/subtitle"
++            android:layout_width="wrap_content"
++            android:layout_height="wrap_content"
++            android:layout_marginTop="2dp"
++            android:text="30 minutes daily"
++            android:textColor="#667085"
++            android:textSize="13sp" />
++    </LinearLayout>
++
++    <TextView
++        android:id="@+id/btnEdit"
++        android:layout_width="36dp"
++        android:layout_height="36dp"
++        android:gravity="center"
++        android:text="✏️"
++        android:textSize="16sp" />
++
++    <TextView
++        android:id="@+id/btnDelete"
++        android:layout_width="36dp"
++        android:layout_height="36dp"
++        android:gravity="center"
++        android:text="🗑"
++        android:textSize="16sp" />
++</LinearLayout>

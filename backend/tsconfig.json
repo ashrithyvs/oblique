@@ -1,0 +1,25 @@
+{
+    "compilerOptions": {
+      "target": "ESNext" /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */,
+      "module": "CommonJS" /* Specify what module code is generated. */,
+      "outDir": "dist",
+      "rootDir": "./src",
+      "moduleResolution": "node" /* Specify the root folder within your source files. */,
+      "typeRoots": [
+        "./node_modules/@types",
+        "./typings"
+      ] /* Specify multiple folders that act like './node_modules/@types'. */,
+      "esModuleInterop": true /* Emit additional JavaScript to ease support for importing CommonJS modules. This enables 'allowSyntheticDefaultImports' for type compatibility. */,
+      "forceConsistentCasingInFileNames": true /* Ensure that casing is correct in imports. */,
+      "resolveJsonModule": true,
+      "allowSyntheticDefaultImports": true,
+      "allowImportingTsExtensions": true,
+      "noEmit": true,
+      // "allowJs": true,
+      /* Type Checking */
+      "skipLibCheck": true /* Skip type checking all .d.ts files. */
+    },
+    "include": ["src/**/*"],
+    "exclude": ["node_modules", "dist"]
+  }
+  

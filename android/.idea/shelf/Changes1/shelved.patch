@@ -1,0 +1,715 @@
+Index: app/src/main/res/layout/activity_welcome.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><androidx.core.widget.NestedScrollView xmlns:android=\"http://schemas.android.com/apk/res/android\"\n    xmlns:app=\"http://schemas.android.com/apk/res-auto\"\n    android:fitsSystemWindows=\"true\"\n    android:layout_width=\"match_parent\"\n    android:layout_height=\"match_parent\"\n    android:layout_gravity=\"center\"\n    android:padding=\"24dp\">\n\n    <LinearLayout\n        android:orientation=\"vertical\"\n        android:gravity=\"center\"\n        android:padding=\"20dp\"\n        android:layout_width=\"match_parent\"\n        android:layout_height=\"wrap_content\">\n\n        <!-- Icon + badge -->\n        <FrameLayout\n            android:layout_width=\"96dp\"\n            android:layout_height=\"96dp\"\n            android:layout_marginTop=\"32dp\"\n            android:background=\"@drawable/round_96_dark\" />\n\n        <ImageView\n            android:layout_width=\"64dp\"\n            android:layout_height=\"64dp\"\n            android:src=\"@drawable/ic_shield\"\n            android:layout_gravity=\"center\"\n            android:layout_marginTop=\"-80dp\"\n            app:tint=\"@android:color/white\" />\n\n        <View\n            android:layout_width=\"18dp\"\n            android:layout_height=\"18dp\"\n            android:background=\"@drawable/bg_badge_red\"\n            android:layout_marginTop=\"-10dp\"\n            android:layout_gravity=\"end\"\n            android:translationX=\"32dp\" />\n\n        <TextView\n            android:id=\"@+id/tvTitle\"\n            android:text=\"Regretn't\"\n            android:textSize=\"28sp\"\n            android:textStyle=\"bold\"\n            android:textColor=\"@color/ink\"\n            android:layout_marginTop=\"24dp\"\n            android:layout_width=\"wrap_content\"\n            android:layout_height=\"wrap_content\" />\n\n        <TextView\n            android:text=\"Take control of your digital habits\"\n            android:textColor=\"@color/muted\"\n            android:textSize=\"16sp\"\n            android:layout_marginTop=\"8dp\"\n            android:layout_width=\"wrap_content\"\n            android:layout_height=\"wrap_content\" />\n\n        <!-- Cards -->\n        <LinearLayout\n            android:orientation=\"vertical\"\n            android:layout_width=\"match_parent\"\n            android:layout_height=\"wrap_content\"\n            android:layout_marginTop=\"24dp\"\n            android:gravity=\"center_horizontal\">\n\n            <LinearLayout\n                android:background=\"@drawable/card_bg\"\n                android:layout_width=\"match_parent\"\n                android:layout_height=\"wrap_content\"\n                android:layout_marginTop=\"12dp\"\n                android:padding=\"20dp\"\n                android:gravity=\"center\">\n\n                <FrameLayout\n                    android:layout_width=\"36dp\"\n                    android:layout_height=\"36dp\"\n                    android:background=\"@drawable/pill_blue\" />\n\n                <ImageView\n                    android:layout_width=\"20dp\"\n                    android:layout_height=\"20dp\"\n                    android:src=\"@drawable/ic_shield\"\n                    android:layout_marginStart=\"-28dp\"\n                    app:tint=\"@color/brand\" />\n\n                <LinearLayout\n                    android:orientation=\"vertical\"\n                    android:layout_marginStart=\"16dp\"\n                    android:layout_width=\"0dp\"\n                    android:layout_weight=\"1\"\n                    android:layout_height=\"wrap_content\">\n\n                    <TextView\n                        android:text=\"Block Distracting Apps\"\n                        android:textStyle=\"bold\"\n                        android:textColor=\"@color/ink\"\n                        android:textSize=\"16sp\"\n                        android:layout_width=\"wrap_content\"\n                        android:layout_height=\"wrap_content\"/>\n\n                    <TextView\n                        android:text=\"Prevent access to time-wasting applications\"\n                        android:textColor=\"@color/muted\"\n                        android:textSize=\"14sp\"\n                        android:layout_width=\"wrap_content\"\n                        android:layout_height=\"wrap_content\"/>\n                </LinearLayout>\n            </LinearLayout>\n\n            <LinearLayout\n                android:background=\"@drawable/card_bg\"\n                android:layout_width=\"match_parent\"\n                android:layout_height=\"wrap_content\"\n                android:layout_marginTop=\"12dp\"\n                android:padding=\"20dp\"\n                android:gravity=\"center\">\n\n                <FrameLayout\n                    android:layout_width=\"36dp\"\n                    android:layout_height=\"36dp\"\n                    android:background=\"@drawable/pill_green\" />\n\n                <ImageView\n                    android:layout_width=\"20dp\"\n                    android:layout_height=\"20dp\"\n                    android:src=\"@drawable/ic_target\"\n                    android:layout_marginStart=\"-28dp\"/>\n\n                <LinearLayout\n                    android:orientation=\"vertical\"\n                    android:layout_marginStart=\"16dp\"\n                    android:layout_width=\"0dp\"\n                    android:layout_weight=\"1\"\n                    android:layout_height=\"wrap_content\">\n\n                    <TextView\n                        android:layout_height=\"wrap_content\"\n                        android:layout_width=\"wrap_content\"\n                        android:text=\"Set Goals\"\n                        android:textStyle=\"bold\"\n                        android:textColor=\"@color/ink\"\n                        android:textSize=\"16sp\"/>\n\n                    <TextView\n                        android:layout_height=\"wrap_content\"\n                        android:layout_width=\"wrap_content\"\n                        android:text=\"Override blocks only after completing tasks\"\n                        android:textColor=\"@color/muted\"\n                        android:textSize=\"14sp\"/>\n                </LinearLayout>\n            </LinearLayout>\n\n            <LinearLayout\n                android:background=\"@drawable/card_bg\"\n                android:layout_width=\"match_parent\"\n                android:layout_height=\"wrap_content\"\n                android:layout_marginTop=\"12dp\"\n                android:padding=\"20dp\"\n                android:gravity=\"center_vertical\">\n\n                <FrameLayout\n                    android:layout_width=\"36dp\"\n                    android:layout_height=\"36dp\"\n                    android:background=\"@drawable/pill_lilac\" />\n\n                <ImageView\n                    android:layout_width=\"20dp\"\n                    android:layout_height=\"20dp\"\n                    android:src=\"@drawable/ic_timer\"\n                    android:layout_marginStart=\"-28dp\"/>\n\n                <LinearLayout\n                    android:orientation=\"vertical\"\n                    android:layout_marginStart=\"16dp\"\n                    android:layout_width=\"0dp\"\n                    android:layout_weight=\"1\"\n                    android:layout_height=\"wrap_content\">\n\n                    <TextView\n                        android:layout_height=\"wrap_content\"\n                        android:layout_width=\"wrap_content\"\n                        android:text=\"Build Better Habits\"\n                        android:textStyle=\"bold\"\n                        android:textColor=\"@color/ink\"\n                        android:textSize=\"16sp\"/>\n\n                    <TextView\n                        android:layout_height=\"wrap_content\"\n                        android:layout_width=\"wrap_content\"\n                        android:text=\"Reduce screen time and increase productivity\"\n                        android:textColor=\"@color/muted\"\n                        android:textSize=\"14sp\"/>\n                </LinearLayout>\n            </LinearLayout>\n        </LinearLayout>\n\n        <com.google.android.material.button.MaterialButton\n            android:id=\"@+id/btnGetStarted\"\n            style=\"@style/Widget.Material3.Button.IconButton.Filled\"\n            android:layout_width=\"match_parent\"\n            android:layout_height=\"56dp\"\n            android:text=\"Get Started\"\n            android:textAllCaps=\"false\"\n            android:layout_marginTop=\"28dp\"\n            android:backgroundTint=\"@color/cta\"\n            android:textColor=\"@android:color/white\"\n            />\n\n        <TextView\n            android:layout_height=\"wrap_content\"\n            android:layout_width=\"wrap_content\"\n            android:text=\"By continuing, you agree to our terms and privacy policy\"\n            android:textColor=\"@color/muted\"\n            android:textSize=\"12sp\"\n            android:layout_marginTop=\"12dp\"/>\n    </LinearLayout>\n</androidx.core.widget.NestedScrollView>\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/res/layout/activity_welcome.xml b/app/src/main/res/layout/activity_welcome.xml
+--- a/app/src/main/res/layout/activity_welcome.xml	(revision 5c59309e9849742bf0d6a06d5913f6e76673365c)
++++ b/app/src/main/res/layout/activity_welcome.xml	(date 1757535481553)
+@@ -4,6 +4,7 @@
+     android:layout_width="match_parent"
+     android:layout_height="match_parent"
+     android:layout_gravity="center"
++    android:background="@color/white"
+     android:padding="24dp">
+ 
+     <LinearLayout
+@@ -47,7 +48,7 @@
+             android:layout_height="wrap_content" />
+ 
+         <TextView
+-            android:text="Take control of your digital habits"
++            android:text="Your phone addiction ends here ✋"
+             android:textColor="@color/muted"
+             android:textSize="16sp"
+             android:layout_marginTop="8dp"
+@@ -198,18 +199,18 @@
+             style="@style/Widget.Material3.Button.IconButton.Filled"
+             android:layout_width="match_parent"
+             android:layout_height="56dp"
+-            android:text="Get Started"
++            android:text="Let's break this habit"
+             android:textAllCaps="false"
+             android:layout_marginTop="28dp"
+-            android:backgroundTint="@color/cta"
++            android:backgroundTint="@color/brand"
+             android:textColor="@android:color/white"
+             />
+ 
+         <TextView
+             android:layout_height="wrap_content"
+             android:layout_width="wrap_content"
+-            android:text="By continuing, you agree to our terms and privacy policy"
+-            android:textColor="@color/muted"
++            android:text="Takes 2 minutes to set up • Free forever"
++            android:textColor="@color/text_muted"
+             android:textSize="12sp"
+             android:layout_marginTop="12dp"/>
+     </LinearLayout>
+Index: app/src/main/res/values/strings.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"utf-8\"?>\n<resources>\n    <string name=\"app_name\">Oblique</string>\n    <string name=\"accessibility_service_description\">Blocks selected apps and shows a prompt until you unblock them in Oblique.</string>\n    <string name=\"delete\">delete</string>\n    <string name=\"app_icon\">App Icon</string>\n    <string name=\"platform_icon\">Platform Icon</string>\n    <string name=\"protection_active\">Protection active</string>\n    <string name=\"protection_paused\">Protection paused</string>\n    <string name=\"no_goals_yet\">No goals yet</string>\n    <string name=\"not_protected\">Not protected</string>\n    <string name=\"active\">Active</string>\n    <string name=\"paused\">Paused</string>\n\n</resources>\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
+--- a/app/src/main/res/values/strings.xml	(revision 5c59309e9849742bf0d6a06d5913f6e76673365c)
++++ b/app/src/main/res/values/strings.xml	(date 1757536948100)
+@@ -11,5 +11,6 @@
+     <string name="not_protected">Not protected</string>
+     <string name="active">Active</string>
+     <string name="paused">Paused</string>
++    <string name="backspace">backspace</string>
+ 
+ </resources>
+Index: app/src/main/java/com/example/oblique_android/activity/PinSetupActivity.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.example.oblique_android.activity\n\nimport android.content.Intent\nimport android.os.Bundle\nimport android.text.InputType\nimport android.widget.ImageView\nimport android.widget.Toast\nimport androidx.appcompat.app.AppCompatActivity\nimport com.chaos.view.PinView\nimport com.example.oblique_android.R\nimport com.google.android.material.button.MaterialButton\n\nclass PinSetupActivity : AppCompatActivity() {\n    private var isPasswordVisible = false\n\n    override fun onCreate(savedInstanceState: Bundle?) {\n        super.onCreate(savedInstanceState)\n        setContentView(R.layout.activity_pin_setup)\n\n        val pinView = findViewById<PinView>(R.id.pinView)\n        val togglePassword = findViewById<ImageView>(R.id.togglePassword)\n        val btnContinue = findViewById<MaterialButton>(R.id.btnContinuePinSetup)\n\n        togglePassword.setOnClickListener {\n            isPasswordVisible = !isPasswordVisible\n            pinView.inputType = if (isPasswordVisible) {\n                InputType.TYPE_CLASS_NUMBER\n            } else {\n                InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD\n            }\n            pinView.setSelection(pinView.text?.length ?: 0)\n        }\n\n        btnContinue.setOnClickListener {\n            val pin = pinView.text?.toString()?.trim()\n\n            if (pin.isNullOrEmpty() || pin.length != 6) {\n                Toast.makeText(this, \"Please enter a 6-digit PIN\", Toast.LENGTH_SHORT).show()\n                return@setOnClickListener\n            }\n\n            val intent = Intent(this, PinConfirmActivity::class.java)\n            intent.putExtra(\"PIN\", pin)\n            startActivity(intent)\n            finish()\n        }\n    }\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/example/oblique_android/activity/PinSetupActivity.kt b/app/src/main/java/com/example/oblique_android/activity/PinSetupActivity.kt
+--- a/app/src/main/java/com/example/oblique_android/activity/PinSetupActivity.kt	(revision 5c59309e9849742bf0d6a06d5913f6e76673365c)
++++ b/app/src/main/java/com/example/oblique_android/activity/PinSetupActivity.kt	(date 1757537030068)
+@@ -3,7 +3,11 @@
+ import android.content.Intent
+ import android.os.Bundle
+ import android.text.InputType
++import android.view.View
++import android.widget.Button
++import android.widget.ImageButton
+ import android.widget.ImageView
++import android.widget.TextView
+ import android.widget.Toast
+ import androidx.appcompat.app.AppCompatActivity
+ import com.chaos.view.PinView
+@@ -11,38 +15,123 @@
+ import com.google.android.material.button.MaterialButton
+ 
+ class PinSetupActivity : AppCompatActivity() {
++
++    private lateinit var pinView: PinView
++    private lateinit var togglePassword: ImageView
++    private lateinit var btnContinue: MaterialButton
++    private lateinit var tvPlainPin: TextView
++
+     private var isPasswordVisible = false
++    private val maxDigits = 6
+ 
+     override fun onCreate(savedInstanceState: Bundle?) {
+         super.onCreate(savedInstanceState)
+         setContentView(R.layout.activity_pin_setup)
+ 
+-        val pinView = findViewById<PinView>(R.id.pinView)
+-        val togglePassword = findViewById<ImageView>(R.id.togglePassword)
+-        val btnContinue = findViewById<MaterialButton>(R.id.btnContinuePinSetup)
++        pinView = findViewById(R.id.pinView)
++        togglePassword = findViewById(R.id.togglePassword)
++        btnContinue = findViewById(R.id.btnContinuePinSetup)
++        tvPlainPin = findViewById(R.id.tvPlainPin)
++
++        // prevent soft keyboard (we use custom numpad)
++        pinView.showSoftInputOnFocus = false
++        pinView.isCursorVisible = false
++
++        setupNumpad()
++        updatePlainPinText()
+ 
+         togglePassword.setOnClickListener {
+             isPasswordVisible = !isPasswordVisible
+-            pinView.inputType = if (isPasswordVisible) {
+-                InputType.TYPE_CLASS_NUMBER
+-            } else {
+-                InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
+-            }
+-            pinView.setSelection(pinView.text?.length ?: 0)
++            applyVisibilityState()
+         }
+ 
+         btnContinue.setOnClickListener {
+-            val pin = pinView.text?.toString()?.trim()
+-
+-            if (pin.isNullOrEmpty() || pin.length != 6) {
++            val pin = pinView.text?.toString()?.trim() ?: ""
++            if (pin.length != maxDigits) {
+                 Toast.makeText(this, "Please enter a 6-digit PIN", Toast.LENGTH_SHORT).show()
+                 return@setOnClickListener
+             }
+-
+             val intent = Intent(this, PinConfirmActivity::class.java)
+             intent.putExtra("PIN", pin)
+             startActivity(intent)
+             finish()
+         }
+     }
++
++    private fun applyVisibilityState() {
++        if (isPasswordVisible) {
++            // show plain digits in the text view
++            tvPlainPin.visibility = View.VISIBLE
++            togglePassword.setImageResource(R.drawable.ic_eye_off) // you can supply a variant; fallback if missing
++            // Also set PinView to plain number so if keyboard somehow appears digits are visible there as well
++            pinView.inputType = InputType.TYPE_CLASS_NUMBER
++        } else {
++            tvPlainPin.visibility = View.GONE
++            togglePassword.setImageResource(R.drawable.ic_eye) // existing icon you had
++            pinView.inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
++        }
++        updatePlainPinText()
++        // keep caret at end
++        pinView.setSelection(pinView.text?.length ?: 0)
++    }
++
++    private fun setupNumpad() {
++        val idsRow1 = listOf(R.id.btn1, R.id.btn2, R.id.btn3)
++        val idsRow2 = listOf(R.id.btn4, R.id.btn5, R.id.btn6)
++        val idsRow3 = listOf(R.id.btn7, R.id.btn8, R.id.btn9)
++        val idsRow4 = listOf(R.id.btnEmpty, R.id.btn0, R.id.btnBackspace)
++
++        val clickNumber: (String) -> Unit = letUnit@{ digit ->
++            val current = pinView.text?.toString() ?: ""
++            if (current.length >= maxDigits) return@letUnit
++            val next = current + digit
++            pinView.setText(next)
++            pinView.setSelection(next.length)
++            updatePlainPinText()
++        }
++
++        // numeric buttons 1..9
++        for (id in idsRow1 + idsRow2 + idsRow3) {
++            val b = findViewById<Button>(id)
++            b.setOnClickListener {
++                val text = b.text?.toString() ?: ""
++                val current = pinView.text?.toString() ?: ""
++                if (current.length >= maxDigits) return@setOnClickListener
++                val next = current + text
++                pinView.setText(next)
++                pinView.setSelection(next.length)
++                updatePlainPinText()
++            }
++        }
++
++        // row 4: empty, 0, backspace
++        findViewById<View>(R.id.btnEmpty).setOnClickListener { /* noop */ }
++
++        findViewById<Button>(R.id.btn0).setOnClickListener {
++            val current = pinView.text?.toString() ?: ""
++            if (current.length >= maxDigits) return@setOnClickListener
++            val next = current + "0"
++            pinView.setText(next)
++            pinView.setSelection(next.length)
++            updatePlainPinText()
++        }
++
++        findViewById<ImageButton>(R.id.btnBackspace).setOnClickListener {
++            val current = pinView.text?.toString() ?: ""
++            if (current.isEmpty()) return@setOnClickListener
++            val next = current.substring(0, current.length - 1)
++            pinView.setText(next)
++            pinView.setSelection(next.length)
++            updatePlainPinText()
++        }
++    }
++
++    // small helper to keep code brief
++    private val <T> T.letUnit: T get() = this
++
++    private fun updatePlainPinText() {
++        val cur = pinView.text?.toString() ?: ""
++        // show grouped text or plain digits when visibility enabled
++        tvPlainPin.text = if (cur.isEmpty()) "" else cur
++    }
+ }
+Index: app/src/main/res/values/styles.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><resources>\n\n    <!-- Use this file for widget/component-level styling -->\n\n    <!-- Example button style -->\n    <style name=\"Oblique.Button.Primary\" parent=\"Widget.Material3.Button\">\n        <item name=\"android:backgroundTint\">@color/purple_500</item>\n        <item name=\"android:textColor\">@android:color/white</item>\n    </style>\n\n    <!-- Example text appearance -->\n    <style name=\"Oblique.Text.Title\" parent=\"TextAppearance.Material3.TitleLarge\">\n        <item name=\"android:textColor\">@color/black</item>\n    </style>\n\n    <!-- Poppins or system fallback -->\n    <string name=\"font_family_poppins\">sans-serif</string>\n\n    <!-- If you have a theme override, keep AppTheme light -->\n    <style name=\"AppTheme\" parent=\"Theme.MaterialComponents.DayNight.NoActionBar\">\n        <item name=\"android:colorBackground\">@color/bg_white</item>\n        <item name=\"android:windowBackground\">@color/bg_white</item>\n    </style>\n\n</resources>\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/res/values/styles.xml b/app/src/main/res/values/styles.xml
+--- a/app/src/main/res/values/styles.xml	(revision 5c59309e9849742bf0d6a06d5913f6e76673365c)
++++ b/app/src/main/res/values/styles.xml	(date 1757536938296)
+@@ -22,4 +22,14 @@
+         <item name="android:windowBackground">@color/bg_white</item>
+     </style>
+ 
++    <style name="Widget.App.NumpadButton" parent="Widget.MaterialComponents.Button.TextButton">
++        <item name="android:layout_width">0dp</item>
++        <item name="android:layout_height">match_parent</item>
++        <item name="android:layout_weight">1</item>
++        <item name="android:background">@drawable/bg_numpad_key</item>
++        <item name="android:textSize">20sp</item>
++        <item name="android:textColor">@color/text_primary</item>
++        <item name="android:fontFamily">sans-serif-medium</item>
++    </style>
++
+ </resources>
+Index: app/src/main/res/drawable/ic_backspace.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/res/drawable/ic_backspace.xml b/app/src/main/res/drawable/ic_backspace.xml
+new file mode 100644
+--- /dev/null	(date 1757536877375)
++++ b/app/src/main/res/drawable/ic_backspace.xml	(date 1757536877375)
+@@ -0,0 +1,11 @@
++<?xml version="1.0" encoding="utf-8"?>
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <!-- simple "backspace" icon path -->
++    <path
++        android:fillColor="#FF000000"
++        android:pathData="M22,3H7c-0.55,0 -1,0.45 -1,1v4H2v8h4v4c0,0.55 0.45,1 1,1h15c0.55,0 1,-0.45 1,-1V4c0,-0.55 -0.45,-1 -1,-1zM12.41,14.59L10,12.17 12.41,9.76c0.39,-0.39 0.39,-1.02 0,-1.41 -0.39,-0.39 -1.02,-0.39 -1.41,0L8.59,10.76 6.17,8.34c-0.39,-0.39 -1.02,-0.39 -1.41,0 -0.39,0.39 -0.39,1.02 0,1.41L7.17,12 4.76,14.41c-0.39,0.39 -0.39,1.02 0,1.41 0.39,0.39 1.02,0.39 1.41,0L8.59,13.24 11,15.65c0.39,0.39 1.02,0.39 1.41,0 0.39,-0.39 0.39,-1.02 0,-1.41z" />
++</vector>
+Index: app/src/main/res/drawable/bg_numpad_key.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/res/drawable/bg_numpad_key.xml b/app/src/main/res/drawable/bg_numpad_key.xml
+new file mode 100644
+--- /dev/null	(date 1757536919991)
++++ b/app/src/main/res/drawable/bg_numpad_key.xml	(date 1757536919991)
+@@ -0,0 +1,17 @@
++<?xml version="1.0" encoding="utf-8"?>
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:state_pressed="true">
++        <shape android:shape="rectangle">
++            <solid android:color="#F0F1F3"/>
++            <corners android:radius="12dp"/>
++        </shape>
++    </item>
++
++    <item>
++        <shape android:shape="rectangle">
++            <solid android:color="@android:color/white"/>
++            <stroke android:width="1dp" android:color="#E6E7EA"/>
++            <corners android:radius="12dp"/>
++        </shape>
++    </item>
++</selector>
+Index: app/src/main/res/layout/activity_permissions.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"utf-8\"?>\n<androidx.constraintlayout.widget.ConstraintLayout xmlns:android=\"http://schemas.android.com/apk/res/android\"\n    xmlns:app=\"http://schemas.android.com/apk/res-auto\"\n    xmlns:tools=\"http://schemas.android.com/tools\"\n    android:layout_width=\"match_parent\"\n    android:layout_height=\"match_parent\"\n    android:paddingHorizontal=\"20dp\"\n    android:background=\"@android:color/white\"\n    tools:context=\".activity.PermissionsActivity\">\n\n    <!-- Shield Icon -->\n    <ImageView\n        android:id=\"@+id/shieldIcon\"\n        android:layout_width=\"64dp\"\n        android:layout_height=\"64dp\"\n        android:src=\"@drawable/ic_shield\"\n        android:layout_marginTop=\"52dp\"\n        app:layout_constraintTop_toTopOf=\"parent\"\n        app:layout_constraintStart_toStartOf=\"parent\"\n        app:layout_constraintEnd_toEndOf=\"parent\" />\n\n    <!-- Title -->\n    <TextView\n        android:id=\"@+id/titleText\"\n        android:layout_width=\"wrap_content\"\n        android:layout_height=\"wrap_content\"\n        android:text=\"Permissions Required\"\n        android:textStyle=\"bold\"\n        android:textSize=\"22sp\"\n        android:textColor=\"@android:color/black\"\n        app:layout_constraintTop_toBottomOf=\"@id/shieldIcon\"\n        android:layout_marginTop=\"12dp\"\n        app:layout_constraintStart_toStartOf=\"parent\"\n        app:layout_constraintEnd_toEndOf=\"parent\" />\n\n    <!-- Subtitle -->\n    <TextView\n        android:id=\"@+id/subTitleText\"\n        android:layout_width=\"0dp\"\n        android:layout_height=\"wrap_content\"\n        android:gravity=\"center\"\n        android:text=\"To block apps effectively, we need some permissions\"\n        android:textSize=\"14sp\"\n        android:textColor=\"@android:color/darker_gray\"\n        app:layout_constraintTop_toBottomOf=\"@id/titleText\"\n        android:layout_marginTop=\"6dp\"\n        app:layout_constraintStart_toStartOf=\"parent\"\n        app:layout_constraintEnd_toEndOf=\"parent\" />\n\n    <!-- Card: Overlay permission -->\n    <androidx.cardview.widget.CardView\n        android:id=\"@+id/cardOverlay\"\n        android:layout_width=\"0dp\"\n        android:layout_height=\"wrap_content\"\n        android:layout_margin=\"16dp\"\n        app:cardCornerRadius=\"12dp\"\n        app:cardElevation=\"2dp\"\n        app:layout_constraintTop_toBottomOf=\"@id/subTitleText\"\n        android:layout_marginTop=\"24dp\"\n        app:layout_constraintStart_toStartOf=\"parent\"\n        app:layout_constraintEnd_toEndOf=\"parent\">\n\n        <LinearLayout\n            android:orientation=\"vertical\"\n            android:padding=\"16dp\"\n            android:layout_width=\"match_parent\"\n            android:layout_height=\"wrap_content\">\n\n            <LinearLayout\n                android:orientation=\"horizontal\"\n                android:layout_width=\"match_parent\"\n                android:layout_height=\"wrap_content\">\n\n                <ImageView\n                    android:layout_width=\"24dp\"\n                    android:layout_height=\"24dp\"\n                    android:src=\"@drawable/ic_eye\"\n                    app:tint=\"@color/primaryColor\" />\n\n                <TextView\n                    android:layout_width=\"wrap_content\"\n                    android:layout_height=\"wrap_content\"\n                    android:text=\"Display Over Other Apps\"\n                    android:textStyle=\"bold\"\n                    android:textSize=\"16sp\"\n                    android:layout_marginStart=\"12dp\" />\n            </LinearLayout>\n\n            <TextView\n                android:layout_width=\"match_parent\"\n                android:layout_height=\"wrap_content\"\n                android:layout_marginTop=\"6dp\"\n                android:text=\"Required to show the blocking overlay when you try to open restricted apps\"\n                android:textSize=\"14sp\"\n                android:textColor=\"@android:color/darker_gray\" />\n\n            <TextView\n                android:layout_width=\"match_parent\"\n                android:layout_height=\"wrap_content\"\n                android:layout_marginTop=\"0dp\"\n                android:background=\"#F0F0F0\"\n                android:padding=\"12dp\"\n                android:text=\"This allows us to display a full-screen overlay that prevents app usage\"\n                android:textSize=\"12sp\"\n                android:textColor=\"@android:color/black\" />\n        </LinearLayout>\n    </androidx.cardview.widget.CardView>\n\n    <!-- Card: Usage Access -->\n    <androidx.cardview.widget.CardView\n        android:id=\"@+id/cardUsage\"\n        android:layout_width=\"0dp\"\n        android:layout_height=\"wrap_content\"\n        android:layout_margin=\"16dp\"\n        app:cardCornerRadius=\"12dp\"\n        app:cardElevation=\"2dp\"\n        app:layout_constraintTop_toBottomOf=\"@id/cardOverlay\"\n        app:layout_constraintStart_toStartOf=\"parent\"\n        app:layout_constraintEnd_toEndOf=\"parent\">\n\n        <LinearLayout\n            android:orientation=\"vertical\"\n            android:padding=\"16dp\"\n            android:layout_width=\"match_parent\"\n            android:layout_height=\"wrap_content\">\n\n            <LinearLayout\n                android:orientation=\"horizontal\"\n                android:layout_width=\"match_parent\"\n                android:layout_height=\"wrap_content\">\n\n                <ImageView\n                    android:layout_width=\"24dp\"\n                    android:layout_height=\"24dp\"\n                    android:src=\"@drawable/ic_settings\"\n                    app:tint=\"@color/primaryColor\" />\n\n                <TextView\n                    android:layout_width=\"wrap_content\"\n                    android:layout_height=\"wrap_content\"\n                    android:text=\"Usage Access\"\n                    android:textStyle=\"bold\"\n                    android:textSize=\"16sp\"\n                    android:layout_marginStart=\"12dp\" />\n            </LinearLayout>\n\n            <TextView\n                android:layout_width=\"match_parent\"\n                android:layout_height=\"wrap_content\"\n                android:layout_marginTop=\"6dp\"\n                android:text=\"Needed to detect when blocked apps are opened and monitor usage patterns\"\n                android:textSize=\"14sp\"\n                android:textColor=\"@android:color/darker_gray\" />\n\n            <TextView\n                android:layout_width=\"match_parent\"\n                android:layout_height=\"wrap_content\"\n                android:layout_marginTop=\"12dp\"\n                android:background=\"#F0F0F0\"\n                android:padding=\"6dp\"\n                android:text=\"We only monitor apps you've selected to block - no personal data is collected\"\n                android:textSize=\"12sp\"\n                android:textColor=\"@android:color/black\" />\n        </LinearLayout>\n    </androidx.cardview.widget.CardView>\n\n    <!-- Card: Privacy -->\n    <androidx.cardview.widget.CardView\n        android:id=\"@+id/cardPrivacy\"\n        android:layout_width=\"0dp\"\n        android:layout_height=\"wrap_content\"\n        android:layout_margin=\"16dp\"\n        app:cardCornerRadius=\"12dp\"\n        app:cardElevation=\"2dp\"\n        app:layout_constraintTop_toBottomOf=\"@id/cardUsage\"\n        app:layout_constraintStart_toStartOf=\"parent\"\n        app:layout_constraintEnd_toEndOf=\"parent\">\n\n        <LinearLayout\n            android:orientation=\"vertical\"\n            android:padding=\"16dp\"\n            android:layout_width=\"match_parent\"\n            android:layout_height=\"wrap_content\">\n\n            <TextView\n                android:layout_width=\"wrap_content\"\n                android:layout_height=\"wrap_content\"\n                android:text=\"Privacy First:\"\n                android:textStyle=\"bold\"\n                android:textSize=\"16sp\" />\n\n            <TextView\n                android:layout_width=\"match_parent\"\n                android:layout_height=\"wrap_content\"\n                android:layout_marginTop=\"6dp\"\n                android:text=\"All data stays on your device. We never collect personal information or share your usage data.\"\n                android:textSize=\"14sp\"\n                android:textColor=\"@android:color/darker_gray\" />\n        </LinearLayout>\n    </androidx.cardview.widget.CardView>\n\n    <!-- Success message -->\n    <TextView\n        android:id=\"@+id/permissionSuccess\"\n        android:layout_width=\"0dp\"\n        android:layout_height=\"wrap_content\"\n        android:gravity=\"center\"\n        android:padding=\"12dp\"\n        android:background=\"@drawable/success_bg\"\n        android:text=\"Permissions granted successfully! You can now set up app blocking.\"\n        android:textColor=\"#34A853\"\n        android:visibility=\"gone\"\n        app:layout_constraintTop_toBottomOf=\"@id/cardPrivacy\"\n        android:layout_margin=\"16dp\"\n        app:layout_constraintStart_toStartOf=\"parent\"\n        app:layout_constraintEnd_toEndOf=\"parent\" />\n\n    <!-- Button -->\n    <com.google.android.material.button.MaterialButton\n        android:id=\"@+id/btnGrantPermissions\"\n        android:layout_width=\"0dp\"\n        android:layout_height=\"wrap_content\"\n        android:text=\"Grant Permissions\"\n        android:textSize=\"16sp\"\n        app:cornerRadius=\"12dp\"\n        android:layout_margin=\"16dp\"\n        android:backgroundTint=\"@color/black\"\n        android:textColor=\"@android:color/white\"\n        app:layout_constraintTop_toBottomOf=\"@id/permissionSuccess\"\n        app:layout_constraintStart_toStartOf=\"parent\"\n        app:layout_constraintEnd_toEndOf=\"parent\" />\n\n    <!-- Info text -->\n    <TextView\n        android:layout_width=\"0dp\"\n        android:layout_height=\"wrap_content\"\n        android:gravity=\"center\"\n        android:text=\"You can modify these permissions later in device settings\"\n        android:textSize=\"12sp\"\n        android:textColor=\"@android:color/darker_gray\"\n        app:layout_constraintBottom_toBottomOf=\"parent\"\n        android:layout_marginBottom=\"12dp\"\n        app:layout_constraintStart_toStartOf=\"parent\"\n        app:layout_constraintEnd_toEndOf=\"parent\" />\n</androidx.constraintlayout.widget.ConstraintLayout>\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/res/layout/activity_permissions.xml b/app/src/main/res/layout/activity_permissions.xml
+--- a/app/src/main/res/layout/activity_permissions.xml	(revision 5c59309e9849742bf0d6a06d5913f6e76673365c)
++++ b/app/src/main/res/layout/activity_permissions.xml	(date 1757535990209)
+@@ -97,8 +97,8 @@
+             <TextView
+                 android:layout_width="match_parent"
+                 android:layout_height="wrap_content"
+-                android:layout_marginTop="0dp"
+-                android:background="#F0F0F0"
++                android:layout_marginTop="5dp"
++                android:background="@drawable/bg_textview_rounded"
+                 android:padding="12dp"
+                 android:text="This allows us to display a full-screen overlay that prevents app usage"
+                 android:textSize="12sp"
+@@ -155,12 +155,13 @@
+             <TextView
+                 android:layout_width="match_parent"
+                 android:layout_height="wrap_content"
+-                android:layout_marginTop="12dp"
+-                android:background="#F0F0F0"
+-                android:padding="6dp"
++                android:layout_marginTop="5dp"
++                android:background="@drawable/bg_textview_rounded"
++                android:padding="12dp"
+                 android:text="We only monitor apps you've selected to block - no personal data is collected"
+                 android:textSize="12sp"
+                 android:textColor="@android:color/black" />
++
+         </LinearLayout>
+     </androidx.cardview.widget.CardView>
+ 
+@@ -222,6 +223,7 @@
+         android:layout_height="wrap_content"
+         android:text="Grant Permissions"
+         android:textSize="16sp"
++        android:padding="10dp"
+         app:cornerRadius="12dp"
+         android:layout_margin="16dp"
+         android:backgroundTint="@color/black"
+Index: app/src/main/res/layout/include_numpad.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/res/layout/include_numpad.xml b/app/src/main/res/layout/include_numpad.xml
+new file mode 100644
+--- /dev/null	(date 1757536964449)
++++ b/app/src/main/res/layout/include_numpad.xml	(date 1757536964449)
+@@ -0,0 +1,83 @@
++<?xml version="1.0" encoding="utf-8"?>
++<GridLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    xmlns:app="http://schemas.android.com/apk/res-auto"
++    android:id="@+id/numpad"
++    android:layout_width="match_parent"
++    android:layout_height="wrap_content"
++    android:rowCount="4"
++    android:columnCount="3"
++    android:alignmentMode="alignMargins"
++    android:columnOrderPreserved="false"
++    android:layout_marginTop="24dp"
++    android:useDefaultMargins="true">
++
++    <!-- 1–9 -->
++    <Button
++        style="@style/Widget.App.NumpadButton"
++        android:id="@+id/btn1"
++        android:text="1" />
++
++    <Button
++        style="@style/Widget.App.NumpadButton"
++        android:id="@+id/btn2"
++        android:text="2" />
++
++    <Button
++        style="@style/Widget.App.NumpadButton"
++        android:id="@+id/btn3"
++        android:text="3" />
++
++    <Button
++        style="@style/Widget.App.NumpadButton"
++        android:id="@+id/btn4"
++        android:text="4" />
++
++    <Button
++        style="@style/Widget.App.NumpadButton"
++        android:id="@+id/btn5"
++        android:text="5" />
++
++    <Button
++        style="@style/Widget.App.NumpadButton"
++        android:id="@+id/btn6"
++        android:text="6" />
++
++    <Button
++        style="@style/Widget.App.NumpadButton"
++        android:id="@+id/btn7"
++        android:text="7" />
++
++    <Button
++        style="@style/Widget.App.NumpadButton"
++        android:id="@+id/btn8"
++        android:text="8" />
++
++    <Button
++        style="@style/Widget.App.NumpadButton"
++        android:id="@+id/btn9"
++        android:text="9" />
++
++    <!-- Empty placeholder -->
++    <View
++        android:layout_width="0dp"
++        android:layout_height="0dp" />
++
++    <!-- Zero -->
++    <Button
++        style="@style/Widget.App.NumpadButton"
++        android:id="@+id/btn0"
++        android:text="0" />
++
++    <!-- Backspace -->
++    <ImageButton
++        android:id="@+id/btnBackspace"
++        android:layout_width="0dp"
++        android:layout_height="72dp"
++        android:layout_columnWeight="1"
++        android:layout_rowWeight="1"
++        android:background="@drawable/bg_numpad_key"
++        android:scaleType="center"
++        android:src="@drawable/ic_backspace"
++        android:contentDescription="@string/backspace"
++        app:tint="@color/text_primary"/>
++</GridLayout>
+Index: app/src/main/res/drawable/bg_textview_rounded.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/res/drawable/bg_textview_rounded.xml b/app/src/main/res/drawable/bg_textview_rounded.xml
+new file mode 100644
+--- /dev/null	(date 1757535898988)
++++ b/app/src/main/res/drawable/bg_textview_rounded.xml	(date 1757535898988)
+@@ -0,0 +1,10 @@
++<shape xmlns:android="http://schemas.android.com/apk/res/android"
++    android:shape="rectangle">
++    <solid android:color="#F0F0F0"/> <!-- background color -->
++    <corners android:radius="12dp"/> <!-- corner radius -->
++    <padding
++        android:left="8dp"
++        android:top="4dp"
++        android:right="8dp"
++        android:bottom="4dp"/>
++</shape>
+Index: app/src/main/res/layout/activity_pin_setup.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"utf-8\"?>\n<androidx.constraintlayout.widget.ConstraintLayout xmlns:android=\"http://schemas.android.com/apk/res/android\"\n    xmlns:app=\"http://schemas.android.com/apk/res-auto\"\n    xmlns:tools=\"http://schemas.android.com/tools\"\n    android:layout_width=\"match_parent\"\n    android:layout_height=\"match_parent\"\n    android:background=\"@android:color/white\"\n    android:fitsSystemWindows=\"true\"\n    tools:context=\".activity.PinSetupActivity\">\n\n    <!-- Lock icon -->\n    <ImageView\n        android:id=\"@+id/lockIcon\"\n        android:layout_width=\"60dp\"\n        android:layout_height=\"60dp\"\n        android:src=\"@drawable/ic_lock\"\n        app:tint=\"@color/primaryColor\"\n        app:layout_constraintTop_toTopOf=\"parent\"\n        android:layout_marginTop=\"80dp\"\n        app:layout_constraintStart_toStartOf=\"parent\"\n        app:layout_constraintEnd_toEndOf=\"parent\" />\n\n    <!-- Title -->\n    <TextView\n        android:id=\"@+id/titleText\"\n        android:layout_width=\"wrap_content\"\n        android:layout_height=\"wrap_content\"\n        android:text=\"Create Your PIN\"\n        android:textSize=\"22sp\"\n        android:textStyle=\"bold\"\n        android:textColor=\"@android:color/black\"\n        app:layout_constraintTop_toBottomOf=\"@id/lockIcon\"\n        android:layout_marginTop=\"16dp\"\n        app:layout_constraintStart_toStartOf=\"parent\"\n        app:layout_constraintEnd_toEndOf=\"parent\" />\n\n    <!-- Subtitle -->\n    <TextView\n        android:id=\"@+id/subTitleText\"\n        android:layout_width=\"0dp\"\n        android:layout_height=\"wrap_content\"\n        android:gravity=\"center\"\n        android:text=\"Choose a 6-digit PIN to secure your app settings\"\n        android:textSize=\"14sp\"\n        android:textColor=\"@android:color/darker_gray\"\n        app:layout_constraintTop_toBottomOf=\"@id/titleText\"\n        android:layout_marginTop=\"8dp\"\n        app:layout_constraintStart_toStartOf=\"parent\"\n        app:layout_constraintEnd_toEndOf=\"parent\" />\n\n    <LinearLayout\n        android:id=\"@+id/pinContainer\"\n        android:layout_width=\"wrap_content\"\n        android:layout_height=\"wrap_content\"\n        android:orientation=\"horizontal\"\n        app:layout_constraintTop_toBottomOf=\"@id/subTitleText\"\n        android:layout_marginTop=\"32dp\"\n        app:layout_constraintStart_toStartOf=\"parent\"\n        app:layout_constraintEnd_toEndOf=\"parent\">\n\n        <com.chaos.view.PinView\n            android:id=\"@+id/pinView\"\n            android:layout_width=\"wrap_content\"\n            android:layout_height=\"wrap_content\"\n            android:cursorVisible=\"true\"\n            android:focusable=\"true\"\n            android:focusableInTouchMode=\"true\"\n            android:imeOptions=\"actionDone\"\n            android:inputType=\"numberPassword\"\n            app:itemCount=\"6\"\n            app:lineColor=\"@color/primaryColor\"\n            app:lineWidth=\"2dp\"\n            app:cursorColor=\"@color/primaryColor\"\n            app:viewType=\"rectangle\"\n            app:hideLineWhenFilled=\"false\" />\n\n        <ImageView\n            android:id=\"@+id/togglePassword\"\n            android:layout_width=\"24dp\"\n            android:layout_height=\"24dp\"\n            android:layout_gravity=\"center_vertical\"\n            android:layout_marginStart=\"12dp\"\n            android:src=\"@drawable/ic_eye\"\n            app:tint=\"@color/primaryColor\" />\n    </LinearLayout>\n\n\n    <!-- Continue Button -->\n    <com.google.android.material.button.MaterialButton\n        android:id=\"@+id/btnContinuePinSetup\"\n        android:layout_width=\"wrap_content\"\n        android:layout_height=\"wrap_content\"\n        android:text=\"Continue\"\n        android:textSize=\"16sp\"\n        app:cornerRadius=\"12dp\"\n        app:backgroundTint=\"@color/primaryColor\"\n        android:layout_marginTop=\"32dp\"\n        app:layout_constraintTop_toBottomOf=\"@id/pinContainer\"\n        app:layout_constraintStart_toStartOf=\"parent\"\n        app:layout_constraintEnd_toEndOf=\"parent\" />\n\n    <!-- Info text -->\n    <TextView\n        android:id=\"@+id/infoText\"\n        android:layout_width=\"0dp\"\n        android:layout_height=\"wrap_content\"\n        android:gravity=\"center\"\n        android:text=\"Your PIN is stored securely on your device and never shared\"\n        android:textSize=\"12sp\"\n        android:textColor=\"@android:color/darker_gray\"\n        app:layout_constraintBottom_toBottomOf=\"parent\"\n        android:layout_marginBottom=\"24dp\"\n        app:layout_constraintStart_toStartOf=\"parent\"\n        app:layout_constraintEnd_toEndOf=\"parent\" />\n\n</androidx.constraintlayout.widget.ConstraintLayout>\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/res/layout/activity_pin_setup.xml b/app/src/main/res/layout/activity_pin_setup.xml
+--- a/app/src/main/res/layout/activity_pin_setup.xml	(revision 5c59309e9849742bf0d6a06d5913f6e76673365c)
++++ b/app/src/main/res/layout/activity_pin_setup.xml	(date 1757536977070)
+@@ -1,12 +1,10 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+     xmlns:app="http://schemas.android.com/apk/res-auto"
+-    xmlns:tools="http://schemas.android.com/tools"
+     android:layout_width="match_parent"
+     android:layout_height="match_parent"
+     android:background="@android:color/white"
+-    android:fitsSystemWindows="true"
+-    tools:context=".activity.PinSetupActivity">
++    android:fitsSystemWindows="true">
+ 
+     <!-- Lock icon -->
+     <ImageView
+@@ -48,42 +46,186 @@
+         app:layout_constraintStart_toStartOf="parent"
+         app:layout_constraintEnd_toEndOf="parent" />
+ 
+-    <LinearLayout
+-        android:id="@+id/pinContainer"
+-        android:layout_width="wrap_content"
++    <!-- PIN card -->
++    <androidx.cardview.widget.CardView
++        android:id="@+id/pinCard"
++        android:layout_width="320dp"
+         android:layout_height="wrap_content"
+-        android:orientation="horizontal"
++        android:layout_marginTop="28dp"
++        app:cardCornerRadius="12dp"
++        app:cardElevation="0dp"
++        android:padding="18dp"
+         app:layout_constraintTop_toBottomOf="@id/subTitleText"
+-        android:layout_marginTop="32dp"
+         app:layout_constraintStart_toStartOf="parent"
+         app:layout_constraintEnd_toEndOf="parent">
+ 
+-        <com.chaos.view.PinView
+-            android:id="@+id/pinView"
+-            android:layout_width="wrap_content"
+-            android:layout_height="wrap_content"
+-            android:cursorVisible="true"
+-            android:focusable="true"
+-            android:focusableInTouchMode="true"
+-            android:imeOptions="actionDone"
+-            android:inputType="numberPassword"
+-            app:itemCount="6"
+-            app:lineColor="@color/primaryColor"
+-            app:lineWidth="2dp"
+-            app:cursorColor="@color/primaryColor"
+-            app:viewType="rectangle"
+-            app:hideLineWhenFilled="false" />
++        <androidx.constraintlayout.widget.ConstraintLayout
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content">
++
++            <com.chaos.view.PinView
++                android:id="@+id/pinView"
++                android:layout_width="0dp"
++                android:layout_height="wrap_content"
++                android:cursorVisible="true"
++                android:focusable="true"
++                android:focusableInTouchMode="true"
++                android:imeOptions="actionDone"
++                android:inputType="numberPassword"
++                app:itemCount="6"
++                app:lineColor="@color/primaryColor"
++                app:lineWidth="2dp"
++                app:cursorColor="@color/primaryColor"
++                app:viewType="rectangle"
++                app:hideLineWhenFilled="false"
++                app:layout_constraintTop_toTopOf="parent"
++                app:layout_constraintStart_toStartOf="parent"
++                app:layout_constraintEnd_toEndOf="parent" />
+ 
+-        <ImageView
+-            android:id="@+id/togglePassword"
+-            android:layout_width="24dp"
+-            android:layout_height="24dp"
+-            android:layout_gravity="center_vertical"
+-            android:layout_marginStart="12dp"
+-            android:src="@drawable/ic_eye"
+-            app:tint="@color/primaryColor" />
++            <ImageView
++                android:id="@+id/togglePassword"
++                android:layout_width="24dp"
++                android:layout_height="24dp"
++                android:src="@drawable/ic_eye"
++                app:tint="@color/primaryColor"
++                app:layout_constraintTop_toTopOf="@id/pinView"
++                app:layout_constraintEnd_toEndOf="parent"
++                android:layout_marginEnd="4dp" />
++
++            <!-- Plain digits (hidden by default) -->
++            <TextView
++                android:id="@+id/tvPlainPin"
++                android:layout_width="wrap_content"
++                android:layout_height="wrap_content"
++                android:text=""
++                android:textSize="26sp"
++                android:layout_marginTop="18dp"
++                android:textColor="@android:color/black"
++                android:visibility="gone"
++                app:layout_constraintTop_toBottomOf="@id/pinView"
++                app:layout_constraintStart_toStartOf="parent"
++                app:layout_constraintEnd_toEndOf="parent" />
++        </androidx.constraintlayout.widget.ConstraintLayout>
++    </androidx.cardview.widget.CardView>
++
++    <!-- Numpad (4 rows) -->
++    <LinearLayout
++        android:id="@+id/numpadRoot"
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:orientation="vertical"
++        android:layout_marginTop="28dp"
++        app:layout_constraintTop_toBottomOf="@id/pinCard"
++        app:layout_constraintStart_toStartOf="parent"
++        app:layout_constraintEnd_toEndOf="parent">
++
++        <!-- Row 1 -->
++        <LinearLayout
++            android:layout_width="match_parent"
++            android:layout_height="72dp"
++            android:orientation="horizontal"
++            android:layout_marginStart="40dp"
++            android:layout_marginEnd="40dp">
++
++            <Button
++                android:id="@+id/btn1"
++                style="@style/Widget.App.NumpadButton"
++                android:text="1" />
++
++            <Button
++                android:id="@+id/btn2"
++                style="@style/Widget.App.NumpadButton"
++                android:text="2" />
++
++            <Button
++                android:id="@+id/btn3"
++                style="@style/Widget.App.NumpadButton"
++                android:text="3" />
++        </LinearLayout>
++
++        <!-- Row 2 -->
++        <LinearLayout
++            android:layout_width="match_parent"
++            android:layout_height="72dp"
++            android:orientation="horizontal"
++            android:layout_marginTop="12dp"
++            android:layout_marginStart="40dp"
++            android:layout_marginEnd="40dp">
++
++            <Button
++                android:id="@+id/btn4"
++                style="@style/Widget.App.NumpadButton"
++                android:text="4" />
++
++            <Button
++                android:id="@+id/btn5"
++                style="@style/Widget.App.NumpadButton"
++                android:text="5" />
++
++            <Button
++                android:id="@+id/btn6"
++                style="@style/Widget.App.NumpadButton"
++                android:text="6" />
++        </LinearLayout>
++
++        <!-- Row 3 -->
++        <LinearLayout
++            android:layout_width="match_parent"
++            android:layout_height="72dp"
++            android:orientation="horizontal"
++            android:layout_marginTop="12dp"
++            android:layout_marginStart="40dp"
++            android:layout_marginEnd="40dp">
++
++            <Button
++                android:id="@+id/btn7"
++                style="@style/Widget.App.NumpadButton"
++                android:text="7" />
++
++            <Button
++                android:id="@+id/btn8"
++                style="@style/Widget.App.NumpadButton"
++                android:text="8" />
++
++            <Button
++                android:id="@+id/btn9"
++                style="@style/Widget.App.NumpadButton"
++                android:text="9" />
++        </LinearLayout>
++
++        <!-- Row 4 -->
++        <LinearLayout
++            android:layout_width="match_parent"
++            android:layout_height="72dp"
++            android:orientation="horizontal"
++            android:layout_marginTop="12dp"
++            android:layout_marginStart="40dp"
++            android:layout_marginEnd="40dp">
++
++            <!-- spacer -->
++            <View
++                android:id="@+id/btnEmpty"
++                android:layout_width="0dp"
++                android:layout_height="match_parent"
++                android:layout_weight="1" />
++
++            <Button
++                android:id="@+id/btn0"
++                style="@style/Widget.App.NumpadButton"
++                android:text="0" />
++
++            <ImageButton
++                android:id="@+id/btnBackspace"
++                android:layout_width="0dp"
++                android:layout_height="match_parent"
++                android:layout_weight="1"
++                android:background="@drawable/bg_numpad_key"
++                android:scaleType="center"
++                android:src="@drawable/ic_backspace"
++                android:contentDescription="@string/backspace"
++                app:tint="@color/text_primary" />
++        </LinearLayout>
+     </LinearLayout>
+-
+ 
+     <!-- Continue Button -->
+     <com.google.android.material.button.MaterialButton
+@@ -94,8 +236,8 @@
+         android:textSize="16sp"
+         app:cornerRadius="12dp"
+         app:backgroundTint="@color/primaryColor"
+-        android:layout_marginTop="32dp"
+-        app:layout_constraintTop_toBottomOf="@id/pinContainer"
++        android:layout_marginTop="18dp"
++        app:layout_constraintTop_toBottomOf="@id/numpadRoot"
+         app:layout_constraintStart_toStartOf="parent"
+         app:layout_constraintEnd_toEndOf="parent" />
+ 
+@@ -112,5 +254,4 @@
+         android:layout_marginBottom="24dp"
+         app:layout_constraintStart_toStartOf="parent"
+         app:layout_constraintEnd_toEndOf="parent" />
+-
+ </androidx.constraintlayout.widget.ConstraintLayout>
