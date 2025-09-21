@@ -19,9 +19,8 @@ import com.example.oblique_android.adapters.GoalsSettingsAdapter
 import com.example.oblique_android.models.Goal
 import com.example.oblique_android.models.GoalsViewModel
 import com.example.oblique_android.network.api.GoalRequest
+import com.example.oblique_android.utils.PrefsUtils
 import com.google.android.material.button.MaterialButton
-import android.widget.Toast
-import android.widget.EditText
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -40,9 +39,6 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var goalsAdapter: GoalsSettingsAdapter
     private lateinit var appsAdapter: AppsSettingsAdapter
     private lateinit var vm: GoalsViewModel
-
-    private val prefsBlockedKey = "blocked_apps"
-    private val prefsBlockedSetKey = "pkgs"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,13 +70,15 @@ class SettingsActivity : AppCompatActivity() {
         rvGoals.adapter = goalsAdapter
 
         val installedApps = loadInstalledApps()
-        val blockedSet = loadBlockedSet().toMutableSet()
         appsAdapter = AppsSettingsAdapter(
             installedApps,
-            blockedSet
+            mutableSetOf()
         ) { pkg, checked ->
-            if (checked) blockedSet.add(pkg) else blockedSet.remove(pkg)
-            saveBlockedSet(blockedSet)
+            if (checked) {
+                vm.addBlockedApp(pkg)
+            } else {
+                vm.removeBlockedApp(pkg)
+            }
         }
         rvApps.layoutManager = LinearLayoutManager(this)
         rvApps.adapter = appsAdapter
@@ -94,6 +92,11 @@ class SettingsActivity : AppCompatActivity() {
             rvGoals.visibility = if (list.isEmpty()) View.GONE else View.VISIBLE
         }
 
+        vm.allBlockedApps.observe(this) { pkgs ->
+            appsAdapter.updateBlockedApps(pkgs.toMutableSet())
+            PrefsUtils.saveBlockedSet(this, pkgs.toSet()) // keep cache synced
+        }
+
         btnAddGoal.setOnClickListener {
             startActivity(Intent(this, GoalsActivity::class.java))
         }
@@ -102,6 +105,10 @@ class SettingsActivity : AppCompatActivity() {
             Toast.makeText(this, "Settings saved", Toast.LENGTH_SHORT).show()
             finish()
         }
+
+        // Initial load
+        vm.refreshGoals()
+        vm.refreshBlockedApps()
     }
 
     private fun switchTab(goals: Boolean) {
@@ -176,15 +183,5 @@ class SettingsActivity : AppCompatActivity() {
             apps.add(AppInfo(label, pkg, icon))
         }
         return apps
-    }
-
-    private fun loadBlockedSet(): Set<String> {
-        return getSharedPreferences(prefsBlockedKey, Context.MODE_PRIVATE)
-            .getStringSet(prefsBlockedSetKey, emptySet()) ?: emptySet()
-    }
-
-    private fun saveBlockedSet(set: Set<String>) {
-        getSharedPreferences(prefsBlockedKey, Context.MODE_PRIVATE)
-            .edit().putStringSet(prefsBlockedSetKey, set).apply()
     }
 }

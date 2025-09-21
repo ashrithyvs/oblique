@@ -21,6 +21,7 @@ import com.example.oblique_android.models.GoalsViewModel
 import com.example.oblique_android.network.api.GoalRequest
 import kotlinx.coroutines.launch
 import androidx.lifecycle.lifecycleScope
+import com.example.oblique_android.utils.FlowDecider
 
 class GoalsActivity : ComponentActivity(), PlatformsAdapter.PlatformClickListener {
 
@@ -126,9 +127,8 @@ class GoalsActivity : ComponentActivity(), PlatformsAdapter.PlatformClickListene
         btnStart.setOnClickListener {
             getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit()
                 .putBoolean(PREF_GOALS_SHOWN, true).apply()
-            startActivity(Intent(this, DashboardActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            })
+            val next = FlowDecider.nextActivity(this)
+            startActivity(Intent(this, next))
             finish()
         }
 

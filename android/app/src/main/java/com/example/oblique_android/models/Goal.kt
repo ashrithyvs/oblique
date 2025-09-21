@@ -1,22 +1,21 @@
 package com.example.oblique_android.models
 
-import com.example.oblique_android.entities.GoalEntity
+import com.example.oblique_android.network.api.GoalDto
 import org.json.JSONObject
 
 data class Goal(
     var id: String = "",
-    var title: String = "",
     var platform: String = "",
     var unit: String = "",
     var targetValue: Int = 0,
     var progress: Int = 0,
     var createdAt: Long = System.currentTimeMillis(),
-    var deadline: Long = 0L
+    var deadline: Long = 0L,
+    var status: String = "active"
 ) {
     fun toJson(): JSONObject {
         val o = JSONObject()
         o.put("id", id)
-        o.put("title", title)
         o.put("platform", platform)
         o.put("unit", unit)
         o.put("targetValue", targetValue)
@@ -27,17 +26,16 @@ data class Goal(
     }
 
     companion object {
-        fun fromEntity(e: GoalEntity): Goal {
-            val derivedTitle = if (e.title.isNotEmpty()) e.title else if (e.unit.isNotEmpty()) "${e.platform} (${e.unit})" else e.platform
+        fun fromDto(dto: GoalDto): Goal {
             return Goal(
-                id = e.id,
-                title = derivedTitle,
-                platform = e.platform,
-                unit = e.unit,
-                targetValue = e.targetValue,
-                progress = e.progress,
-                createdAt = e.createdAt,
-                deadline = e.deadline
+                id = dto.id,
+                platform = dto.platform,
+                unit = "", // backend doesn’t send unit
+                targetValue = dto.targetValue,
+                progress = 0,
+                createdAt = System.currentTimeMillis(),
+                deadline = 0L,
+                status = dto.status
             )
         }
     }

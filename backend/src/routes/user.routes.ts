@@ -2,17 +2,18 @@
 import { Router } from 'express';
 import * as ctrl from '../controllers/user.controller';
 import { requireAuth } from '../middleware/auth';
-import multer from 'multer';
 
 const router = Router();
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 500 * 1024 } });
 
+// all routes here require auth
 router.use(requireAuth);
 
-router.post('/icon', upload.single('icon'), ctrl.uploadIcon);
-router.get('/icon/:id', ctrl.getUserIconHandler);
+router.get('/me', ctrl.getCurrentUser);
 
-// update blocked apps (body: { blockedApps: ["com.foo", "com.bar"] })
-router.put('/blocked-apps', ctrl.updateBlockedAppsHandler);
+// blocked-apps endpoints (user-embedded)
+router.get('/me/blocked-apps', ctrl.listBlockedApps);
+router.post('/me/blocked-apps', ctrl.addBlockedApp);
+router.delete('/me/blocked-apps/:pkg', ctrl.removeBlockedApp);
+router.put('/me/blocked-apps', ctrl.replaceBlockedApps);
 
 export default router;

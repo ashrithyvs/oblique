@@ -17,13 +17,13 @@ android {
 
         // Base URL (fallback + override via buildTypes)
         val apiBaseUrl: String = project.findProperty("API_BASE_URL") as String?
-            ?: "http://10.0.2.2:3000/"
+            ?: "http://192.168.29.115:3000/"
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
     }
 
     buildTypes {
         debug {
-            buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:3000/\"")
+            buildConfigField("String", "API_BASE_URL", "\"http://192.168.29.115:3000/\"")
             isMinifyEnabled = false
         }
         release {

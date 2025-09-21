@@ -4,28 +4,28 @@ import retrofit2.http.*
 
 data class GoalRequest(
     val platform: String,
-    val platformUsername: String = "",
-    val title: String,
-    val unit: String = "",
+    val platformUsername: String,
     val targetValue: Int,
-    val baselineValue: Int = 0,
-    val deadline: String? = null,
-    val checkIntervalMs: Long = 3600000L,
-    val evidence: Map<String, Any>? = null
+    val baselineValue: Int,
+    val deadline: String?,
+    val title: String,
+    val checkIntervalMs: Long = 3600000,
+    val evidence: Map<String, Any>? = null,
+    val unit: String
 )
 
 data class GoalDto(
     val id: String,
     val title: String,
     val platform: String,
-    val platformUsername: String?,
-    val unit: String?,
+    val platformUsername: String,
     val targetValue: Int,
     val baselineValue: Int,
     val status: String,
     val deadline: String?,
     val completedAt: String?,
-    val evidence: Map<String, Any>?
+    val createdAt: String?,
+    val unit: String
 )
 
 interface GoalsApi {
@@ -35,12 +35,12 @@ interface GoalsApi {
     @POST("/api/goals")
     suspend fun createGoal(@Body req: GoalRequest): GoalDto
 
-    @GET("/api/goals/{id}")
-    suspend fun getGoal(@Path("id") id: String): GoalDto
-
-    @POST("/api/goals/{id}/complete")
-    suspend fun completeGoal(@Path("id") id: String, @Body body: Map<String, Any>): GoalDto
-
     @DELETE("/api/goals/{id}")
     suspend fun deleteGoal(@Path("id") id: String): Map<String, Any>
+
+    @POST("/api/goals/{id}/complete")
+    suspend fun completeGoal(
+        @Path("id") id: String,
+        @Body body: Map<String, Any>
+    ): GoalDto
 }

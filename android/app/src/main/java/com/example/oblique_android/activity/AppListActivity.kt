@@ -12,9 +12,12 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.oblique_android.adapters.AppAdapter
 import com.example.oblique_android.R
+import com.example.oblique_android.adapters.AppAdapter
 import com.example.oblique_android.repository.AppRepository
+import com.example.oblique_android.repository.BlockedAppsRepository
+import com.example.oblique_android.services.Prefs
+import com.example.oblique_android.utils.FlowDecider
 import kotlinx.coroutines.launch
 
 class AppListActivity : AppCompatActivity() {
@@ -24,12 +27,6 @@ class AppListActivity : AppCompatActivity() {
     private lateinit var selectedApps: MutableSet<String>
     private lateinit var btnConfirm: Button
     private lateinit var etSearch: EditText
-
-    companion object {
-        private const val PREFS_NAME = "app_prefs"
-        private const val PREF_BLOCKED_PKGS = "blocked_apps_pkgs"
-        private const val PREF_GOALS_SHOWN = "goals_shown" // one-time onboarding flag
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,28 +65,24 @@ class AppListActivity : AppCompatActivity() {
         }
 
         btnConfirm.setOnClickListener {
-            // save immediately
-            saveSelectedApps(selectedApps)
-
-            // If goals onboarding hasn't been shown yet, launch it now (one-time).
-            val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
-            val goalsShown = prefs.getBoolean(PREF_GOALS_SHOWN, false)
-
-            if (!goalsShown) {
+            lifecycleScope.launch {
                 try {
-                    val i = Intent(this@AppListActivity, GoalsActivity::class.java)
-                    // make it a fresh onboarding flow
-                    startActivity(i)
-                    Log.d("AppListActivity", "Launching GoalsActivity (first-time onboarding)")
-                } catch (ex: Exception) {
-                    Log.e("AppListActivity", "Failed to start GoalsActivity: ${ex.message}")
-                }
-            } else {
-                Log.d("AppListActivity", "Goals already shown previously; not launching onboarding.")
-            }
+                    // 1️⃣ Save locally
+                    saveSelectedApps(selectedApps)
 
-            // finish this activity no matter what
-            finish()
+                    // 2️⃣ Sync with backend
+                    val blockedRepo = BlockedAppsRepository(this@AppListActivity)
+                    val resp = blockedRepo.replaceBlockedApps(selectedApps.toList())
+                    Log.d("AppListActivity", "Synced blocked apps: $resp")
+
+                    // 3️⃣ Continue flow
+                    val next = FlowDecider.nextActivity(this@AppListActivity)
+                    startActivity(Intent(this@AppListActivity, next))
+                    finish()
+                } catch (e: Exception) {
+                    Log.e("AppListActivity", "Failed syncing blocked apps", e)
+                }
+            }
         }
     }
 
@@ -101,7 +94,6 @@ class AppListActivity : AppCompatActivity() {
             Log.d("AppListActivity", "Adding $pkg to selection")
             selectedApps.add(pkg)
         }
-        // persist selection on every toggle (keeps state durable)
         saveSelectedApps(selectedApps)
     }
 
@@ -116,6 +108,8 @@ class AppListActivity : AppCompatActivity() {
         val p = getSharedPreferences("blocked_apps", MODE_PRIVATE)
         p.edit().putStringSet("pkgs", set.toSet()).apply()
         Log.d("AppListActivity", "Saved selected apps: $set")
+        Prefs.setSelectedApps(set)
+        Log.d("AppListActivity", "Saved selected apps in Prefs: $set")
     }
 
     private fun updateConfirmButton() {

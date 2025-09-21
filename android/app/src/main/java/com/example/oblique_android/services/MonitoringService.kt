@@ -9,11 +9,12 @@ import android.os.Looper
 import android.app.usage.UsageStatsManager
 import android.util.Log
 import com.example.oblique_android.R
+import com.example.oblique_android.utils.PrefsUtils
 
 class MonitoringService : Service() {
 
     private val handler = Handler(Looper.getMainLooper())
-    private val interval: Long = 1000 // check every 1 second
+    private val interval: Long = 1000
     private lateinit var usageStatsManager: UsageStatsManager
     private var currentBlockedApp: String? = null
 
@@ -26,12 +27,11 @@ class MonitoringService : Service() {
 
     private val checkRunnable = object : Runnable {
         override fun run() {
-            val blockedApps = getBlockedAppsFromPrefs()
+            val blockedApps = PrefsUtils.loadBlockedSet(this@MonitoringService)
             val foregroundApp = getForegroundApp()
 
             if (foregroundApp != null && blockedApps.contains(foregroundApp)) {
                 if (!isTempUnlocked(foregroundApp)) {
-                    // app is blocked AND not temporarily unlocked
                     if (currentBlockedApp != foregroundApp) {
                         currentBlockedApp = foregroundApp
                         Log.d("MonitoringService", "Blocking $foregroundApp")
@@ -51,11 +51,6 @@ class MonitoringService : Service() {
             }
             handler.postDelayed(this, interval)
         }
-    }
-
-    private fun getBlockedAppsFromPrefs(): Set<String> {
-        val prefs = getSharedPreferences("blocked_apps", MODE_PRIVATE)
-        return prefs.getStringSet("pkgs", emptySet()) ?: emptySet()
     }
 
     private fun getForegroundApp(): String? {

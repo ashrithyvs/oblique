@@ -7,7 +7,7 @@ import { PORT, NODE_ENV } from './config';
 async function start() {
     try {
         await connectToMongo();
-        const server = app.listen(PORT, () => {
+        const server = app.listen(PORT, '0.0.0.0', () => {
             logger.info(`Server running in ${NODE_ENV} mode on port ${PORT}`);
         });
 

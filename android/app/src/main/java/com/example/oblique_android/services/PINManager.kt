@@ -1,6 +1,7 @@
 package com.example.oblique_android.services
 
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
 
@@ -8,14 +9,28 @@ object PINManager {
     private const val PREFS_NAME = "secure_prefs"
     private const val KEY_PIN = "user_pin"
 
-    private fun getPrefs(context: Context) =
-        EncryptedSharedPreferences.create(
-            PREFS_NAME,
-            MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC),
-            context,
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-        )
+    private fun getPrefs(context: Context): SharedPreferences {
+        return try {
+            EncryptedSharedPreferences.create(
+                PREFS_NAME,
+                MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC),
+                context,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+        } catch (e: Exception) {
+            // 🔥 Corruption detected (keystore key mismatch or prefs unreadable)
+            context.deleteSharedPreferences(PREFS_NAME)
+
+            EncryptedSharedPreferences.create(
+                PREFS_NAME,
+                MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC),
+                context,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+        }
+    }
 
     fun savePin(context: Context, pin: String) {
         getPrefs(context).edit().putString(KEY_PIN, pin).apply()

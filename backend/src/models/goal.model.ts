@@ -3,33 +3,58 @@ import mongoose, { Document, Schema, Types } from 'mongoose';
 
 export interface IGoal extends Document {
     user: Types.ObjectId;
-    title?: string;
+    title: string;
     platform: string;
-    platformUsername: string;
-    targetValue: number;
-    baselineValue?: number;
-    status: 'active' | 'completed';
-    deadline?: Date;
-    checkIntervalMs?: number;
-    evidence?: any;
+    platformUsername?: string | null;
+    platformIcon?: Buffer | null;    // optional platform icon blob (if ever uploaded)
+    unit?: string;                   // e.g. "minutes", "lessons"
+    baselineValue: number;           // baseline snapshot (used for validation)
+    targetValue: number;             // required target for completion
+    progress: number;                // optional local progress snapshot
+    status: 'active' | 'completed' | 'paused';
+    deadline?: Date | null;
+    checkIntervalMs: number;         // how often to poll/check for completion
+    lastCheckedAt?: Date | null;
     completedAt?: Date | null;
+    completedByDevice?: boolean;     // whether device-side checker completed it
+    evidence?: Schema.Types.Mixed;   // arbitrary JSON metadata/evidence
     createdAt: Date;
     updatedAt: Date;
 }
 
-const GoalSchema = new Schema<IGoal>({
-    user: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-    title: { type: String },
-    platform: { type: String, required: true, default: 'leetcode' },
-    platformUsername: { type: String, required: true },
-    targetValue: { type: Number, required: true },
-    baselineValue: { type: Number, default: 0 },
-    status: { type: String, enum: ['active', 'completed'], default: 'active' },
-    deadline: { type: Date },
-    checkIntervalMs: { type: Number, default: 3600000 },
-    evidence: { type: Schema.Types.Mixed },
-    completedAt: { type: Date, default: null }
-}, { timestamps: true });
+const GoalSchema = new Schema<IGoal>(
+    {
+        user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+        title: { type: String, required: true },
+        platform: { type: String, required: true }, // e.g. "leetcode"
+        platformUsername: { type: String, default: null },
+        platformIcon: { type: Buffer, default: null },
+
+        unit: { type: String, default: '' },
+        baselineValue: { type: Number, default: 0 },
+        targetValue: { type: Number, required: true },
+        progress: { type: Number, default: 0 },
+        status: { type: String, enum: ['active', 'completed', 'paused'], default: 'active' },
+        checkIntervalMs: { type: Number, default: 3600000 }, // default 1 hour
+        deadline: { type: Date, default: null },
+        lastCheckedAt: { type: Date, default: null },
+        completedAt: { type: Date, default: null },
+        completedByDevice: { type: Boolean, default: false },
+
+        evidence: { type: Schema.Types.Mixed, default: null }
+    },
+    {
+        timestamps: true
+    }
+);
+
+// Virtual for a quick computed "completed" flag
+GoalSchema.virtual('completed').get(function (this: IGoal) {
+    return (this.progress || 0) >= (this.targetValue || 0);
+});
+
+// Index to accelerate per-user queries
+GoalSchema.index({ user: 1, createdAt: -1 });
 
 const Goal = mongoose.model<IGoal>('Goal', GoalSchema);
 export default Goal;

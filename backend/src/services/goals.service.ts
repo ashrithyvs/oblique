@@ -81,11 +81,6 @@ export async function getGoal(userId: string, goalId: string) {
         updatedAt: g.updatedAt
     };
 }
-
-/**
- * Mark a goal as complete and record a history entry.
- * Non-transactional (works on standalone Mongo).
- */
 export async function markComplete(
     userId: string,
     goalId: string,
@@ -97,7 +92,6 @@ export async function markComplete(
     const gid = new Types.ObjectId(goalId);
     const uid = new Types.ObjectId(userId);
 
-    // Fetch and update goal (atomic per-document via save)
     const goal = await Goal.findOne({ _id: gid, user: uid }).exec();
     if (!goal) throw new Error('Goal not found');
 
@@ -105,17 +99,10 @@ export async function markComplete(
         goal.status = 'completed';
         goal.completedAt = completedAt;
         goal.evidence = evidence ?? goal.evidence ?? null;
+        goal.progress = Math.max(goal.progress, goal.targetValue); // ensure full progress
         await goal.save();
-    } else {
-        // If already completed, optionally update completedAt if provided and newer
-        if (completedAt && (!goal.completedAt || completedAt > goal.completedAt)) {
-            goal.completedAt = completedAt;
-            goal.evidence = evidence ?? goal.evidence ?? null;
-            await goal.save();
-        }
     }
 
-    // Insert history record (non-transactional)
     try {
         await GoalCheckHistory.create({
             goal: gid,
@@ -126,19 +113,35 @@ export async function markComplete(
             evidence
         });
     } catch (err) {
-        // History insertion failure is non-fatal for completion. Log and continue.
-        // If you have a logger, prefer logger.warn here. For now, console.warn.
-        // eslint-disable-next-line no-console
         console.warn('Failed to write GoalCheckHistory:', err);
     }
 
-    const fresh = await Goal.findById(gid).lean().exec();
     return {
-        id: fresh?._id,
-        status: fresh?.status,
-        completedAt: fresh?.completedAt ?? null,
-        evidence: fresh?.evidence ?? null,
-        createdAt: fresh?.createdAt,
-        updatedAt: fresh?.updatedAt
+        id: goal._id,
+        status: goal.status,
+        progress: goal.progress,
+        completedAt: goal.completedAt,
+        evidence: goal.evidence,
+        createdAt: goal.createdAt,
+        updatedAt: goal.updatedAt
     };
+}
+
+
+export async function updateGoalProgress(goalId: string, currentValue: number, userId: string) {
+    const goal = await Goal.findById(goalId);
+    if (!goal) return null;
+
+    // Compute progress
+    const computedProgress = Math.max(0, currentValue - goal.baselineValue);
+    goal.progress = computedProgress;
+
+    // If reached/exceeded target -> delegate to markComplete
+    if (computedProgress >= goal.targetValue && goal.status !== 'completed') {
+        await goal.save(); // save progress before marking
+        return markComplete(userId, goalId, new Date(), { via: 'progressUpdate' });
+    }
+
+    await goal.save();
+    return goal.toObject();
 }

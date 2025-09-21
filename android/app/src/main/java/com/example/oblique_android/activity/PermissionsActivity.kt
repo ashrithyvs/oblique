@@ -70,13 +70,15 @@ class PermissionsActivity : AppCompatActivity() {
             && PermissionUtils.hasOverlayPermission(this)
             && PermissionUtils.hasNotificationPermission(this)
         ) {
-            val next = if (PINManager.isPinSet(this)) {
-                DashboardActivity::class.java
-            } else {
-                PinSetupActivity::class.java
-            }
-            startActivity(Intent(this, next))
+            // ✅ Mark in Prefs that permissions are granted
+            com.example.oblique_android.services.Prefs.setHasAllPermissions(true)
+
+            // ✅ Return to SplashActivity to re-run the whole flow
+            val intent = Intent(this, SplashActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+            startActivity(intent)
             finish()
         }
     }
+
 }
