@@ -1,6 +1,9 @@
 package com.example.oblique_android.activity
 
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Bundle
@@ -11,8 +14,9 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
-import com.example.oblique_android.BlockedAppEntity
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.example.oblique_android.R
+import com.example.oblique_android.entities.BlockedAppEntity
 import com.example.oblique_android.models.GoalsViewModel
 import com.example.oblique_android.services.MonitoringService
 import com.example.oblique_android.utils.BitmapUtils
@@ -88,13 +92,6 @@ class DashboardActivity : AppCompatActivity() {
                 stopMonitoring()
             }
             refreshBlockedStatuses()
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        lifecycleScope.launch {
-            loadAndShowBlockedApps()
         }
     }
 
@@ -212,4 +209,35 @@ class DashboardActivity : AppCompatActivity() {
             tvStatus.text = if (protectionActive) getString(R.string.active) else getString(R.string.paused)
         }
     }
+    private val logoutReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            // Navigate back to LoginActivity
+            startActivity(Intent(this@DashboardActivity, LoginActivity::class.java))
+            finish()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        lifecycleScope.launch {
+            val prefs = getSharedPreferences("blocked_apps", MODE_PRIVATE)
+            val pkgs = prefs.getStringSet("pkgs", emptySet()) ?: emptySet()
+
+            if (pkgs.isNotEmpty()) {
+                for (pkg in pkgs) {
+                    vm.addBlockedApp(pkg, reason = "migrated")
+                }
+                prefs.edit().clear().apply()
+            }
+        }
+
+        LocalBroadcastManager.getInstance(this)
+            .registerReceiver(logoutReceiver, IntentFilter("com.example.oblique_android.ACTION_LOGOUT"))
+    }
+
+    override fun onPause() {
+        super.onPause()
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(logoutReceiver)
+    }
+
 }

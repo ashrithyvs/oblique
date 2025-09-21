@@ -1,12 +1,12 @@
 package com.example.oblique_android.activity
 
+import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.View
-import android.widget.LinearLayout
-import android.widget.TextView
+import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
@@ -17,11 +17,11 @@ import com.example.oblique_android.adapters.AppInfo
 import com.example.oblique_android.adapters.AppsSettingsAdapter
 import com.example.oblique_android.adapters.GoalsSettingsAdapter
 import com.example.oblique_android.models.Goal
+import com.example.oblique_android.models.GoalsViewModel
+import com.example.oblique_android.network.api.GoalRequest
 import com.google.android.material.button.MaterialButton
 import android.widget.Toast
-import android.content.Context
 import android.widget.EditText
-import com.example.oblique_android.models.GoalsViewModel
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -48,7 +48,6 @@ class SettingsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
 
-        // find views
         tabGoals = findViewById(R.id.tabGoals)
         tabApps = findViewById(R.id.tabApps)
         indicatorGoals = findViewById(R.id.indicatorGoals)
@@ -61,16 +60,11 @@ class SettingsActivity : AppCompatActivity() {
         btnSave = findViewById(R.id.btnSave)
         settingsTabLabel = findViewById(R.id.settingsTabLabel)
 
-        // ⚠️ make sure activity_settings.xml has this view
-//        val emptyStateCard: View = findViewById(R.id.emptyStateCard)
-
-        // ViewModel
         vm = ViewModelProvider(
             this,
             ViewModelProvider.AndroidViewModelFactory.getInstance(application)
         ).get(GoalsViewModel::class.java)
 
-        // Goals adapter
         goalsAdapter = GoalsSettingsAdapter(
             emptyList(),
             onEdit = { goal -> showEditGoalDialog(goal) },
@@ -79,7 +73,6 @@ class SettingsActivity : AppCompatActivity() {
         rvGoals.layoutManager = LinearLayoutManager(this)
         rvGoals.adapter = goalsAdapter
 
-        // Apps adapter
         val installedApps = loadInstalledApps()
         val blockedSet = loadBlockedSet().toMutableSet()
         appsAdapter = AppsSettingsAdapter(
@@ -92,20 +85,16 @@ class SettingsActivity : AppCompatActivity() {
         rvApps.layoutManager = LinearLayoutManager(this)
         rvApps.adapter = appsAdapter
 
-        // tabs
         tabGoals.setOnClickListener { switchTab(true) }
         tabApps.setOnClickListener { switchTab(false) }
         switchTab(true)
 
-        // ✅ Observe goals with empty state toggle
         vm.allGoals.observe(this) { list ->
             goalsAdapter.submitList(list)
-//            emptyStateCard.visibility = if (list.isEmpty()) View.VISIBLE else View.GONE
             rvGoals.visibility = if (list.isEmpty()) View.GONE else View.VISIBLE
         }
 
         btnAddGoal.setOnClickListener {
-            // Launch GoalsActivity for adding a new goal
             startActivity(Intent(this, GoalsActivity::class.java))
         }
 
@@ -114,7 +103,6 @@ class SettingsActivity : AppCompatActivity() {
             finish()
         }
     }
-
 
     private fun switchTab(goals: Boolean) {
         if (goals) {
@@ -146,8 +134,19 @@ class SettingsActivity : AppCompatActivity() {
         builder.setPositiveButton("Save") { _, _ ->
             val newTarget = etTarget.text.toString().toIntOrNull()
             if (newTarget != null && newTarget > 0) {
-                goal.targetValue = newTarget
-                vm.updateGoal(goal)
+                val req = GoalRequest(
+                    platform = goal.platform,
+                    platformUsername = "",
+                    unit = goal.unit,
+                    targetValue = newTarget,
+                    baselineValue = 0,
+                    deadline = null,
+                    title = "${goal.unit} goal",
+                    checkIntervalMs = 3600000L
+                )
+                vm.deleteGoal(goal.id) {
+                    vm.createGoal(req)
+                }
             } else {
                 Toast.makeText(ctx, "Invalid target", Toast.LENGTH_SHORT).show()
             }
@@ -160,7 +159,7 @@ class SettingsActivity : AppCompatActivity() {
         AlertDialog.Builder(this)
             .setTitle("Delete goal")
             .setMessage("Delete ${goal.platform}?")
-            .setPositiveButton("Delete") { _, _ -> vm.deleteGoal(goal) }
+            .setPositiveButton("Delete") { _, _ -> vm.deleteGoal(goal.id) }
             .setNegativeButton("Cancel", null)
             .show()
     }
@@ -170,7 +169,6 @@ class SettingsActivity : AppCompatActivity() {
         val apps = mutableListOf<AppInfo>()
         val packages = pm.getInstalledApplications(PackageManager.GET_META_DATA)
         for (appInfo in packages.sortedBy { it.loadLabel(pm).toString() }) {
-            // Exclude system apps for clarity (optional)
             if ((appInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0) continue
             val label = appInfo.loadLabel(pm).toString()
             val pkg = appInfo.packageName
@@ -189,5 +187,4 @@ class SettingsActivity : AppCompatActivity() {
         getSharedPreferences(prefsBlockedKey, Context.MODE_PRIVATE)
             .edit().putStringSet(prefsBlockedSetKey, set).apply()
     }
-
 }

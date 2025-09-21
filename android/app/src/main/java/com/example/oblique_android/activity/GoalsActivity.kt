@@ -16,9 +16,9 @@ import com.example.oblique_android.R
 import com.example.oblique_android.adapters.GoalTypeAdapter
 import com.example.oblique_android.adapters.GoalsAdapter
 import com.example.oblique_android.adapters.PlatformsAdapter
-import com.example.oblique_android.models.Goal
 import com.example.oblique_android.models.GoalType
 import com.example.oblique_android.models.GoalsViewModel
+import com.example.oblique_android.network.api.GoalRequest
 import kotlinx.coroutines.launch
 import androidx.lifecycle.lifecycleScope
 
@@ -36,12 +36,9 @@ class GoalsActivity : ComponentActivity(), PlatformsAdapter.PlatformClickListene
     private lateinit var tvTargetLabel: TextView
     private lateinit var emptyStateCard: View
     private lateinit var platformsAdapter: PlatformsAdapter
-
-
     private lateinit var goalsAdapter: GoalsAdapter
     private lateinit var goalTypeAdapter: GoalTypeAdapter
     private lateinit var vm: GoalsViewModel
-
     private var selectedPlatform: String? = null
     private var selectedGoalType: GoalType? = null
     private lateinit var proTipCard: CardView
@@ -73,12 +70,10 @@ class GoalsActivity : ComponentActivity(), PlatformsAdapter.PlatformClickListene
             ViewModelProvider.AndroidViewModelFactory.getInstance(application as Application)
         ).get(GoalsViewModel::class.java)
 
-        // Platforms
         rvPlatforms.layoutManager = GridLayoutManager(this, 2)
         platformsAdapter = PlatformsAdapter(listener = this)
         rvPlatforms.adapter = platformsAdapter
 
-        // Goal types
         val goalTypesList = listOf(
             GoalType("lessons", "Lessons", "Complete lessons", "lessons", 1),
             GoalType("minutes", "Focused time", "Minutes spent", "minutes", 10),
@@ -88,15 +83,13 @@ class GoalsActivity : ComponentActivity(), PlatformsAdapter.PlatformClickListene
         rvGoalTypes.layoutManager = LinearLayoutManager(this)
         rvGoalTypes.adapter = goalTypeAdapter
 
-        // Goals list
         goalsAdapter = GoalsAdapter(
-            onDelete = { goal -> lifecycleScope.launch { vm.deleteGoal(goal) } },
-            onVerify = { goal -> lifecycleScope.launch { vm.markGoalComplete(goal) } }
+            onDelete = { goal -> lifecycleScope.launch { vm.deleteGoal(goal.id) } },
+            onVerify = { goal -> lifecycleScope.launch { vm.completeGoal(goal.id) } }
         )
         rvGoals.layoutManager = LinearLayoutManager(this)
         rvGoals.adapter = goalsAdapter
 
-        // ✅ Observe LiveData directly
         vm.allGoals.observe(this) { list ->
             goalsAdapter.submitList(list)
             emptyStateCard.visibility = if (list.isEmpty()) View.VISIBLE else View.GONE
@@ -111,10 +104,23 @@ class GoalsActivity : ComponentActivity(), PlatformsAdapter.PlatformClickListene
             val target = etTarget.text.toString().trim().toIntOrNull()
                 ?: return@setOnClickListener toast("Enter a valid target")
 
-            val goal = Goal(platform = platform, unit = gt.unit, targetValue = target, progress = 0)
-            lifecycleScope.launch { vm.addGoal(goal) }
+            val req = GoalRequest(
+                platform = platform,
+                platformUsername = "",
+                unit = gt.unit,
+                targetValue = target,
+                baselineValue = 0,
+                deadline = null,
+                title = "${gt.title} on $platform",
+                checkIntervalMs = 3600000L
+            )
+
+            lifecycleScope.launch {
+                vm.createGoal(req) { created ->
+                    if (created != null) toast("Goal added") else toast("Failed to add goal")
+                }
+            }
             clearSelectionAfterAdd()
-            toast("Goal added")
         }
 
         btnStart.setOnClickListener {
@@ -146,21 +152,17 @@ class GoalsActivity : ComponentActivity(), PlatformsAdapter.PlatformClickListene
     }
 
     override fun onPlatformSelected(platform: String) {
-        // adapter passes empty string when user toggles the currently selected tile off
         if (platform.isEmpty()) {
             selectedPlatform = null
-            // hide the selected-platform card if you show one
             cardSelectedPlatform.visibility = View.GONE
             tvSelectedPlatformName.text = ""
         } else {
             selectedPlatform = platform
             tvSelectedPlatformName.text = platform
             cardSelectedPlatform.visibility = View.VISIBLE
-            // scroll to selected UI if you want
             scrollView.post { scrollView.smoothScrollTo(0, cardSelectedPlatform.top) }
         }
     }
-
 
     private fun updateBottomCTA(totalGoals: Int) {
         btnStart.apply {

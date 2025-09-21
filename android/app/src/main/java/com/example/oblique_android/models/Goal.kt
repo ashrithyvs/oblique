@@ -4,7 +4,8 @@ import com.example.oblique_android.entities.GoalEntity
 import org.json.JSONObject
 
 data class Goal(
-    var id: Int = 0,
+    var id: String = "",
+    var title: String = "",
     var platform: String = "",
     var unit: String = "",
     var targetValue: Int = 0,
@@ -15,6 +16,7 @@ data class Goal(
     fun toJson(): JSONObject {
         val o = JSONObject()
         o.put("id", id)
+        o.put("title", title)
         o.put("platform", platform)
         o.put("unit", unit)
         o.put("targetValue", targetValue)
@@ -24,34 +26,12 @@ data class Goal(
         return o
     }
 
-    fun toEntity(): GoalEntity {
-        return GoalEntity(
-            id = id,
-            platform = platform,
-            unit = unit,
-            targetValue = targetValue,
-            progress = progress,
-            createdAt = createdAt,
-            deadline = deadline
-        )
-    }
-
     companion object {
-        fun fromJson(obj: JSONObject): Goal {
-            return Goal(
-                id = obj.optInt("id", 0),
-                platform = obj.optString("platform", ""),
-                unit = obj.optString("unit", ""),
-                targetValue = obj.optInt("targetValue", 0),
-                progress = obj.optInt("progress", 0),
-                createdAt = obj.optLong("createdAt", System.currentTimeMillis()),
-                deadline = obj.optLong("deadline", 0L)
-            )
-        }
-
         fun fromEntity(e: GoalEntity): Goal {
+            val derivedTitle = if (e.title.isNotEmpty()) e.title else if (e.unit.isNotEmpty()) "${e.platform} (${e.unit})" else e.platform
             return Goal(
                 id = e.id,
+                title = derivedTitle,
                 platform = e.platform,
                 unit = e.unit,
                 targetValue = e.targetValue,

@@ -16,12 +16,21 @@ fun GoalEntity.toDomain(): Goal {
 
 fun Goal.toEntity(): GoalEntity {
     return GoalEntity(
-        id = id,
+        id = if (id.isBlank()) java.util.UUID.randomUUID().toString() else id,
+        title = "",
         platform = platform,
+        platformUsername = null,
         unit = unit,
+        baselineValue = 0,
         targetValue = targetValue,
         progress = progress,
+        status = "active",
+        checkIntervalMs = 3600000L,
+        deadline = deadline,
+        evidenceJson = null,
+        completedAt = null,
         createdAt = createdAt,
-        deadline = deadline
+        updatedAt = createdAt,
+        pendingSync = true
     )
 }

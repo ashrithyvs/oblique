@@ -19,3 +19,15 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Retrofit and Moshi
+-keepclassmembers class * {
+    @com.squareup.moshi.Json <fields>;
+}
+
+-keep @com.squareup.moshi.JsonClass class * { *; }
+-keep class com.squareup.moshi.** { *; }
+-keep interface com.example.oblique_android.network.api.** { *; }
+
+-keepattributes Signature
+-keepattributes *Annotation*
