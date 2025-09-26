@@ -7,8 +7,9 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.chaos.view.PinView
-import com.example.oblique_android.services.PINManager
 import com.example.oblique_android.R
+import com.example.oblique_android.services.PINManager
+import com.example.oblique_android.utils.TempUnlockManager
 import com.google.android.material.button.MaterialButton
 
 class PinUnlockActivity : AppCompatActivity() {
@@ -48,9 +49,9 @@ class PinUnlockActivity : AppCompatActivity() {
 
             if (PINManager.verifyPin(this, entered)) {
                 if (blockedApp != null) {
-                    val prefs = getSharedPreferences("temp_unlocked", MODE_PRIVATE)
-                    prefs.edit().putBoolean(blockedApp, true).apply()
-                    Log.d("PinUnlock", "Unlocked only $blockedApp temporarily")
+                    // ✅ Use TempUnlockManager instead of permanent flag
+                    TempUnlockManager.setTempUnlock(this, blockedApp, 5 * 60 * 1000L) // 5 min unlock
+                    Log.d("PinUnlock", "Unlocked $blockedApp for 5 minutes")
                 }
                 finish()
             } else {

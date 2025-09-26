@@ -1,5 +1,6 @@
 package com.example.oblique_android.network.api
 
+import com.example.oblique_android.repository.BlockedAppRequest
 import com.example.oblique_android.repository.BlockedAppsRequest
 import retrofit2.http.*
 
@@ -16,7 +17,7 @@ data class BlockedAppDto(
     val packageName: String,
 )
 interface UserApi {
-    @GET("users/me")
+    @GET("/api/users/me")
     suspend fun getCurrentUser(): UserDto
 
     // List all blocked apps
@@ -25,11 +26,11 @@ interface UserApi {
 
     // Add one or many apps (we’ll wrap a single one inside a list)
     @POST("/api/user/me/blocked-apps")
-    suspend fun addBlockedApp(@Body body: BlockedAppsRequest): List<BlockedAppDto>
+    suspend fun addBlockedApp(@Body body: BlockedAppRequest): List<BlockedAppDto>
 
-    // Remove one app by package
-    @HTTP(method = "DELETE", path = "/api/user/me/blocked-apps", hasBody = true)
-    suspend fun removeBlockedApp(@Body body: BlockedAppsRequest): List<BlockedAppDto>
+    // UserApi.kt
+    @DELETE("/api/user/me/blocked-apps/{pkg}")
+    suspend fun removeBlockedApp(@Path("pkg") pkg: String): List<String>
 
     // Replace all apps with new set
     @PUT("/api/user/me/blocked-apps")

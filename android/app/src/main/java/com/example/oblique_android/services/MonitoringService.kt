@@ -1,16 +1,13 @@
 package com.example.oblique_android.services
 
 import android.app.*
-import android.content.Intent
-import android.os.Build
-import android.os.Handler
-import android.os.IBinder
-import android.os.Looper
 import android.app.usage.UsageStatsManager
+import android.content.Intent
+import android.os.*
 import android.util.Log
 import com.example.oblique_android.R
 import com.example.oblique_android.utils.PrefsUtils
-
+import com.example.oblique_android.utils.TempUnlockManager
 class MonitoringService : Service() {
 
     private val handler = Handler(Looper.getMainLooper())
@@ -31,7 +28,7 @@ class MonitoringService : Service() {
             val foregroundApp = getForegroundApp()
 
             if (foregroundApp != null && blockedApps.contains(foregroundApp)) {
-                if (!isTempUnlocked(foregroundApp)) {
+                if (!TempUnlockManager.isTempUnlocked(this@MonitoringService, foregroundApp)) {
                     if (currentBlockedApp != foregroundApp) {
                         currentBlockedApp = foregroundApp
                         Log.d("MonitoringService", "Blocking $foregroundApp")
@@ -60,11 +57,6 @@ class MonitoringService : Service() {
             UsageStatsManager.INTERVAL_DAILY, beginTime, endTime
         )
         return usageStats?.maxByOrNull { it.lastTimeUsed }?.packageName
-    }
-
-    private fun isTempUnlocked(pkg: String): Boolean {
-        val prefs = getSharedPreferences("temp_unlocked", MODE_PRIVATE)
-        return prefs.getBoolean(pkg, false)
     }
 
     override fun onDestroy() {

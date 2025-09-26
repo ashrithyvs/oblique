@@ -4,13 +4,13 @@ import android.content.Context
 import com.example.oblique_android.BuildConfig
 import com.example.oblique_android.prefs.TokenManager
 import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import java.util.concurrent.TimeUnit
-import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 
 object ApiClient {
     @Volatile
@@ -23,16 +23,13 @@ object ApiClient {
     }
 
     private fun buildRetrofit(context: Context): Retrofit {
-        val tokenManager = TokenManager(context)
-
-        // Add Authorization header when token is present
+        // Always fetch token dynamically on each request
         val authInterceptor = Interceptor { chain ->
-            val original = chain.request()
-            val builder = original.newBuilder()
-            tokenManager.getToken()?.let { token ->
-                builder.header("Authorization", "Bearer $token")
-            }
-            chain.proceed(builder.build())
+            val token = TokenManager(context).getToken()
+            val request = chain.request().newBuilder().apply {
+                token?.let { header("Authorization", "Bearer $it") }
+            }.build()
+            chain.proceed(request)
         }
 
         val logging = HttpLoggingInterceptor().apply {
@@ -48,8 +45,9 @@ object ApiClient {
             .writeTimeout(30, TimeUnit.SECONDS)
             .build()
 
-        // Plain Moshi instance (no kotlin-reflect adapter required)
-        val moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
+        val moshi = Moshi.Builder()
+            .add(KotlinJsonAdapterFactory())
+            .build()
 
         return Retrofit.Builder()
             .baseUrl(BuildConfig.API_BASE_URL)

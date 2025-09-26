@@ -40,11 +40,18 @@ class SplashActivity : AppCompatActivity() {
         val user = try {
             userApi.getCurrentUser()
         } catch (e: Exception) {
-            tokenManager.clear()
-            goTo(LoginActivity::class.java)
+            // Check for 401 before wiping token
+            if (e is retrofit2.HttpException && e.code() == 401) {
+                tokenManager.clear()
+                goTo(LoginActivity::class.java)
+            } else {
+                // Non-auth error: don’t log user out
+                Log.e("SplashActivity", "Failed to fetch user, but token is still valid", e)
+                goTo(DashboardActivity::class.java)
+            }
             return
         }
-        Log.d("asd","User:%d"+user)
+
         // 3️⃣ PIN (check ONLY after login)
         if (user.hasPin != true) {
             goTo(PinSetupActivity::class.java); return
@@ -66,6 +73,7 @@ class SplashActivity : AppCompatActivity() {
         // 6️⃣ Otherwise → Dashboard
         goTo(DashboardActivity::class.java)
     }
+
 
 
     private fun goTo(cls: Class<*>) {

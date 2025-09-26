@@ -3,20 +3,23 @@ package com.example.oblique_android.activity
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.example.oblique_android.R
 import com.example.oblique_android.models.GoalsViewModel
+import com.example.oblique_android.repository.BlockedAppsRepository
 import com.example.oblique_android.services.MonitoringService
 import com.example.oblique_android.utils.BitmapUtils
 import com.example.oblique_android.utils.PrefsUtils
+import kotlinx.coroutines.launch
 
 class DashboardActivity : AppCompatActivity() {
 
@@ -192,9 +195,25 @@ class DashboardActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        LocalBroadcastManager.getInstance(this)
-            .registerReceiver(logoutReceiver, IntentFilter("com.example.oblique_android.ACTION_LOGOUT"))
+        lifecycleScope.launch {
+            try {
+                vm.refreshGoals()
+                val blockedAppsRepository = BlockedAppsRepository(this@DashboardActivity)
+                val blocked = blockedAppsRepository.listBlockedApps()
+
+
+                // update the blocked apps counter + UI
+                tvAppsBlocked.text = blocked.size.toString()
+                showBlockedApps(blocked)
+
+                // also update cache for MonitoringService (keeps it consistent everywhere)
+                PrefsUtils.saveBlockedSet(this@DashboardActivity, blocked.toSet())
+            } catch (e: Exception) {
+                Log.e("DashboardActivity", "Failed to refresh blocked apps", e)
+            }
+        }
     }
+
 
     override fun onPause() {
         super.onPause()

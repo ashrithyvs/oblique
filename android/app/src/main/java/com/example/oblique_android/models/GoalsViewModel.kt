@@ -1,6 +1,7 @@
 package com.example.oblique_android.models
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -35,11 +36,13 @@ class GoalsViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             try {
                 val newGoal = goalsRepo.createGoal(req)
+                Log.i("GoalsViewModel", newGoal.toString())
                 if (newGoal != null) {
                     _goals.postValue((_goals.value ?: emptyList()) + newGoal)
                 }
                 onResult?.invoke(newGoal)
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                Log.e("GoalsViewModel", "Failed to create goal", e)
                 onResult?.invoke(null)
             }
         }

@@ -67,12 +67,14 @@ class AppListActivity : AppCompatActivity() {
         btnConfirm.setOnClickListener {
             lifecycleScope.launch {
                 try {
+                    val blockedRepo = BlockedAppsRepository(this@AppListActivity)
                     // 1️⃣ Save locally
-                    saveSelectedApps(selectedApps)
+                    val resp = blockedRepo.replaceBlockedApps(selectedApps.toList())
+                    val updated = blockedRepo.replaceBlockedApps(selectedApps.toList())
+
+                    saveSelectedApps(updated.toSet())
 
                     // 2️⃣ Sync with backend
-                    val blockedRepo = BlockedAppsRepository(this@AppListActivity)
-                    val resp = blockedRepo.replaceBlockedApps(selectedApps.toList())
                     Log.d("AppListActivity", "Synced blocked apps: $resp")
 
                     // 3️⃣ Continue flow

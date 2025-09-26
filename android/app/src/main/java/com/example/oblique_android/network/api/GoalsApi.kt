@@ -18,7 +18,7 @@ data class GoalDto(
     val id: String,
     val title: String,
     val platform: String,
-    val platformUsername: String,
+    val platformUsername: String?,
     val targetValue: Int,
     val baselineValue: Int,
     val status: String,

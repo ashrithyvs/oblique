@@ -118,7 +118,11 @@ class GoalsActivity : ComponentActivity(), PlatformsAdapter.PlatformClickListene
 
             lifecycleScope.launch {
                 vm.createGoal(req) { created ->
-                    if (created != null) toast("Goal added") else toast("Failed to add goal")
+                    if (created != null) {
+                        toast("Goal added")
+                    } else {
+                        toast("Goal creation failed. Please retry.")
+                    }
                 }
             }
             clearSelectionAfterAdd()
