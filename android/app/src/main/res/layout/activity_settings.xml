@@ -101,6 +101,32 @@
                 android:background="@color/text_primary"
                 android:visibility="gone" />
         </LinearLayout>
+        <LinearLayout
+            android:id="@+id/tabPreferences"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/tvPreferences"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Preferences"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_muted" />
+
+            <View
+                android:id="@+id/indicatorPreferences"
+                android:layout_width="28dp"
+                android:layout_height="3dp"
+                android:layout_marginTop="6dp"
+                android:background="@color/text_primary"
+                android:visibility="gone" />
+        </LinearLayout>
+
     </LinearLayout>
 
     <!-- Goals header + add button -->

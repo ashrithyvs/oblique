@@ -117,3 +117,37 @@ export async function updateBlockedApps(userId: string, apps: string[]) {
     const cleaned = Array.isArray(apps) ? apps.filter(x => typeof x === 'string' && x.trim().length > 0) : [];
     await User.findByIdAndUpdate(userId, { blockedApps: cleaned }).exec();
 }
+
+
+export const updatePreferences = async (
+    userId: string,
+    displayName?: string,
+    usernames?: Record<string, string>
+) => {
+    const user = await User.findById(userId);
+    if (!user) throw new Error("User not found");
+
+    // ✅ Update display name if provided
+    if (displayName !== undefined) {
+        user.displayName = displayName.trim() || null;
+    }
+
+    // ✅ Merge platform usernames safely
+    if (usernames && typeof usernames === "object") {
+        user.platformUsernames = {
+            ...(user.platformUsernames || {}),
+            ...usernames,
+        };
+
+        // Remove keys with empty values
+        for (const key of Object.keys(user.platformUsernames)) {
+            if (!user.platformUsernames[key]) {
+                delete user.platformUsernames[key];
+            }
+        }
+    }
+
+    await user.save();
+    return user;
+};
+

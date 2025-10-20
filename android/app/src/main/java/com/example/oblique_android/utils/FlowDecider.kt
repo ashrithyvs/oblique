@@ -16,7 +16,7 @@ object FlowDecider {
         Log.d("pref",""+Prefs.getSelectedApps())
         return when {
             !Prefs.hasAllPermissions() -> PermissionsActivity::class.java
-            TokenManager(context).getToken().isNullOrEmpty() -> LoginActivity::class.java
+            TokenManager.getInstance(context).getToken().isNullOrEmpty() -> LoginActivity::class.java
             !Prefs.isPinSet() -> PinSetupActivity::class.java
             Prefs.isPinJustCreated() -> PinConfirmActivity::class.java
             Prefs.getSelectedApps().isEmpty() -> AppListActivity::class.java

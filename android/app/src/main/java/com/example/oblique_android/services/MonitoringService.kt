@@ -1,6 +1,7 @@
 package com.example.oblique_android.services
 
 import android.app.*
+import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
 import android.content.Intent
 import android.os.*
@@ -26,8 +27,11 @@ class MonitoringService : Service() {
         override fun run() {
             val blockedApps = PrefsUtils.loadBlockedSet(this@MonitoringService)
             val foregroundApp = getForegroundApp()
+            Log.d("MonitoringService", "Foreground app: $foregroundApp")
+
 
             if (foregroundApp != null && blockedApps.contains(foregroundApp)) {
+                Log.d("MonitoringService", "Detected blocked app: $foregroundApp")
                 if (!TempUnlockManager.isTempUnlocked(this@MonitoringService, foregroundApp)) {
                     if (currentBlockedApp != foregroundApp) {
                         currentBlockedApp = foregroundApp
@@ -50,13 +54,32 @@ class MonitoringService : Service() {
         }
     }
 
+    @Suppress("DEPRECATION")
     private fun getForegroundApp(): String? {
+        val usageStatsManager = getSystemService(USAGE_STATS_SERVICE) as UsageStatsManager
         val endTime = System.currentTimeMillis()
         val beginTime = endTime - 2000
-        val usageStats = usageStatsManager.queryUsageStats(
-            UsageStatsManager.INTERVAL_DAILY, beginTime, endTime
-        )
-        return usageStats?.maxByOrNull { it.lastTimeUsed }?.packageName
+        val events = usageStatsManager.queryEvents(beginTime, endTime)
+        var lastApp: String? = null
+        val event = UsageEvents.Event()
+
+        while (events.hasNextEvent()) {
+            events.getNextEvent(event)
+
+            // Compatibility: handle both old and new event types
+            val isForeground =
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                    // Android 14+ added Event.ACTIVITY_RESUMED and Event.ACTIVITY_PAUSED
+                    event.eventType == UsageEvents.Event.ACTIVITY_RESUMED
+                } else {
+                    event.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND
+                }
+
+            if (isForeground) {
+                lastApp = event.packageName
+            }
+        }
+        return lastApp
     }
 
     override fun onDestroy() {

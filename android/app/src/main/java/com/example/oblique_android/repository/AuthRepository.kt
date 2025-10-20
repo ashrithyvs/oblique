@@ -28,7 +28,7 @@ class AuthRepository(
         ApiClient.getClient(context).create(AuthApi::class.java)
     }
 
-    private val tokenManager = TokenManager(context)
+    private val tokenManager = TokenManager.getInstance(context)
 
     // API-only repositories (should exist in your project)
     private val goalsRepo = GoalsRepository(context)

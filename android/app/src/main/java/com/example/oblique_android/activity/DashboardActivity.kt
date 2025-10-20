@@ -1,10 +1,13 @@
 package com.example.oblique_android.activity
 
+import android.app.AppOpsManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -20,6 +23,7 @@ import com.example.oblique_android.services.MonitoringService
 import com.example.oblique_android.utils.BitmapUtils
 import com.example.oblique_android.utils.PrefsUtils
 import kotlinx.coroutines.launch
+import androidx.core.net.toUri
 
 class DashboardActivity : AppCompatActivity() {
 
@@ -67,6 +71,14 @@ class DashboardActivity : AppCompatActivity() {
         }
 
         btnStartProtection.setOnClickListener {
+            if (!ensureUsageAccessPermission()) return@setOnClickListener
+            if (!Settings.canDrawOverlays(this)) {
+                val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    "package:$packageName".toUri())
+                startActivity(intent)
+                Toast.makeText(this, "Please grant overlay permission", Toast.LENGTH_LONG).show()
+                return@setOnClickListener
+            }
             protectionActive = true
             tvProtectionStatus.text = getString(R.string.protection_active)
             btnStartProtection.visibility = View.GONE
@@ -92,6 +104,24 @@ class DashboardActivity : AppCompatActivity() {
         vm.refreshGoals()
         vm.refreshBlockedApps()
     }
+
+    private fun ensureUsageAccessPermission(): Boolean {
+        val appOps = getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+        val mode = appOps.checkOpNoThrow(
+            AppOpsManager.OPSTR_GET_USAGE_STATS,
+            android.os.Process.myUid(),
+            packageName
+        )
+        val granted = mode == AppOpsManager.MODE_ALLOWED
+        if (!granted) {
+            val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivity(intent)
+            Toast.makeText(this, "Please grant Usage Access permission", Toast.LENGTH_LONG).show()
+        }
+        return granted
+    }
+
 
     private fun startMonitoring() {
         val intent = Intent(this, MonitoringService::class.java)

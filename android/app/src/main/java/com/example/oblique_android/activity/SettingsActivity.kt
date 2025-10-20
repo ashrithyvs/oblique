@@ -10,17 +10,26 @@ import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.oblique_android.R
 import com.example.oblique_android.adapters.AppInfo
 import com.example.oblique_android.adapters.AppsSettingsAdapter
 import com.example.oblique_android.adapters.GoalsSettingsAdapter
+import com.example.oblique_android.adapters.PlatformPrefsAdapter
 import com.example.oblique_android.models.Goal
 import com.example.oblique_android.models.GoalsViewModel
+import com.example.oblique_android.network.ApiClient
 import com.example.oblique_android.network.api.GoalRequest
 import com.example.oblique_android.utils.PrefsUtils
 import com.google.android.material.button.MaterialButton
+import kotlinx.coroutines.launch
+import com.example.oblique_android.network.api.UserApi
+import com.example.oblique_android.network.api.UserDto
+import com.example.oblique_android.network.request.UserPreferencesRequest
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -39,6 +48,14 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var goalsAdapter: GoalsSettingsAdapter
     private lateinit var appsAdapter: AppsSettingsAdapter
     private lateinit var vm: GoalsViewModel
+    private lateinit var tabPreferences: LinearLayout
+    private lateinit var indicatorPreferences: View
+    private lateinit var tvPreferences: TextView
+    private lateinit var api: ApiClient
+    private lateinit var adapter: PlatformPrefsAdapter
+
+    private lateinit var userApi: UserApi
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,6 +77,15 @@ class SettingsActivity : AppCompatActivity() {
             this,
             ViewModelProvider.AndroidViewModelFactory.getInstance(application)
         ).get(GoalsViewModel::class.java)
+
+        tabPreferences = findViewById(R.id.tabPreferences)
+        indicatorPreferences = findViewById(R.id.indicatorPreferences)
+        tvPreferences = findViewById(R.id.tvPreferences)
+
+
+        tabPreferences.setOnClickListener {
+            startActivity(Intent(this, UserPreferencesActivity::class.java))
+        }
 
         goalsAdapter = GoalsSettingsAdapter(
             emptyList(),
@@ -101,10 +127,64 @@ class SettingsActivity : AppCompatActivity() {
             startActivity(Intent(this, GoalsActivity::class.java))
         }
 
+//        btnSave.setOnClickListener {
+//            lifecycleScope.launch {
+//                try {
+//                    val displayName = PrefsUtils.getDisplayName(this@SettingsActivity) ?: ""
+//
+//                    val request = UserPreferencesRequest(
+//                        displayName = displayName,
+//                        usernames = adapter.getUsernames() // or emptyMap<String, String>()
+//                    )
+//
+//                    val result = withContext(Dispatchers.IO) {
+//                        userApi.updatePreferences(request)
+//                    }
+//                    Toast.makeText(
+//                        this@SettingsActivity,
+//                        "Preferences updated for ${result.name ?: displayName}",
+//                        Toast.LENGTH_SHORT
+//                    ).show()
+//
+//                } catch (e: Exception) {
+//                    e.printStackTrace()
+//                    Toast.makeText(this@SettingsActivity, "Failed to update preferences", Toast.LENGTH_SHORT).show()
+//                }
+//            }
+//
+//            finish()
+//        }
+
         btnSave.setOnClickListener {
-            Toast.makeText(this, "Settings saved", Toast.LENGTH_SHORT).show()
-            finish()
+            lifecycleScope.launch {
+                try {
+                    // 🧩 Get latest blocked apps from adapter
+                    val blockedPkgs = appsAdapter.getSelectedPackages()
+
+                    // 🧠 Push update to backend
+                    vm.replaceBlockedApps(blockedPkgs)
+
+                    // 💾 Save locally
+                    PrefsUtils.saveBlockedSet(this@SettingsActivity, blockedPkgs.toSet())
+
+                    Toast.makeText(
+                        this@SettingsActivity,
+                        "Blocked apps updated successfully",
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    Toast.makeText(
+                        this@SettingsActivity,
+                        "Failed to update blocked apps: ${e.message}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
         }
+
+
 
         // Initial load
         vm.refreshGoals()
@@ -118,6 +198,7 @@ class SettingsActivity : AppCompatActivity() {
             rvGoals.visibility = View.VISIBLE
             rvApps.visibility = View.GONE
             btnAddGoal.visibility = View.VISIBLE
+            btnSave.visibility = View.GONE
             settingsTabLabel.text = "Daily Goals"
         } else {
             indicatorGoals.visibility = View.INVISIBLE
@@ -125,6 +206,7 @@ class SettingsActivity : AppCompatActivity() {
             rvGoals.visibility = View.GONE
             rvApps.visibility = View.VISIBLE
             btnAddGoal.visibility = View.GONE
+            btnSave.visibility = View.VISIBLE
             settingsTabLabel.text = "Blocked App List"
         }
     }

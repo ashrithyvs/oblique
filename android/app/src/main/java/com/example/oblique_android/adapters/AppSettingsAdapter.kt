@@ -48,6 +48,11 @@ class AppsSettingsAdapter(
         notifyDataSetChanged()
     }
 
+    fun getSelectedPackages(): List<String> {
+        return blockedSet.toList()
+    }
+
+
     inner class VH(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val iv = itemView.findViewById<ImageView>(R.id.ivAppIcon)
         private val tv = itemView.findViewById<TextView>(R.id.tvAppLabel)

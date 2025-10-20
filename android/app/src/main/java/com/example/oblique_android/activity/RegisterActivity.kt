@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import com.example.oblique_android.R
 import com.example.oblique_android.models.AuthViewModel
+import com.example.oblique_android.utils.FlowDecider
 
 class RegisterActivity : AppCompatActivity() {
     private val authVm: AuthViewModel by viewModels()
@@ -25,8 +26,8 @@ class RegisterActivity : AppCompatActivity() {
 
         authVm.authResult.observe(this, Observer { success ->
             if (success) {
-                // Navigate to dashboard after successful registration
-                startActivity(Intent(this, DashboardActivity::class.java))
+                val next = FlowDecider.nextActivity(this)
+                startActivity(Intent(this, next))
                 finish()
             } else {
                 Toast.makeText(this, "Registration failed", Toast.LENGTH_SHORT).show()

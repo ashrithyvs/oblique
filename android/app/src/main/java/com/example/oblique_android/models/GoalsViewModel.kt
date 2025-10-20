@@ -100,4 +100,16 @@ class GoalsViewModel(application: Application) : AndroidViewModel(application) {
             } catch (_: Exception) { }
         }
     }
+
+    fun replaceBlockedApps(apps: List<String>) {
+        viewModelScope.launch {
+            try {
+                val updated = blockedRepo.replaceBlockedApps(apps)
+                _blockedApps.postValue(updated)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
 }

@@ -1,4 +1,3 @@
-// src/models/user.model.ts
 import mongoose, { Document, Schema, Types } from 'mongoose';
 
 export interface IOAuthProvider {
@@ -10,12 +9,14 @@ export interface IOAuthProvider {
 export interface IUser extends Document {
     email?: string | null;
     name?: string | null;
+    displayName?: string | null;                // ✅ user’s display name
     onboardingCompleted?: boolean;
-    blockedApps: string[]; // list of package names
+    blockedApps: string[]; 
     hashedPin?: string | null;
     hashedPassword?: string | null;
     providers?: IOAuthProvider[];
     icon?: Buffer | null;
+    platformUsernames?: Record<string, string>;   // 👈 plain object
     createdAt: Date;
     updatedAt: Date;
 }
@@ -29,15 +30,16 @@ const OAuthProviderSchema = new Schema({
 const UserSchema = new Schema<IUser>({
     email: { type: String, sparse: true },
     name: { type: String },
+    displayName: { type: String, default: null },                  // ✅ new
     onboardingCompleted: { type: Boolean, default: false },
-    blockedApps: { type: [String], default: [] }, // now an array of simple strings (package names)
+    blockedApps: { type: [String], default: [] },
     hashedPin: { type: String, default: null, select: false },
-    hashedPassword: { type: String, default: null, select: false }, // new: hashed password for login
-    providers: { type: [OAuthProviderSchema], default: [] }, // external auth providers (google etc)
-    icon: { type: Buffer, select: false }
+    hashedPassword: { type: String, default: null, select: false },
+    providers: { type: [OAuthProviderSchema], default: [] },
+    icon: { type: Buffer, select: false },
+    platformUsernames: { type: Object, default: {} },
 }, { timestamps: true });
 
-// Indexes
 UserSchema.index({ email: 1 });
 UserSchema.index({ onboardingCompleted: 1 });
 

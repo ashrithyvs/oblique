@@ -6,6 +6,7 @@ import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import com.example.oblique_android.R
 import com.example.oblique_android.prefs.TokenManager
+import com.example.oblique_android.services.Prefs
 
 class WelcomeActivity : AppCompatActivity() {
 
@@ -13,26 +14,28 @@ class WelcomeActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_welcome)
 
+        Prefs.init(this)
+
         val btnGetStarted = findViewById<Button>(R.id.btnGetStarted)
 
         btnGetStarted.setOnClickListener {
-            val token = TokenManager(this).getToken()
-            val pinPrefs = getSharedPreferences("regretnt_pin_prefs", MODE_PRIVATE)
+            Prefs.setOnboardingDone(true)
+
+            // ✅ First ensure user has granted permissions
+            if (!Prefs.hasAllPermissions()) {
+                startActivity(Intent(this, PermissionsActivity::class.java))
+                finish()
+                return@setOnClickListener
+            }
+
+            val token = TokenManager.getInstance(this).getToken()
+            val pinPrefs = getSharedPreferences("secure_prefs", MODE_PRIVATE)
             val pinExists = pinPrefs.contains("user_pin")
 
             when {
-                !pinExists -> {
-                    // First-time user → PIN setup flow
-                    startActivity(Intent(this, PinSetupActivity::class.java))
-                }
-                token.isNullOrEmpty() -> {
-                    // PIN exists but no login token → go to login/register
-                    startActivity(Intent(this, LoginActivity::class.java))
-                }
-                else -> {
-                    // Token exists → try dashboard
-                    startActivity(Intent(this, DashboardActivity::class.java))
-                }
+                !pinExists -> startActivity(Intent(this, PinSetupActivity::class.java))
+                token.isNullOrEmpty() -> startActivity(Intent(this, LoginActivity::class.java))
+                else -> startActivity(Intent(this, DashboardActivity::class.java))
             }
             finish()
         }

@@ -115,3 +115,34 @@ export async function replaceBlockedApps(req: any, res: Response) {
         return res.status(500).json({ message: err.message });
     }
 }
+// src/controllers/user.controller.ts
+export const updatePreferences = async (req: Request, res: Response) => {
+    try {
+        const userId = (req as any).user?._id;
+        if (!userId) {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
+
+        const { displayName, usernames } = req.body || {};
+
+        const updatedUser = await userSvc.updatePreferences(
+            userId,
+            displayName,
+            usernames || {}
+        );
+
+        return res.json({
+            message: "Preferences updated successfully",
+            user: {
+                id: updatedUser._id,
+                displayName: updatedUser.displayName ?? updatedUser.name ?? null,
+                platformUsernames: updatedUser.platformUsernames || {},
+            },
+        });
+    } catch (err: any) {
+        console.error("updatePreferences error:", err);
+        return res
+            .status(500)
+            .json({ message: err.message || "Failed to update preferences" });
+    }
+};

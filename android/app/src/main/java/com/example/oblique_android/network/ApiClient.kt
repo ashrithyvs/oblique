@@ -23,9 +23,10 @@ object ApiClient {
     }
 
     private fun buildRetrofit(context: Context): Retrofit {
-        // Always fetch token dynamically on each request
+        val tokenManager = TokenManager.getInstance(context)
+
         val authInterceptor = Interceptor { chain ->
-            val token = TokenManager(context).getToken()
+            val token = tokenManager.getToken()
             val request = chain.request().newBuilder().apply {
                 token?.let { header("Authorization", "Bearer $it") }
             }.build()

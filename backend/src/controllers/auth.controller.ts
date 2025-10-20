@@ -7,14 +7,13 @@ import { registerSchema, loginSchema } from '../utils/validators';
 export async function register(req: Request, res: Response) {
     try {
         const parsed = registerSchema.parse(req.body);
+        console.log("Parsed register body:", parsed);
 
-        // If email provided and already exists, reject
         if (parsed.email) {
             const existing = await userSvc.findUserByEmail(parsed.email);
             if (existing) return res.status(400).json({ message: 'Email already used' });
         }
 
-        // Create user
         const user = await userSvc.createUser({
             email: parsed.email,
             name: parsed.name,
@@ -22,11 +21,14 @@ export async function register(req: Request, res: Response) {
             password: parsed.password
         });
 
-        const token = signJwt({ sub: user._id.toString(), email: user.email });
+        const token = signJwt({ sub: user._id, email: user.email });
         return res.json({ token, user: { id: user._id, email: user.email, name: user.name } });
     } catch (err: any) {
         console.error('register error', err);
-        return res.status(400).json({ message: err?.message || 'Invalid payload' });
+        return res.status(400).json({
+            message: err?.message || 'Invalid payload',
+            stack: err?.stack
+        });
     }
 }
 

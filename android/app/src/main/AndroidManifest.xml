@@ -50,11 +50,14 @@
         <activity android:name=".activity.PinConfirmActivity" />
         <activity android:name=".activity.PinUnlockActivity" />
         <activity android:name=".activity.AppListActivity" />
+        <activity android:name=".activity.UserPreferencesActivity" />
 
         <service
             android:name=".services.MonitoringService"
+            android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="dataSync" />
+            android:foregroundServiceType="dataSync"
+            android:stopWithTask="false" />
 
         <service
             android:name=".services.OverlayService"

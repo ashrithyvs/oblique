@@ -1,5 +1,7 @@
 package com.example.oblique_android.network.api
 
+import com.example.oblique_android.network.request.UserPreferencesRequest
+import com.example.oblique_android.network.response.UserPreferencesResponse
 import com.example.oblique_android.repository.BlockedAppRequest
 import com.example.oblique_android.repository.BlockedAppsRequest
 import retrofit2.http.*
@@ -16,8 +18,10 @@ data class UserDto(
 data class BlockedAppDto(
     val packageName: String,
 )
+
+
 interface UserApi {
-    @GET("/api/users/me")
+    @GET("/api/user/me")
     suspend fun getCurrentUser(): UserDto
 
     // List all blocked apps
@@ -35,4 +39,8 @@ interface UserApi {
     // Replace all apps with new set
     @PUT("/api/user/me/blocked-apps")
     suspend fun replaceBlockedApps(@Body body: BlockedAppsRequest): List<BlockedAppDto>
+
+    @PUT("/api/user/me/preferences")
+    suspend fun updatePreferences(@Body body: UserPreferencesRequest): UserPreferencesResponse
+
 }
