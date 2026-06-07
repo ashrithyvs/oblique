@@ -188,6 +188,38 @@
                     android:padding="@dimen/input_padding"
                     android:inputType="number" />
 
+                <!-- Deadline picker -->
+                <TextView
+                    android:id="@+id/tvDeadlineLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Select daily deadline"
+                    android:layout_marginTop="@dimen/section_spacing"
+                    android:textColor="@color/text_primary" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical">
+                <TextView
+                    android:id="@+id/tvDeadlinePreview"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textAlignment="center"
+                    android:text="No deadline selected"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_muted"
+                    android:layout_margin="16dp" />
+                <Button
+                    android:id="@+id/btnPickDeadline"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:text="Pick Time"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/btn_dark_pill"
+                    android:textColor="@color/white"
+                    android:textAllCaps="false" />
+                </LinearLayout>
+
                 <!-- Add this goal button (dark pill) -->
                 <Button
                     android:id="@+id/btnAddGoal"

@@ -53,7 +53,7 @@ class PinConfirmActivity : AppCompatActivity() {
             }
 
             // ✅ Save PIN securely only after confirmation
-            PINManager.savePin(this, confirmPin)
+            PINManager.savePin(applicationContext, confirmPin)
             Prefs.setPinSet(true)
             Toast.makeText(this, "PIN saved successfully", Toast.LENGTH_SHORT).show()
 

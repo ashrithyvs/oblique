@@ -30,6 +30,7 @@ import com.example.oblique_android.network.api.UserDto
 import com.example.oblique_android.network.request.UserPreferencesRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.Calendar
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -216,33 +217,88 @@ class SettingsActivity : AppCompatActivity() {
         val builder = AlertDialog.Builder(ctx)
         val view = layoutInflater.inflate(R.layout.dialog_edit_goal, null)
         val etTarget = view.findViewById<EditText>(R.id.etEditTarget)
+        val btnPickDeadline = view.findViewById<Button>(R.id.btnPickDeadlineEdit)
+        val tvDeadlinePreview = view.findViewById<TextView>(R.id.tvDeadlinePreviewEdit)
+
         etTarget.setText(goal.targetValue.toString())
 
-        builder.setTitle("Edit ${goal.platform}")
+        // Initialize with current deadline if present
+        var selectedDeadlineEpoch: Long = goal.deadline
+        if (selectedDeadlineEpoch > 0L) {
+            val cal = Calendar.getInstance().apply { timeInMillis = selectedDeadlineEpoch }
+            val hour = cal.get(Calendar.HOUR_OF_DAY)
+            val minute = cal.get(Calendar.MINUTE)
+            val amPm = if (hour >= 12) "PM" else "AM"
+            val display = String.format("%02d:%02d %s", if (hour % 12 == 0) 12 else hour % 12, minute, amPm)
+            tvDeadlinePreview.text = "Deadline: $display"
+        }
+
+        // 🕒 Material Time Picker
+        btnPickDeadline.setOnClickListener {
+            val cal = Calendar.getInstance()
+            val picker = com.google.android.material.timepicker.MaterialTimePicker.Builder()
+                .setTitleText("Select new goal deadline")
+                .setTimeFormat(com.google.android.material.timepicker.TimeFormat.CLOCK_12H)
+                .setHour(cal.get(Calendar.HOUR_OF_DAY))
+                .setMinute(cal.get(Calendar.MINUTE))
+                .build()
+
+            picker.addOnPositiveButtonClickListener {
+                val selectedHour = picker.hour
+                val selectedMinute = picker.minute
+
+                val todayStart = Calendar.getInstance().apply {
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }.timeInMillis
+                selectedDeadlineEpoch = todayStart + (selectedHour * 60 * 60 * 1000L) + (selectedMinute * 60 * 1000L)
+
+                val display = String.format("%02d:%02d %s",
+                    if (selectedHour % 12 == 0) 12 else selectedHour % 12,
+                    selectedMinute,
+                    if (selectedHour >= 12) "PM" else "AM"
+                )
+                tvDeadlinePreview.text = "Deadline: $display"
+            }
+
+            picker.show(supportFragmentManager, "deadline_edit_picker")
+        }
+
+        builder.setTitle("Edit ${goal.platform} Goal")
         builder.setView(view)
+
         builder.setPositiveButton("Save") { _, _ ->
             val newTarget = etTarget.text.toString().toIntOrNull()
-            if (newTarget != null && newTarget > 0) {
-                val req = GoalRequest(
-                    platform = goal.platform,
-                    platformUsername = "",
-                    unit = goal.unit,
-                    targetValue = newTarget,
-                    baselineValue = 0,
-                    deadline = null,
-                    title = "${goal.unit} goal",
-                    checkIntervalMs = 3600000L
-                )
-                vm.deleteGoal(goal.id) {
-                    vm.createGoal(req)
+
+            if (newTarget == null || newTarget <= 0) {
+                Toast.makeText(ctx, "Invalid target value", Toast.LENGTH_SHORT).show()
+                return@setPositiveButton
+            }
+
+            lifecycleScope.launch {
+                try {
+                    // ✅ Instead of deleting & recreating, perform an update
+                    val updatedGoal = goal.copy(
+                        targetValue = newTarget,
+                        deadline = selectedDeadlineEpoch
+                    )
+
+                    vm.updateGoal(updatedGoal)
+                    Toast.makeText(ctx, "Goal updated", Toast.LENGTH_SHORT).show()
+
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    Toast.makeText(ctx, "Failed to update goal", Toast.LENGTH_SHORT).show()
                 }
-            } else {
-                Toast.makeText(ctx, "Invalid target", Toast.LENGTH_SHORT).show()
             }
         }
+
         builder.setNegativeButton("Cancel", null)
         builder.show()
     }
+
 
     private fun showDeleteConfirm(goal: Goal) {
         AlertDialog.Builder(this)

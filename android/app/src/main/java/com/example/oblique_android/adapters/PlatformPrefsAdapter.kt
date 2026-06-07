@@ -42,7 +42,7 @@ class PlatformPrefsAdapter(
      * Return current username map keyed by platform key.
      * Only non-empty trimmed values are included.
      */
-    fun getUsernames(): java.util.Map<String, String> {
+    fun getUsernames(): Map<String, String> {
         val map = LinkedHashMap<String, String>()
         for ((key, et) in inputs) {
             val value = et.text.toString().trim()
@@ -50,8 +50,9 @@ class PlatformPrefsAdapter(
                 map[key] = value
             }
         }
-        return map as java.util.Map<String, String> // ✅ explicit upcast fixes type mismatch
+        return map // no need to upcast to java.util.Map
     }
+
 
     /**
      * Persist current usernames into SharedPreferences.Editor.

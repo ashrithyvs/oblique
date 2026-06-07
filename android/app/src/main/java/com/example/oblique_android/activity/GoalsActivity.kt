@@ -4,9 +4,11 @@ import android.app.Application
 import android.content.Intent
 import android.os.Bundle
 import android.text.InputType
+import android.util.Log
 import android.view.View
 import android.widget.*
 import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.GridLayoutManager
@@ -22,8 +24,11 @@ import com.example.oblique_android.network.api.GoalRequest
 import kotlinx.coroutines.launch
 import androidx.lifecycle.lifecycleScope
 import com.example.oblique_android.utils.FlowDecider
+import com.google.android.material.timepicker.MaterialTimePicker
+import com.google.android.material.timepicker.TimeFormat
+import java.util.Calendar
 
-class GoalsActivity : ComponentActivity(), PlatformsAdapter.PlatformClickListener {
+class GoalsActivity : AppCompatActivity(), PlatformsAdapter.PlatformClickListener {
 
     private lateinit var rvPlatforms: RecyclerView
     private lateinit var rvGoalTypes: RecyclerView
@@ -43,6 +48,12 @@ class GoalsActivity : ComponentActivity(), PlatformsAdapter.PlatformClickListene
     private var selectedPlatform: String? = null
     private var selectedGoalType: GoalType? = null
     private lateinit var proTipCard: CardView
+    private lateinit var btnPickDeadline: Button
+    private lateinit var tvDeadlinePreview: TextView
+
+    private var selectedDeadlineMsOfDay: Long = -1L  // ms since midnight (Option B)
+    private var selectedDeadlineEpoch: Long = -1L    // absolute epoch (Option A)
+
 
     companion object {
         private const val PREFS_NAME = "app_prefs"
@@ -65,6 +76,8 @@ class GoalsActivity : ComponentActivity(), PlatformsAdapter.PlatformClickListene
         tvTargetLabel = findViewById(R.id.tvTargetLabel)
         emptyStateCard = findViewById(R.id.emptyStateCard)
         proTipCard = findViewById(R.id.proTipCard)
+        btnPickDeadline = findViewById(R.id.btnPickDeadline)
+        tvDeadlinePreview = findViewById(R.id.tvDeadlinePreview)
 
         vm = ViewModelProvider(
             this,
@@ -98,6 +111,46 @@ class GoalsActivity : ComponentActivity(), PlatformsAdapter.PlatformClickListene
             proTipCard.visibility = if (list.isEmpty()) View.VISIBLE else View.GONE
             updateBottomCTA(list.size)
         }
+        btnPickDeadline.setOnClickListener {
+            val now = Calendar.getInstance()
+            val hour = now.get(Calendar.HOUR_OF_DAY)
+            val minute = now.get(Calendar.MINUTE)
+
+            val picker = MaterialTimePicker.Builder()
+                .setTitleText("Select goal deadline")
+                .setHour(hour)
+                .setMinute(minute)
+                .setTimeFormat(TimeFormat.CLOCK_12H)
+                .build()
+
+            picker.addOnPositiveButtonClickListener {
+                val selectedHour = picker.hour
+                val selectedMinute = picker.minute
+                val display = String.format("%02d:%02d %s",
+                    if (selectedHour % 12 == 0) 12 else selectedHour % 12,
+                    selectedMinute,
+                    if (selectedHour >= 12) "PM" else "AM"
+                )
+                tvDeadlinePreview.text = "Deadline: $display"
+
+                // compute ms since midnight
+                selectedDeadlineMsOfDay = (selectedHour * 60 * 60 * 1000L) + (selectedMinute * 60 * 1000L)
+
+                // compute absolute epoch (today + selected time)
+                val todayStart = Calendar.getInstance().apply {
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }.timeInMillis
+                selectedDeadlineEpoch = todayStart + selectedDeadlineMsOfDay
+
+                Log.i("GoalsActivity", "Deadline selected: $display")
+                Log.i("GoalsActivity", "→ sinceMidnight=$selectedDeadlineMsOfDay, absolute=$selectedDeadlineEpoch")
+            }
+
+            picker.show(supportFragmentManager, "deadline_picker")
+        }
 
         btnAddGoal.setOnClickListener {
             val platform = selectedPlatform ?: return@setOnClickListener toast("Pick a platform")
@@ -105,13 +158,18 @@ class GoalsActivity : ComponentActivity(), PlatformsAdapter.PlatformClickListene
             val target = etTarget.text.toString().trim().toIntOrNull()
                 ?: return@setOnClickListener toast("Enter a valid target")
 
+            if (selectedDeadlineEpoch < 0) {
+                toast("Please select a deadline time")
+                return@setOnClickListener
+            }
+
             val req = GoalRequest(
                 platform = platform,
                 platformUsername = "",
                 unit = gt.unit,
                 targetValue = target,
                 baselineValue = 0,
-                deadline = null,
+                deadline = selectedDeadlineEpoch, // ✅ using absolute timestamp (Option A)
                 title = "${gt.title} on $platform",
                 checkIntervalMs = 3600000L
             )

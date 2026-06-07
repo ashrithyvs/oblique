@@ -7,13 +7,14 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@color/bg_white"
-    android:padding="24dp"
+    android:paddingHorizontal="24dp"
     android:fillViewport="true"
     android:scrollbars="none"
     android:clipToPadding="false">
 
     <!-- Header -->
     <LinearLayout
+        android:paddingTop="48dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">

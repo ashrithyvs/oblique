@@ -16,6 +16,16 @@ class GoalsRepository(context: Context) {
     suspend fun createGoal(req: GoalRequest): Goal {
         return Goal.fromDto(api.createGoal(req))
     }
+    suspend fun updateGoal(goal: Goal) {
+        val body = mutableMapOf<String, Any>(
+            "targetValue" to goal.targetValue
+        )
+        if (goal.deadline != null && goal.deadline > 0L) {
+            body["deadline"] = goal.deadline
+        }
+        api.updateGoal(goal.id, body)
+    }
+
 
     suspend fun deleteGoal(id: String) {
         api.deleteGoal(id)

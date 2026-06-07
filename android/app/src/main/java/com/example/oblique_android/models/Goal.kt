@@ -2,6 +2,8 @@ package com.example.oblique_android.models
 
 import com.example.oblique_android.network.api.GoalDto
 import org.json.JSONObject
+import java.text.SimpleDateFormat
+import java.util.*
 
 data class Goal(
     var id: String = "",
@@ -26,17 +28,53 @@ data class Goal(
     }
 
     companion object {
+
+        // Robust parser for both numeric and ISO 8601 string deadlines
+        private fun parseDeadline(deadline: Any?): Long {
+            if (deadline == null) return 0L
+
+            return when (deadline) {
+                is Number -> deadline.toLong() // ✅ backend sends Long
+                is String -> {
+                    if (deadline.isBlank()) return 0L
+                    try {
+                        deadline.toLong() // numeric string
+                    } catch (e: NumberFormatException) {
+                        try {
+                            // ISO 8601 string fallback
+                            val fmt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
+                            fmt.timeZone = TimeZone.getTimeZone("UTC")
+                            fmt.parse(deadline)?.time ?: 0L
+                        } catch (e2: Exception) {
+                            0L
+                        }
+                    }
+                }
+                else -> 0L
+            }
+        }
+
         fun fromDto(dto: GoalDto): Goal {
-            return Goal(
+            val deadlineMs = parseDeadline(dto.deadline)
+            val progressValue = when (dto.status.lowercase(Locale.ROOT)) {
+                "completed" -> dto.targetValue
+                else -> 0
+            }
+
+            val goal = Goal(
                 id = dto.id,
                 platform = dto.platform,
-                unit = "", // backend doesn’t send unit
+                unit = dto.unit.ifBlank { "unknown" },
                 targetValue = dto.targetValue,
-                progress = 0,
+                progress = progressValue,
                 createdAt = System.currentTimeMillis(),
-                deadline = 0L,
+                deadline = deadlineMs,
                 status = dto.status
             )
+
+            // 🔍 Debug log
+            println("Goal.fromDto → id=${goal.id}, platform=${goal.platform}, status=${goal.status}, deadline=${goal.deadline}")
+            return goal
         }
     }
 }

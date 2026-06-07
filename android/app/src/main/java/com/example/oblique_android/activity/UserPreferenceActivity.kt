@@ -19,6 +19,10 @@ import com.example.oblique_android.utils.PrefsUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.core.content.edit
+import java.util.HashMap
+import kotlin.collections.iterator
+import kotlin.collections.toMap
 
 class UserPreferencesActivity : AppCompatActivity() {
 
@@ -65,7 +69,7 @@ class UserPreferencesActivity : AppCompatActivity() {
         // Handle save button
         btnSave.setOnClickListener {
             val displayName = etDisplayName.text.toString().trim()
-            val usernames = adapter.getUsernames()
+            val usernames = adapter.getUsernames() // Map<String, String>
 
             if (displayName.isEmpty()) {
                 Toast.makeText(this, "Please enter a display name", Toast.LENGTH_SHORT).show()
@@ -73,50 +77,57 @@ class UserPreferencesActivity : AppCompatActivity() {
             }
 
             // Save locally first for offline persistence
-            val editor = prefs.edit()
-            editor.putString("displayName", displayName)
-            adapter.saveUsernames(editor)
-            editor.apply()
+            prefs.edit {
+                putString("displayName", displayName)
+                adapter.saveUsernames(this)
+            }
             PrefsUtils.saveDisplayName(this, displayName)
 
             // Sync to backend
             lifecycleScope.launch {
                 try {
-                    val body = mapOf(
-                        "displayName" to displayName,
-                        "usernames" to usernames
+                    val request = UserPreferencesRequest(
+                        displayName = displayName,
+                        usernames = usernames
                     )
 
-                    try {
-                        val request = UserPreferencesRequest(
-                            displayName = etDisplayName.text.toString(),
-                            usernames = adapter.getUsernames() // returns Map<String, String>
-                        )
+                    val updatedUser = ApiClient.getClient(this@UserPreferencesActivity)
+                        .create(UserApi::class.java)
+                        .updatePreferences(request)
 
-                        val updatedUser = ApiClient.getClient(this@UserPreferencesActivity)
-                            .create(UserApi::class.java)
-                            .updatePreferences(request)
-                        withContext(Dispatchers.Main) {
-                            Toast.makeText(
-                                this@UserPreferencesActivity,
-                                "Preferences saved for ${updatedUser.user.displayName ?: displayName}",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            finish()
+                    // ✅ Store usernames locally in PrefsUtils for validators
+                    val rawMap = adapter.getUsernames() // returns java.util.Map<String, String>
+                    val usernameMap: Map<String, String> = HashMap(rawMap) // safely converted
+
+                    for (entry in usernameMap.entries) {
+                        val platform = entry.key
+                        val uname = entry.value
+
+                        if (uname.isNotBlank()) {
+                            PrefsUtils.savePlatformUsername(this@UserPreferencesActivity, platform, uname)
                         }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                        Toast.makeText(this@UserPreferencesActivity, "Failed to save preferences", Toast.LENGTH_SHORT).show()
+                    }
+
+
+
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(
+                            this@UserPreferencesActivity,
+                            "Preferences saved for ${updatedUser.user.displayName ?: displayName}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        finish()
                     }
 
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    Toast.makeText(
-                        this@UserPreferencesActivity,
-                        "Failed to sync preferences, saved locally",
-                        Toast.LENGTH_LONG
-                    ).show()
-                    finish()
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(
+                            this@UserPreferencesActivity,
+                            "Failed to save preferences",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 }
             }
         }

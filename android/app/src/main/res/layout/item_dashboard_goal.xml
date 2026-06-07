@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cardGoal"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="12dp"
@@ -53,15 +54,38 @@
                 android:gravity="center_vertical"
                 android:layout_marginTop="8dp">
 
-                <ProgressBar
-                    android:id="@+id/progressBarGoal"
-                    style="?android:attr/progressBarStyleHorizontal"
+                <!-- Progress bar container: rounded track + filled view + glow overlay -->
+                <FrameLayout
+                    android:id="@+id/progressContainer"
                     android:layout_width="0dp"
-                    android:layout_height="10dp"
+                    android:layout_height="14dp"
                     android:layout_weight="1"
-                    android:progress="0"
-                    android:max="2"
-                    android:progressDrawable="@drawable/progress_goal" />
+                    android:background="@drawable/progress_track"
+                    android:clipToPadding="false"
+                    android:clipToOutline="true">
+
+                    <!-- Filled portion (width will be adjusted programmatically) -->
+                    <View
+                        android:id="@+id/viewProgressFill"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_gravity="left"
+                        android:backgroundTint="@color/accent_green"
+                        android:background="@drawable/progress_fill"
+                        android:importantForAccessibility="no" />
+
+                    <!-- Glow overlay, same width as filled portion; animated alpha/scale for pulse -->
+                    <View
+                        android:id="@+id/viewProgressGlow"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_gravity="left"
+                        android:background="@drawable/progress_glow"
+                        android:alpha="0"
+                        android:visibility="visible"
+                        android:importantForAccessibility="no" />
+
+                </FrameLayout>
 
                 <TextView
                     android:id="@+id/tvGoalProgress"

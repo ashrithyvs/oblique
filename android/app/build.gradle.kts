@@ -23,7 +23,7 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField("String", "API_BASE_URL", "\"http://192.168.0.106:3000/\"")
+            buildConfigField("String", "API_BASE_URL", "\"http://192.168.29.115:3000/\"")
             isMinifyEnabled = false
         }
         release {
@@ -83,6 +83,7 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
     implementation("com.squareup.moshi:moshi-kotlin:1.15.0")
 
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
 
     // Tests
     testImplementation(libs.junit)

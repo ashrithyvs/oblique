@@ -6,6 +6,7 @@
     android:layout_height="match_parent"
     android:background="@color/white"
     android:fillViewport="true"
+    android:paddingTop="24dp"
     android:scrollbars="none"
     android:clipToPadding="false"
     >
@@ -13,7 +14,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="18dp"
+        android:paddingHorizontal="24dp"
         android:orientation="vertical">
 
         <!-- Header -->
@@ -45,6 +46,16 @@
                     android:textSize="13sp"
                     android:textColor="@color/text_muted" />
             </LinearLayout>
+
+            <ImageView
+                android:id="@+id/manualPoll"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginRight="6dp"
+                android:src="@drawable/ic_reload"
+                android:background="@drawable/circle_light"
+                android:contentDescription="Manual Poll"
+                android:padding="6dp" />
 
             <ImageView
                 android:id="@+id/btnSettings"

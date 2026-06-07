@@ -48,6 +48,18 @@ class GoalsViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun updateGoal(goal: Goal) {
+        viewModelScope.launch {
+            try {
+                goalsRepo.updateGoal(goal)
+                refreshGoals()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+
     fun deleteGoal(id: String, onComplete: (() -> Unit)? = null) {
         viewModelScope.launch {
             try {

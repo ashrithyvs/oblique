@@ -31,7 +31,8 @@ export async function listGoals(req: any, res: Response) {
             completedByDevice: g.completedByDevice,
             evidence: g.evidence,
             createdAt: g.createdAt,
-            updatedAt: g.updatedAt
+            updatedAt: g.updatedAt,
+            deadline: g.deadline
         }));
 
         return res.json(out);
@@ -56,6 +57,7 @@ export async function createGoal(req: any, res: Response) {
             title: req.body.title || `${req.body.platform || 'goal'} goal`,
             platform: req.body.platform || 'leetcode',
             platformUsername: req.body.platformUsername || null,
+            deadline: req.body.deadline || null,
             unit: req.body.unit || req.body.unit || '',
             baselineValue: typeof req.body.baselineValue === 'number' ? req.body.baselineValue : 0,
             targetValue: typeof req.body.targetValue === 'number' ? req.body.targetValue : 0,
@@ -88,7 +90,8 @@ export async function createGoal(req: any, res: Response) {
             completedAt: g.completedAt,
             evidence: g.evidence,
             createdAt: g.createdAt,
-            updatedAt: g.updatedAt
+            updatedAt: g.updatedAt,
+            deadline: g.deadline
         });
     } catch (err: any) {
         console.error('createGoal error', err);
@@ -157,7 +160,8 @@ export async function getGoal(req: any, res: Response) {
             targetValue: goal.targetValue,
             status: goal.status,
             createdAt: goal.createdAt,
-            updatedAt: goal.updatedAt
+            updatedAt: goal.updatedAt,
+            deadline: goal.deadline
         });
     } catch (err: any) {
         console.error('getGoal error', err);
@@ -170,13 +174,12 @@ export async function updateGoalProgress(req: any, res: Response) {
     try {
         const userId = req.user._id;
         const id = req.params.id;
-        const { currentValue } = req.body;
-
-        if (!currentValue || typeof currentValue !== 'number') {
-            return res.status(400).json({ message: 'Missing or invalid currentValue' });
+        const { progress } = req.body;
+        if (!progress || typeof progress !== 'number') {
+            return res.status(400).json({ message: 'Missing or invalid progress' });
         }
 
-        const updated = await goalSvc.updateGoalProgress(id, currentValue, userId);
+        const updated = await goalSvc.updateGoalProgress(id, progress, userId);
         if (!updated) return res.status(404).json({ message: 'Goal not found' });
 
         return res.json(updated);
@@ -184,6 +187,65 @@ export async function updateGoalProgress(req: any, res: Response) {
         console.error('updateGoalProgress error', err);
         return res.status(500).json({ message: err.message });
     }
+    
 }
 
+/**
+ * PUT /api/goals/:id
+ * Update selected fields of an existing goal (partial update).
+ */
+export async function updateGoal(req: any, res: Response) {
+    try {
+        const userId = new Types.ObjectId(req.user._id);
+        const id = req.params.id;
+
+        if (!Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ message: 'Invalid goal id' });
+        }
+
+        const allowedFields = ['title', 'targetValue', 'deadline', 'unit', 'checkIntervalMs'];
+        const updatePayload: Record<string, any> = {};
+
+        for (const key of allowedFields) {
+            if (req.body[key] !== undefined) {
+                updatePayload[key] = req.body[key];
+            }
+        }
+
+        if (Object.keys(updatePayload).length === 0) {
+            return res.status(400).json({ message: 'No valid fields to update' });
+        }
+
+        updatePayload.updatedAt = new Date();
+
+        const updatedGoal = await Goal.findOneAndUpdate(
+            { _id: id, user: userId },
+            { $set: updatePayload },
+            { new: true }
+        ).lean();
+
+        if (!updatedGoal) {
+            return res.status(404).json({ message: 'Goal not found' });
+        }
+
+        return res.json({
+            id: updatedGoal._id,
+            title: updatedGoal.title,
+            platform: updatedGoal.platform,
+            platformUsername: updatedGoal.platformUsername,
+            unit: updatedGoal.unit,
+            baselineValue: updatedGoal.baselineValue,
+            targetValue: updatedGoal.targetValue,
+            progress: updatedGoal.progress,
+            status: updatedGoal.status,
+            deadline: updatedGoal.deadline,
+            checkIntervalMs: updatedGoal.checkIntervalMs,
+            createdAt: updatedGoal.createdAt,
+            updatedAt: updatedGoal.updatedAt,
+        });
+    } catch (err: any) {
+        console.error('updateGoal error', err);
+        return res.status(500).json({ message: err.message });
+    }
+}
 
