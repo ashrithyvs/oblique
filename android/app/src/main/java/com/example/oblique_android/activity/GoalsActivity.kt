@@ -23,7 +23,9 @@ import com.example.oblique_android.models.GoalsViewModel
 import com.example.oblique_android.network.api.GoalRequest
 import kotlinx.coroutines.launch
 import androidx.lifecycle.lifecycleScope
-import com.example.oblique_android.utils.FlowDecider
+import com.example.oblique_android.utils.OnboardingRouter
+import com.example.oblique_android.utils.PrefsUtils
+import com.example.oblique_android.utils.setupWindowInsets
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
 import java.util.Calendar
@@ -38,6 +40,7 @@ class GoalsActivity : AppCompatActivity(), PlatformsAdapter.PlatformClickListene
     private lateinit var btnStart: Button
     private lateinit var cardSelectedPlatform: View
     private lateinit var tvSelectedPlatformName: TextView
+    private lateinit var ivSelectedIcon: ImageView
     private lateinit var scrollView: ScrollView
     private lateinit var tvTargetLabel: TextView
     private lateinit var emptyStateCard: View
@@ -51,18 +54,13 @@ class GoalsActivity : AppCompatActivity(), PlatformsAdapter.PlatformClickListene
     private lateinit var btnPickDeadline: Button
     private lateinit var tvDeadlinePreview: TextView
 
-    private var selectedDeadlineMsOfDay: Long = -1L  // ms since midnight (Option B)
-    private var selectedDeadlineEpoch: Long = -1L    // absolute epoch (Option A)
-
-
-    companion object {
-        private const val PREFS_NAME = "app_prefs"
-        private const val PREF_GOALS_SHOWN = "goals_shown"
-    }
+    private var selectedDeadlineMsOfDay: Long = -1L
+    private var selectedDeadlineEpoch: Long = -1L
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_goals)
+        setupWindowInsets(R.id.scrollView)
 
         rvPlatforms = findViewById(R.id.rvPlatforms)
         rvGoalTypes = findViewById(R.id.rvGoalTypes)
@@ -72,6 +70,7 @@ class GoalsActivity : AppCompatActivity(), PlatformsAdapter.PlatformClickListene
         btnStart = findViewById(R.id.btnStart)
         cardSelectedPlatform = findViewById(R.id.cardSelectedPlatform)
         tvSelectedPlatformName = findViewById(R.id.tvSelectedPlatformName)
+        ivSelectedIcon = findViewById(R.id.ivSelectedIcon)
         scrollView = findViewById(R.id.scrollView)
         tvTargetLabel = findViewById(R.id.tvTargetLabel)
         emptyStateCard = findViewById(R.id.emptyStateCard)
@@ -163,9 +162,12 @@ class GoalsActivity : AppCompatActivity(), PlatformsAdapter.PlatformClickListene
                 return@setOnClickListener
             }
 
+            val platformKey = platform.lowercase()
+            val username = PrefsUtils.getPlatformUsername(this, platformKey).orEmpty()
+
             val req = GoalRequest(
                 platform = platform,
-                platformUsername = "",
+                platformUsername = username,
                 unit = gt.unit,
                 targetValue = target,
                 baselineValue = 0,
@@ -187,9 +189,7 @@ class GoalsActivity : AppCompatActivity(), PlatformsAdapter.PlatformClickListene
         }
 
         btnStart.setOnClickListener {
-            getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit()
-                .putBoolean(PREF_GOALS_SHOWN, true).apply()
-            val next = FlowDecider.nextActivity(this)
+            val next = OnboardingRouter.next(this)
             startActivity(Intent(this, next))
             finish()
         }
@@ -209,6 +209,7 @@ class GoalsActivity : AppCompatActivity(), PlatformsAdapter.PlatformClickListene
         selectedGoalType = null
         selectedPlatform = null
         goalTypeAdapter.clearSelection()
+        platformsAdapter.clearSelection()
         etTarget.setText("")
         cardSelectedPlatform.visibility = View.GONE
     }
@@ -221,9 +222,16 @@ class GoalsActivity : AppCompatActivity(), PlatformsAdapter.PlatformClickListene
         } else {
             selectedPlatform = platform
             tvSelectedPlatformName.text = platform
+            ivSelectedIcon.setImageResource(platformIconRes(platform))
             cardSelectedPlatform.visibility = View.VISIBLE
             scrollView.post { scrollView.smoothScrollTo(0, cardSelectedPlatform.top) }
         }
+    }
+
+    private fun platformIconRes(platform: String): Int = when (platform.lowercase()) {
+        "leetcode" -> R.drawable.ic_leetcode
+        "duolingo" -> R.drawable.ic_duolingo
+        else -> R.drawable.ic_placeholder
     }
 
     private fun updateBottomCTA(totalGoals: Int) {

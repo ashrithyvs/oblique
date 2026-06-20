@@ -7,6 +7,7 @@ import android.text.TextWatcher
 import android.util.Log
 import android.widget.Button
 import android.widget.EditText
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
@@ -17,7 +18,9 @@ import com.example.oblique_android.adapters.AppAdapter
 import com.example.oblique_android.repository.AppRepository
 import com.example.oblique_android.repository.BlockedAppsRepository
 import com.example.oblique_android.services.Prefs
-import com.example.oblique_android.utils.FlowDecider
+import com.example.oblique_android.utils.OnboardingRouter
+import com.example.oblique_android.utils.PrefsUtils
+import com.example.oblique_android.utils.setupWindowInsets
 import kotlinx.coroutines.launch
 
 class AppListActivity : AppCompatActivity() {
@@ -27,13 +30,18 @@ class AppListActivity : AppCompatActivity() {
     private lateinit var selectedApps: MutableSet<String>
     private lateinit var btnConfirm: Button
     private lateinit var etSearch: EditText
+    private lateinit var loadingOverlay: View
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_app_list)
+        setupWindowInsets(R.id.rootAppList)
 
+        Prefs.init(this)
+        loadingOverlay = findViewById(R.id.loadingOverlay)
+        loadingOverlay.visibility = View.VISIBLE
         repo = AppRepository.getInstance(this)
-        selectedApps = loadSelectedApps()
+        selectedApps = PrefsUtils.loadBlockedSet(this).toMutableSet()
 
         btnConfirm = findViewById(R.id.btnConfirm)
         etSearch = findViewById(R.id.etSearch)
@@ -58,27 +66,24 @@ class AppListActivity : AppCompatActivity() {
         })
 
         lifecycleScope.launch {
-            val apps = repo.getInstalledApps()
-            adapter.setOriginalList(apps)
-            adapter.updateList(apps)
-            updateConfirmButton()
+            try {
+                val apps = repo.getInstalledApps()
+                adapter.setOriginalList(apps)
+                adapter.updateList(apps)
+                updateConfirmButton()
+            } finally {
+                loadingOverlay.visibility = View.GONE
+            }
         }
 
         btnConfirm.setOnClickListener {
             lifecycleScope.launch {
                 try {
                     val blockedRepo = BlockedAppsRepository(this@AppListActivity)
-                    // 1️⃣ Save locally
-                    val resp = blockedRepo.replaceBlockedApps(selectedApps.toList())
                     val updated = blockedRepo.replaceBlockedApps(selectedApps.toList())
-
                     saveSelectedApps(updated.toSet())
-
-                    // 2️⃣ Sync with backend
-                    Log.d("AppListActivity", "Synced blocked apps: $resp")
-
-                    // 3️⃣ Continue flow
-                    val next = FlowDecider.nextActivity(this@AppListActivity)
+                    Log.d("AppListActivity", "Synced blocked apps: $updated")
+                    val next = OnboardingRouter.next(this@AppListActivity)
                     startActivity(Intent(this@AppListActivity, next))
                     finish()
                 } catch (e: Exception) {
@@ -89,29 +94,13 @@ class AppListActivity : AppCompatActivity() {
     }
 
     private fun toggleSelection(pkg: String) {
-        if (selectedApps.contains(pkg)) {
-            Log.d("AppListActivity", "Removing $pkg from selection")
-            selectedApps.remove(pkg)
-        } else {
-            Log.d("AppListActivity", "Adding $pkg to selection")
-            selectedApps.add(pkg)
-        }
+        if (selectedApps.contains(pkg)) selectedApps.remove(pkg) else selectedApps.add(pkg)
         saveSelectedApps(selectedApps)
     }
 
-    private fun loadSelectedApps(): MutableSet<String> {
-        val p = getSharedPreferences("blocked_apps", MODE_PRIVATE)
-        val set = p.getStringSet("pkgs", emptySet())!!.toMutableSet()
-        Log.d("AppListActivity", "Loaded selected apps: $set")
-        return set
-    }
-
     private fun saveSelectedApps(set: Set<String>) {
-        val p = getSharedPreferences("blocked_apps", MODE_PRIVATE)
-        p.edit().putStringSet("pkgs", set.toSet()).apply()
-        Log.d("AppListActivity", "Saved selected apps: $set")
+        PrefsUtils.saveBlockedSet(this, set)
         Prefs.setSelectedApps(set)
-        Log.d("AppListActivity", "Saved selected apps in Prefs: $set")
     }
 
     private fun updateConfirmButton() {

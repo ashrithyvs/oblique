@@ -1,12 +1,13 @@
 package com.example.oblique_android.repository
 
 import android.content.Context
+import com.example.oblique_android.models.AuthOutcome
 import com.example.oblique_android.network.ApiClient
 import com.example.oblique_android.network.api.AuthApi
 import com.example.oblique_android.network.api.LoginRequest
 import com.example.oblique_android.network.api.RegisterRequest
 import com.example.oblique_android.prefs.TokenManager
-import com.example.oblique_android.services.PINManager
+import com.example.oblique_android.utils.ApiErrorParser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -36,36 +37,37 @@ class AuthRepository(
 
     /**
      * Register a new user with backend.
-     * PIN is pulled automatically from PINManager if available.
+     * Device unlock PIN is configured locally after auth via PinSetupActivity.
      */
-    suspend fun register(name: String, email: String, password: String): Boolean =
+    suspend fun register(name: String, email: String, password: String): AuthOutcome =
         withContext(Dispatchers.IO) {
             try {
-                val pin = try { PINManager.getPin(context) } catch (_: Exception) { null }
                 val req = RegisterRequest(
                     name = name,
                     email = email,
-                    password = password,
-                    pin = pin
+                    password = password
                 )
                 val response = api.register(req)
 
                 if (!response.token.isNullOrEmpty()) {
                     tokenManager.saveToken(response.token)
-                    // try to warm local caches by calling repos (best-effort)
                     safeWarmupAfterAuth()
-                    return@withContext true
+                    return@withContext AuthOutcome(success = true)
                 }
+                AuthOutcome(success = false, errorMessage = "Registration failed")
             } catch (ex: Exception) {
                 ex.printStackTrace()
+                AuthOutcome(
+                    success = false,
+                    errorMessage = ApiErrorParser.messageFrom(ex, "Registration failed")
+                )
             }
-            false
         }
 
     /**
      * Login existing user.
      */
-    suspend fun login(email: String, password: String): Boolean =
+    suspend fun login(email: String, password: String): AuthOutcome =
         withContext(Dispatchers.IO) {
             try {
                 val req = LoginRequest(email = email, password = password)
@@ -73,12 +75,16 @@ class AuthRepository(
                 if (!response.token.isNullOrEmpty()) {
                     tokenManager.saveToken(response.token)
                     safeWarmupAfterAuth()
-                    return@withContext true
+                    return@withContext AuthOutcome(success = true)
                 }
+                AuthOutcome(success = false, errorMessage = "Login failed")
             } catch (ex: Exception) {
                 ex.printStackTrace()
+                AuthOutcome(
+                    success = false,
+                    errorMessage = ApiErrorParser.messageFrom(ex, "Login failed")
+                )
             }
-            false
         }
 
     /**

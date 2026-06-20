@@ -2,10 +2,12 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/rootPinSetup"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/white"
-    android:fitsSystemWindows="true"
+    android:paddingBottom="16dp"
+    android:clipToPadding="false"
     tools:context=".activity.PinSetupActivity">
 
     <!-- Lock icon -->
@@ -40,7 +42,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:text="Choose a 6-digit PIN to secure your app settings"
+        android:text="@string/pin_setup_subtitle"
         android:textSize="14sp"
         android:textColor="@android:color/darker_gray"
         app:layout_constraintTop_toBottomOf="@id/titleText"
@@ -67,7 +69,7 @@
             android:focusableInTouchMode="true"
             android:imeOptions="actionDone"
             android:inputType="numberPassword"
-            app:itemCount="6"
+            app:itemCount="4"
             app:lineColor="@color/primaryColor"
             app:lineWidth="2dp"
             app:cursorColor="@color/primaryColor"

@@ -25,10 +25,7 @@ export async function register(req: Request, res: Response) {
         return res.json({ token, user: { id: user._id, email: user.email, name: user.name } });
     } catch (err: any) {
         console.error('register error', err);
-        return res.status(400).json({
-            message: err?.message || 'Invalid payload',
-            stack: err?.stack
-        });
+        return res.status(400).json({ message: err?.message || 'Invalid payload' });
     }
 }
 
@@ -38,7 +35,6 @@ export async function loginByEmail(req: Request, res: Response) {
 
         const email = parsed.email;
         const password = (req.body as any).password;
-        const pin = (req.body as any).pin;
 
         // Try password login first if password provided
         if (password) {
@@ -48,17 +44,7 @@ export async function loginByEmail(req: Request, res: Response) {
             return res.json({ token, user: { id: user._id, email: user.email, name: user.name } });
         }
 
-        // Fallback: PIN-based login (legacy)
-        if (pin) {
-            const user = await userSvc.findUserByEmail(email);
-            if (!user) return res.status(401).json({ message: 'Invalid credentials' });
-            const ok = await userSvc.verifyUserPin(user._id.toString(), pin);
-            if (!ok) return res.status(401).json({ message: 'Invalid credentials' });
-            const token = signJwt({ sub: user._id.toString(), email: user.email });
-            return res.json({ token, user: { id: user._id, email: user.email, name: user.name } });
-        }
-
-        return res.status(400).json({ message: 'Missing credentials. Provide password or pin.' });
+        return res.status(400).json({ message: 'Missing credentials. Provide password.' });
     } catch (err: any) {
         console.error('login error', err);
         return res.status(400).json({ message: err?.message || 'Invalid payload' });

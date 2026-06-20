@@ -1,6 +1,6 @@
 package com.example.oblique_android.adapters
 
-import android.content.SharedPreferences
+import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,13 +10,13 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.oblique_android.R
 import com.example.oblique_android.prefs.PlatformPref
+import com.example.oblique_android.utils.PrefsUtils
 
 class PlatformPrefsAdapter(
-    private val items: List<PlatformPref>,
-    private val prefs: SharedPreferences
+    private val context: Context,
+    private val items: List<PlatformPref>
 ) : RecyclerView.Adapter<PlatformPrefsAdapter.PlatformViewHolder>() {
 
-    // keep references to the EditTexts so we can read values later
     private val inputs = mutableMapOf<String, EditText>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PlatformViewHolder {
@@ -29,19 +29,13 @@ class PlatformPrefsAdapter(
         holder.title.text = item.displayName
         holder.icon.setImageResource(item.iconRes)
 
-        // Prefill from SharedPreferences (if exists)
-        holder.username.setText(prefs.getString(item.key, ""))
-
-        // keep reference so we can fetch later
+        val saved = PrefsUtils.getPlatformUsername(context, item.key).orEmpty()
+        holder.username.setText(saved)
         inputs[item.key] = holder.username
     }
 
     override fun getItemCount() = items.size
 
-    /**
-     * Return current username map keyed by platform key.
-     * Only non-empty trimmed values are included.
-     */
     fun getUsernames(): Map<String, String> {
         val map = LinkedHashMap<String, String>()
         for ((key, et) in inputs) {
@@ -50,17 +44,15 @@ class PlatformPrefsAdapter(
                 map[key] = value
             }
         }
-        return map // no need to upcast to java.util.Map
+        return map
     }
 
-
-    /**
-     * Persist current usernames into SharedPreferences.Editor.
-     * Note: does not call apply() so caller can batch with other edits.
-     */
-    fun saveUsernames(editor: SharedPreferences.Editor) {
+    fun saveUsernames() {
         for ((key, et) in inputs) {
-            editor.putString(key, et.text.toString())
+            val value = et.text.toString().trim()
+            if (value.isNotEmpty()) {
+                PrefsUtils.savePlatformUsername(context, key, value)
+            }
         }
     }
 

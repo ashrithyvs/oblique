@@ -8,8 +8,11 @@
     android:scrollbars="none"
     android:fadeScrollbars="false"
     android:background="@color/bg_white"
+    android:clipToPadding="false"
     android:paddingStart="@dimen/screen_horizontal_padding"
-    android:paddingEnd="@dimen/screen_horizontal_padding">
+    android:paddingEnd="@dimen/screen_horizontal_padding"
+    android:paddingTop="16dp"
+    android:paddingBottom="16dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -132,21 +135,13 @@
 
                         <TextView
                             android:id="@+id/tvSelectedPlatformName"
-                            android:layout_width="0dp"
-                            android:layout_weight="1"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="LeetCode"
                             android:textSize="15sp"
                             android:textStyle="bold"
                             android:layout_marginStart="12dp"
                             android:textColor="@color/text_primary" />
-
-                        <TextView
-                            android:id="@+id/tvChange"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Change"
-                            android:textColor="@color/accent_blue" />
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
 
@@ -342,6 +337,6 @@
             android:textColor="@color/white"
             android:textAllCaps="false" />
 
-        <View android:layout_height="18dp" android:layout_width="match_parent"/>
+        <View android:layout_height="16dp" android:layout_width="match_parent"/>
     </LinearLayout>
 </ScrollView>

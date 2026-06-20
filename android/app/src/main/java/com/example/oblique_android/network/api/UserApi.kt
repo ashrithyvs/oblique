@@ -10,6 +10,8 @@ data class UserDto(
     val id: String,
     val email: String?,
     val name: String?,
+    val displayName: String? = null,
+    val platformUsernames: Map<String, String>? = null,
     val hasPin: Boolean?,
     val blockedApps: List<String>?,
     val goals: List<GoalDto>?
@@ -34,7 +36,7 @@ interface UserApi {
 
     // UserApi.kt
     @DELETE("/api/user/me/blocked-apps/{pkg}")
-    suspend fun removeBlockedApp(@Path("pkg") pkg: String): List<String>
+    suspend fun removeBlockedApp(@Path("pkg") pkg: String): List<BlockedAppDto>
 
     // Replace all apps with new set
     @PUT("/api/user/me/blocked-apps")

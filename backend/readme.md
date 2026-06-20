@@ -1,26 +1,53 @@
-# Regretn't Backend
+# Regretnt Backend
 
-Node.js + TypeScript + Express + MongoDB backend for Regretn't app.
+Node.js + TypeScript + Express + MongoDB backend for the Regretnt (Oblique) Android app.
 
 ## Features
-- JWT-based authentication (register/login with PIN).
-- CRUD for Goals with baseline, evidence, completion tracking.
-- Blocked apps list per user.
-- Rate limiting for auth & goal completion endpoints.
-- MongoDB connection (local, Atlas).
-- Configurable CORS (allowed origins via env).
-- Winston logging + morgan HTTP logs.
-- Graceful shutdown.
+
+- JWT authentication (email + password register/login).
+- Optional PIN stored server-side on register (device unlock PIN is local on Android).
+- Goals CRUD with progress tracking and completion audit history.
+- Blocked apps list embedded per user.
+- User preferences (display name, platform usernames for LeetCode/Duolingo).
+- Aggregated dashboard endpoint (`GET /api/dashboard`).
+- Rate limiting on auth and goal completion.
+- Client-side goal validation (LeetCode GraphQL runs on Android; backend stores results).
+
+## API overview
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | `/api/auth/register` | No | Create account |
+| POST | `/api/auth/login` | No | Login with password |
+| GET | `/api/user/me` | Yes | Profile + goals summary + platform usernames |
+| PUT | `/api/user/me/preferences` | Yes | Update display name / platform usernames |
+| GET/PUT | `/api/user/me/blocked-apps` | Yes | List or replace blocked apps |
+| GET/POST/PUT/PATCH/DELETE | `/api/goals` | Yes | Goal CRUD + progress + complete |
+| GET | `/api/dashboard` | Yes | Goals + blocked apps in one call |
+
+All blocked-app mutations return `[{ "packageName": "..." }]`.
 
 ## Requirements
+
 - Node.js >= 18
-- npm or yarn
 - MongoDB (local or Atlas)
 
 ## Setup
 
-1. Clone repository and install dependencies:
+```bash
+cd backend
+npm install
+cp .env.example .env   # set MONGO_URI, JWT_SECRET
+npm run dev
+```
 
-   ```bash
-   cd backend
-   npm install
+## Tests
+
+```bash
+npm test
+```
+
+## Android integration
+
+- Backend base URL: set `API_BASE_URL` in `android/local.properties` (see `android/local.properties.example`). The app reads it via `BuildConfig.API_BASE_URL` for all build types; there are no hardcoded URLs in Gradle.
+- Auth header: `Authorization: Bearer <token>`.

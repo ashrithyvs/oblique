@@ -10,7 +10,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import com.example.oblique_android.R
 import com.example.oblique_android.models.AuthViewModel
-import com.example.oblique_android.utils.FlowDecider
+import com.example.oblique_android.utils.OnboardingRouter
+import com.example.oblique_android.utils.setupWindowInsets
 
 class RegisterActivity : AppCompatActivity() {
     private val authVm: AuthViewModel by viewModels()
@@ -18,19 +19,21 @@ class RegisterActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_register)
+        setupWindowInsets(R.id.rootRegister)
 
         val etName = findViewById<EditText>(R.id.inputName)
         val etEmail = findViewById<EditText>(R.id.inputEmail)
         val etPassword = findViewById<EditText>(R.id.inputPassword)
         val btnRegister = findViewById<Button>(R.id.btnRegister)
 
-        authVm.authResult.observe(this, Observer { success ->
-            if (success) {
-                val next = FlowDecider.nextActivity(this)
+        authVm.authResult.observe(this, Observer { outcome ->
+            if (outcome.success) {
+                val next = OnboardingRouter.next(this)
                 startActivity(Intent(this, next))
                 finish()
             } else {
-                Toast.makeText(this, "Registration failed", Toast.LENGTH_SHORT).show()
+                val message = outcome.errorMessage ?: getString(R.string.registration_failed)
+                Toast.makeText(this, message, Toast.LENGTH_LONG).show()
             }
         })
 

@@ -54,7 +54,7 @@ interface GoalsApi {
     @PATCH("/api/goals/{id}/progress")
     suspend fun updateGoalProgress(
         @Path("id") id: String,
-        @Body body: Map<String, Integer>
+        @Body body: Map<String, Int>
     )
 
 }

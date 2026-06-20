@@ -10,6 +10,9 @@ import com.chaos.view.PinView
 import com.example.oblique_android.services.PINManager
 import com.example.oblique_android.services.Prefs
 import com.example.oblique_android.R
+import com.example.oblique_android.utils.OnboardingRouter
+import com.example.oblique_android.utils.PinConstants
+import com.example.oblique_android.utils.setupWindowInsets
 import com.google.android.material.button.MaterialButton
 
 class PinConfirmActivity : AppCompatActivity() {
@@ -18,11 +21,13 @@ class PinConfirmActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_pin_confirm)
+        setupWindowInsets(R.id.rootPinConfirm)
 
         // Ensure Prefs is initialized
         Prefs.init(this)
 
         val pinViewConfirm = findViewById<PinView>(R.id.pinViewConfirm)
+        pinViewConfirm.itemCount = PinConstants.LENGTH
         val togglePassword = findViewById<ImageView>(R.id.togglePasswordConfirm)
         val btnSave = findViewById<MaterialButton>(R.id.btnSavePin)
 
@@ -42,8 +47,12 @@ class PinConfirmActivity : AppCompatActivity() {
         btnSave.setOnClickListener {
             val confirmPin = pinViewConfirm.text?.toString()?.trim()
 
-            if (confirmPin.isNullOrEmpty() || confirmPin.length != 6) {
-                Toast.makeText(this, "Please enter a 6-digit PIN", Toast.LENGTH_SHORT).show()
+            if (!PinConstants.isValid(confirmPin)) {
+                Toast.makeText(
+                    this,
+                    getString(R.string.pin_enter_length, PinConstants.LENGTH),
+                    Toast.LENGTH_SHORT
+                ).show()
                 return@setOnClickListener
             }
 
@@ -53,11 +62,11 @@ class PinConfirmActivity : AppCompatActivity() {
             }
 
             // ✅ Save PIN securely only after confirmation
-            PINManager.savePin(applicationContext, confirmPin)
+            PINManager.savePin(applicationContext, confirmPin!!)
             Prefs.setPinSet(true)
-            Toast.makeText(this, "PIN saved successfully", Toast.LENGTH_SHORT).show()
 
-            startActivity(Intent(this, AppListActivity::class.java))
+            val next = OnboardingRouter.next(this, validateToken = false)
+            startActivity(Intent(this, next))
             finish()
         }
     }

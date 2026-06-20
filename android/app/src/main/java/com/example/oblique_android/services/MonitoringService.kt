@@ -27,68 +27,63 @@ class MonitoringService : Service() {
     private val ioScope = CoroutineScope(Dispatchers.IO)
 
     override fun onCreate() {
+        super.onCreate()
+        Log.i(TAG, "MonitoringService started")
 
-            super.onCreate()
-            Log.i(TAG, "MonitoringService started")
+        startForeground(1, createNotification())
 
         if (!hasUsageAccessPermission()) {
-            Log.e(TAG, "❌ Missing Usage Access permission. Open Settings -> Usage Access and enable it for this app.")
+            Log.e(TAG, "Missing Usage Access permission — stopping monitoring.")
             stopSelf()
             return
         }
 
-            if (!NetworkUtils.hasInternet(this)) {
-                Log.w(TAG, "Internet unavailable → skipping validation scheduling to prevent user lockout")
-                return
-            }
+        usageStatsManager = getSystemService(USAGE_STATS_SERVICE) as UsageStatsManager
+        handler.post(checkRunnable)
 
-            usageStatsManager = getSystemService(USAGE_STATS_SERVICE) as UsageStatsManager
-            startForeground(1, createNotification())
-            handler.post(checkRunnable)
-
-            val scheduler = GoalValidationScheduler(applicationContext)
-
-            // Schedule validation for all LeetCode goals automatically
-            ioScope.launch {
-                try {
-                    val repo = GoalsRepository(applicationContext)
-                    val goals = repo.listGoals()
-                    for (g in goals) {
-                        if (g.platform.lowercase() == "leetcode" && g.status == "active") {
-                            scheduler.schedule(g.id, g.deadline)
-                        }
-                    }
-                    Log.i(TAG, "Goal validation schedules initialized")
-                } catch (e: Exception) {
-                    Log.e(TAG, "Failed to schedule validations: ${e.message}")
-                }
+        if (!NetworkUtils.hasInternet(this)) {
+            Log.w(TAG, "Internet unavailable — skipping validation scheduling")
+            return
         }
 
+        val scheduler = GoalValidationScheduler(applicationContext)
+        ioScope.launch {
+            try {
+                val repo = GoalsRepository(applicationContext)
+                val goals = repo.listGoals()
+                for (g in goals) {
+                    if (g.platform.lowercase() == "leetcode" && g.status == "active") {
+                        scheduler.schedule(g.id, g.deadline)
+                    }
+                }
+                Log.i(TAG, "Goal validation schedules initialized")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to schedule validations: ${e.message}")
+            }
+        }
     }
 
     private val checkRunnable = object : Runnable {
         override fun run() {
             val blockedApps = PrefsUtils.loadBlockedSet(this@MonitoringService)
             val foregroundApp = getForegroundApp()
-            Log.d("MonitoringService", "Foreground app: $foregroundApp")
-
+            Log.d(TAG, "Foreground app: $foregroundApp")
 
             if (foregroundApp != null && blockedApps.contains(foregroundApp)) {
-                Log.d("MonitoringService", "Detected blocked app: $foregroundApp")
                 if (!TempUnlockManager.isTempUnlocked(this@MonitoringService, foregroundApp)) {
                     if (currentBlockedApp != foregroundApp) {
                         currentBlockedApp = foregroundApp
-                        Log.d("MonitoringService", "Blocking $foregroundApp")
+                        Log.d(TAG, "Blocking $foregroundApp")
                         val intent = Intent(this@MonitoringService, OverlayService::class.java)
                         intent.putExtra("blockedApp", foregroundApp)
                         startService(intent)
                     }
                 } else {
-                    Log.d("MonitoringService", "Skipping $foregroundApp (temporarily unlocked)")
+                    Log.d(TAG, "Skipping $foregroundApp (temporarily unlocked)")
                 }
             } else {
                 if (currentBlockedApp != null) {
-                    Log.d("MonitoringService", "No longer blocking $currentBlockedApp")
+                    Log.d(TAG, "No longer blocking $currentBlockedApp")
                     stopService(Intent(this@MonitoringService, OverlayService::class.java))
                     currentBlockedApp = null
                 }
@@ -109,40 +104,28 @@ class MonitoringService : Service() {
 
     @Suppress("DEPRECATION")
     private fun getForegroundApp(): String? {
-        val usageStatsManager = getSystemService(USAGE_STATS_SERVICE) as UsageStatsManager
         val endTime = System.currentTimeMillis()
-        val beginTime = endTime - 10_000 // Look back 10 seconds
+        val beginTime = endTime - 10_000
 
         val events = usageStatsManager.queryEvents(beginTime, endTime)
         val event = UsageEvents.Event()
         var lastForegroundApp: String? = null
-        var lastEventTime = 0L
 
         while (events.hasNextEvent()) {
             events.getNextEvent(event)
-
             val isForeground = when {
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE ->
                     event.eventType == UsageEvents.Event.ACTIVITY_RESUMED
                 else ->
                     event.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND
             }
-
             if (isForeground) {
                 lastForegroundApp = event.packageName
-                lastEventTime = event.timeStamp
             }
-        }
-
-        if (lastForegroundApp == null) {
-            Log.w(TAG, "⚠️ No foreground event detected in last 10s — check Usage Access permission.")
-        } else {
-            Log.d(TAG, "✅ Foreground app detected: $lastForegroundApp at $lastEventTime")
         }
 
         return lastForegroundApp
     }
-
 
     override fun onDestroy() {
         handler.removeCallbacks(checkRunnable)

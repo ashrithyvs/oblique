@@ -16,13 +16,14 @@ export const loginSchema = z.object({
 
 export const createGoalSchema = z.object({
     platform: z.string().min(1).optional(),
-    platformUsername: z.string().min(1).optional(),
+    platformUsername: z.string().optional(),
     targetValue: z.number().int().positive(),
-    deadline: z.string().optional(),
+    deadline: z.union([z.number(), z.string()]).optional(),
     checkIntervalMs: z.number().int().positive().optional(),
     title: z.string().optional(),
     baselineValue: z.number().int().nonnegative().optional(),
-    evidence: z.any().optional()
+    evidence: z.any().optional(),
+    unit: z.string().optional(),
 });
 
 export const completeGoalSchema = z.object({

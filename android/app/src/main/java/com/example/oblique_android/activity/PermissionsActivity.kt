@@ -10,6 +10,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.example.oblique_android.services.PINManager
 import com.example.oblique_android.utils.PermissionUtils
+import com.example.oblique_android.utils.setupWindowInsets
 import com.example.oblique_android.R
 
 class PermissionsActivity : AppCompatActivity() {
@@ -47,6 +48,7 @@ class PermissionsActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_permissions)
+        setupWindowInsets(R.id.rootPermissions)
 
         val btnGrant = findViewById<Button>(R.id.btnGrantPermissions)
         btnGrant.setOnClickListener {

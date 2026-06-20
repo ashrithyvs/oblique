@@ -4,10 +4,12 @@
     android:layout_height="match_parent">
 
     <LinearLayout
+        android:id="@+id/rootRegister"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="16dp"
+        android:clipToPadding="false">
 
         <EditText
             android:id="@+id/inputEmail"
@@ -28,13 +30,6 @@
             android:layout_height="wrap_content"
             android:hint="Password"
             android:inputType="textPassword" />
-
-        <EditText
-            android:id="@+id/inputPin"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="PIN"
-            android:inputType="numberPassword" />
 
         <Button
             android:id="@+id/btnRegister"

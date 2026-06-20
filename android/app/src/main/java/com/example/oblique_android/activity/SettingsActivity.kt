@@ -1,93 +1,118 @@
 package com.example.oblique_android.activity
 
-import android.content.Context
 import android.content.Intent
-import android.content.pm.ApplicationInfo
-import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.oblique_android.R
-import com.example.oblique_android.adapters.AppInfo
 import com.example.oblique_android.adapters.AppsSettingsAdapter
 import com.example.oblique_android.adapters.GoalsSettingsAdapter
 import com.example.oblique_android.adapters.PlatformPrefsAdapter
 import com.example.oblique_android.models.Goal
 import com.example.oblique_android.models.GoalsViewModel
 import com.example.oblique_android.network.ApiClient
-import com.example.oblique_android.network.api.GoalRequest
-import com.example.oblique_android.utils.PrefsUtils
-import com.google.android.material.button.MaterialButton
-import kotlinx.coroutines.launch
 import com.example.oblique_android.network.api.UserApi
-import com.example.oblique_android.network.api.UserDto
 import com.example.oblique_android.network.request.UserPreferencesRequest
+import com.example.oblique_android.prefs.PlatformPref
+import com.example.oblique_android.repository.AppRepository
+import com.example.oblique_android.repository.AuthRepository
+import com.example.oblique_android.services.Prefs
+import com.example.oblique_android.utils.PrefsUtils
+import com.example.oblique_android.utils.setupWindowInsets
+import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Calendar
 
 class SettingsActivity : AppCompatActivity() {
 
+    private enum class Tab { GOALS, APPS, PREFERENCES }
+
     private lateinit var tabGoals: LinearLayout
     private lateinit var tabApps: LinearLayout
+    private lateinit var tabPreferences: LinearLayout
     private lateinit var indicatorGoals: View
     private lateinit var indicatorApps: View
+    private lateinit var indicatorPreferences: View
     private lateinit var tvGoals: TextView
     private lateinit var tvApps: TextView
+    private lateinit var tvPreferences: TextView
     private lateinit var rvGoals: RecyclerView
     private lateinit var rvApps: RecyclerView
     private lateinit var btnAddGoal: MaterialButton
     private lateinit var btnSave: MaterialButton
     private lateinit var settingsTabLabel: TextView
+    private lateinit var sectionHeaderRow: LinearLayout
+    private lateinit var preferencesPanel: View
+    private lateinit var etDisplayName: EditText
+    private lateinit var rvPlatformPrefs: RecyclerView
+    private lateinit var btnSavePreferences: MaterialButton
+    private lateinit var btnSignOut: MaterialButton
 
     private lateinit var goalsAdapter: GoalsSettingsAdapter
     private lateinit var appsAdapter: AppsSettingsAdapter
+    private lateinit var platformPrefsAdapter: PlatformPrefsAdapter
     private lateinit var vm: GoalsViewModel
-    private lateinit var tabPreferences: LinearLayout
-    private lateinit var indicatorPreferences: View
-    private lateinit var tvPreferences: TextView
-    private lateinit var api: ApiClient
-    private lateinit var adapter: PlatformPrefsAdapter
-
-    private lateinit var userApi: UserApi
-
+    private lateinit var authRepo: AuthRepository
+    private lateinit var loadingOverlay: View
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
+        setupWindowInsets(R.id.rootSettings)
+        Prefs.init(this)
+        authRepo = AuthRepository(this)
+        loadingOverlay = findViewById(R.id.loadingOverlay)
+        loadingOverlay.visibility = View.VISIBLE
 
+        bindViews()
+        setupGoalsList()
+        setupAppsList()
+        setupPreferencesTab()
+        setupTabs()
+        setupActions()
+
+        vm.refreshGoals()
+        vm.refreshBlockedApps()
+    }
+
+    private fun bindViews() {
         tabGoals = findViewById(R.id.tabGoals)
         tabApps = findViewById(R.id.tabApps)
+        tabPreferences = findViewById(R.id.tabPreferences)
         indicatorGoals = findViewById(R.id.indicatorGoals)
         indicatorApps = findViewById(R.id.indicatorApps)
+        indicatorPreferences = findViewById(R.id.indicatorPreferences)
         tvGoals = findViewById(R.id.tvGoals)
         tvApps = findViewById(R.id.tvApps)
+        tvPreferences = findViewById(R.id.tvPreferences)
         rvGoals = findViewById(R.id.rvGoals)
         rvApps = findViewById(R.id.recyclerViewApps)
         btnAddGoal = findViewById(R.id.btnAddGoal)
         btnSave = findViewById(R.id.btnSave)
         settingsTabLabel = findViewById(R.id.settingsTabLabel)
+        sectionHeaderRow = findViewById(R.id.sectionHeaderRow)
+        preferencesPanel = findViewById(R.id.preferencesPanel)
+        etDisplayName = findViewById(R.id.etDisplayName)
+        rvPlatformPrefs = findViewById(R.id.rvPlatformPrefs)
+        btnSavePreferences = findViewById(R.id.btnSavePreferences)
+        btnSignOut = findViewById(R.id.btnSignOut)
 
         vm = ViewModelProvider(
             this,
             ViewModelProvider.AndroidViewModelFactory.getInstance(application)
         ).get(GoalsViewModel::class.java)
+    }
 
-        tabPreferences = findViewById(R.id.tabPreferences)
-        indicatorPreferences = findViewById(R.id.indicatorPreferences)
-        tvPreferences = findViewById(R.id.tvPreferences)
-
-
-        tabPreferences.setOnClickListener {
-            startActivity(Intent(this, UserPreferencesActivity::class.java))
-        }
-
+    private fun setupGoalsList() {
         goalsAdapter = GoalsSettingsAdapter(
             emptyList(),
             onEdit = { goal -> showEditGoalDialog(goal) },
@@ -96,86 +121,79 @@ class SettingsActivity : AppCompatActivity() {
         rvGoals.layoutManager = LinearLayoutManager(this)
         rvGoals.adapter = goalsAdapter
 
-        val installedApps = loadInstalledApps()
-        appsAdapter = AppsSettingsAdapter(
-            installedApps,
-            mutableSetOf()
-        ) { pkg, checked ->
-            if (checked) {
-                vm.addBlockedApp(pkg)
-            } else {
-                vm.removeBlockedApp(pkg)
-            }
-        }
-        rvApps.layoutManager = LinearLayoutManager(this)
-        rvApps.adapter = appsAdapter
-
-        tabGoals.setOnClickListener { switchTab(true) }
-        tabApps.setOnClickListener { switchTab(false) }
-        switchTab(true)
-
         vm.allGoals.observe(this) { list ->
             goalsAdapter.submitList(list)
             rvGoals.visibility = if (list.isEmpty()) View.GONE else View.VISIBLE
         }
+    }
+
+    private fun setupAppsList() {
+        appsAdapter = AppsSettingsAdapter(
+            emptyList(),
+            mutableSetOf()
+        ) { pkg, checked ->
+            if (checked) vm.addBlockedApp(pkg) else vm.removeBlockedApp(pkg)
+        }
+        rvApps.layoutManager = LinearLayoutManager(this)
+        rvApps.adapter = appsAdapter
 
         vm.allBlockedApps.observe(this) { pkgs ->
             appsAdapter.updateBlockedApps(pkgs.toMutableSet())
-            PrefsUtils.saveBlockedSet(this, pkgs.toSet()) // keep cache synced
+            PrefsUtils.saveBlockedSet(this, pkgs.toSet())
+            Prefs.setSelectedApps(pkgs.toSet())
         }
 
+        lifecycleScope.launch {
+            try {
+                val apps = AppRepository.getInstance(this@SettingsActivity).getInstalledApps()
+                appsAdapter.submitList(apps)
+            } catch (_: Exception) {
+                Toast.makeText(this@SettingsActivity, R.string.failed_load_apps, Toast.LENGTH_SHORT).show()
+            } finally {
+                loadingOverlay.visibility = View.GONE
+            }
+        }
+    }
+
+    private fun setupPreferencesTab() {
+        etDisplayName.setText(PrefsUtils.getDisplayName(this).orEmpty())
+
+        val platforms = listOf(
+            PlatformPref("leetcode", "LeetCode", R.drawable.ic_leetcode),
+            PlatformPref("duolingo", "Duolingo", R.drawable.ic_duolingo),
+        )
+        platformPrefsAdapter = PlatformPrefsAdapter(this, platforms)
+        rvPlatformPrefs.layoutManager = LinearLayoutManager(this)
+        rvPlatformPrefs.adapter = platformPrefsAdapter
+        rvPlatformPrefs.isNestedScrollingEnabled = false
+    }
+
+    private fun setupTabs() {
+        tabGoals.setOnClickListener { switchTab(Tab.GOALS) }
+        tabApps.setOnClickListener { switchTab(Tab.APPS) }
+        tabPreferences.setOnClickListener { switchTab(Tab.PREFERENCES) }
+        switchTab(Tab.GOALS)
+    }
+
+    private fun setupActions() {
         btnAddGoal.setOnClickListener {
             startActivity(Intent(this, GoalsActivity::class.java))
         }
 
-//        btnSave.setOnClickListener {
-//            lifecycleScope.launch {
-//                try {
-//                    val displayName = PrefsUtils.getDisplayName(this@SettingsActivity) ?: ""
-//
-//                    val request = UserPreferencesRequest(
-//                        displayName = displayName,
-//                        usernames = adapter.getUsernames() // or emptyMap<String, String>()
-//                    )
-//
-//                    val result = withContext(Dispatchers.IO) {
-//                        userApi.updatePreferences(request)
-//                    }
-//                    Toast.makeText(
-//                        this@SettingsActivity,
-//                        "Preferences updated for ${result.name ?: displayName}",
-//                        Toast.LENGTH_SHORT
-//                    ).show()
-//
-//                } catch (e: Exception) {
-//                    e.printStackTrace()
-//                    Toast.makeText(this@SettingsActivity, "Failed to update preferences", Toast.LENGTH_SHORT).show()
-//                }
-//            }
-//
-//            finish()
-//        }
-
         btnSave.setOnClickListener {
             lifecycleScope.launch {
                 try {
-                    // 🧩 Get latest blocked apps from adapter
                     val blockedPkgs = appsAdapter.getSelectedPackages()
-
-                    // 🧠 Push update to backend
                     vm.replaceBlockedApps(blockedPkgs)
-
-                    // 💾 Save locally
-                    PrefsUtils.saveBlockedSet(this@SettingsActivity, blockedPkgs.toSet())
-
+                    val pkgSet = blockedPkgs.toSet()
+                    PrefsUtils.saveBlockedSet(this@SettingsActivity, pkgSet)
+                    Prefs.setSelectedApps(pkgSet)
                     Toast.makeText(
                         this@SettingsActivity,
                         "Blocked apps updated successfully",
                         Toast.LENGTH_SHORT
                     ).show()
-
                 } catch (e: Exception) {
-                    e.printStackTrace()
                     Toast.makeText(
                         this@SettingsActivity,
                         "Failed to update blocked apps: ${e.message}",
@@ -185,30 +203,98 @@ class SettingsActivity : AppCompatActivity() {
             }
         }
 
+        btnSavePreferences.setOnClickListener { savePreferences() }
 
-
-        // Initial load
-        vm.refreshGoals()
-        vm.refreshBlockedApps()
+        btnSignOut.setOnClickListener {
+            AlertDialog.Builder(this)
+                .setTitle(R.string.sign_out)
+                .setMessage(R.string.sign_out_confirm)
+                .setPositiveButton(R.string.sign_out) { _, _ -> performSignOut() }
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
+        }
     }
 
-    private fun switchTab(goals: Boolean) {
-        if (goals) {
-            indicatorGoals.visibility = View.VISIBLE
-            indicatorApps.visibility = View.INVISIBLE
-            rvGoals.visibility = View.VISIBLE
-            rvApps.visibility = View.GONE
-            btnAddGoal.visibility = View.VISIBLE
-            btnSave.visibility = View.GONE
-            settingsTabLabel.text = "Daily Goals"
-        } else {
-            indicatorGoals.visibility = View.INVISIBLE
-            indicatorApps.visibility = View.VISIBLE
-            rvGoals.visibility = View.GONE
-            rvApps.visibility = View.VISIBLE
-            btnAddGoal.visibility = View.GONE
-            btnSave.visibility = View.VISIBLE
-            settingsTabLabel.text = "Blocked App List"
+    private fun savePreferences() {
+        val displayName = etDisplayName.text.toString().trim()
+        val usernames = platformPrefsAdapter.getUsernames()
+
+        if (displayName.isEmpty()) {
+            Toast.makeText(this, R.string.display_name_required, Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        PrefsUtils.saveDisplayName(this, displayName)
+        platformPrefsAdapter.saveUsernames()
+
+        lifecycleScope.launch {
+            try {
+                val request = UserPreferencesRequest(
+                    displayName = displayName,
+                    usernames = usernames
+                )
+                val updatedUser = ApiClient.getClient(this@SettingsActivity)
+                    .create(UserApi::class.java)
+                    .updatePreferences(request)
+
+                for ((platform, uname) in usernames) {
+                    if (uname.isNotBlank()) {
+                        PrefsUtils.savePlatformUsername(this@SettingsActivity, platform, uname)
+                    }
+                }
+
+                Toast.makeText(
+                    this@SettingsActivity,
+                    getString(R.string.preferences_saved, updatedUser.user.displayName ?: displayName),
+                    Toast.LENGTH_SHORT
+                ).show()
+            } catch (e: Exception) {
+                Toast.makeText(
+                    this@SettingsActivity,
+                    R.string.preferences_save_failed,
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+    }
+
+    private fun performSignOut() {
+        lifecycleScope.launch {
+            authRepo.logout()
+            withContext(Dispatchers.Main) {
+                val intent = Intent(this@SettingsActivity, LoginActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                }
+                startActivity(intent)
+                finish()
+            }
+        }
+    }
+
+    private fun switchTab(tab: Tab) {
+        val primary = ContextCompat.getColor(this, R.color.text_primary)
+        val muted = ContextCompat.getColor(this, R.color.text_muted)
+
+        indicatorGoals.visibility = if (tab == Tab.GOALS) View.VISIBLE else View.INVISIBLE
+        indicatorApps.visibility = if (tab == Tab.APPS) View.VISIBLE else View.INVISIBLE
+        indicatorPreferences.visibility = if (tab == Tab.PREFERENCES) View.VISIBLE else View.INVISIBLE
+
+        tvGoals.setTextColor(if (tab == Tab.GOALS) primary else muted)
+        tvApps.setTextColor(if (tab == Tab.APPS) primary else muted)
+        tvPreferences.setTextColor(if (tab == Tab.PREFERENCES) primary else muted)
+
+        rvGoals.visibility = if (tab == Tab.GOALS) View.VISIBLE else View.GONE
+        rvApps.visibility = if (tab == Tab.APPS) View.VISIBLE else View.GONE
+        preferencesPanel.visibility = if (tab == Tab.PREFERENCES) View.VISIBLE else View.GONE
+
+        sectionHeaderRow.visibility = if (tab == Tab.PREFERENCES) View.GONE else View.VISIBLE
+        btnAddGoal.visibility = if (tab == Tab.GOALS) View.VISIBLE else View.GONE
+        btnSave.visibility = if (tab == Tab.APPS) View.VISIBLE else View.GONE
+
+        settingsTabLabel.text = when (tab) {
+            Tab.GOALS -> "Daily Goals"
+            Tab.APPS -> "Blocked App List"
+            Tab.PREFERENCES -> "Preferences"
         }
     }
 
@@ -222,7 +308,6 @@ class SettingsActivity : AppCompatActivity() {
 
         etTarget.setText(goal.targetValue.toString())
 
-        // Initialize with current deadline if present
         var selectedDeadlineEpoch: Long = goal.deadline
         if (selectedDeadlineEpoch > 0L) {
             val cal = Calendar.getInstance().apply { timeInMillis = selectedDeadlineEpoch }
@@ -233,7 +318,6 @@ class SettingsActivity : AppCompatActivity() {
             tvDeadlinePreview.text = "Deadline: $display"
         }
 
-        // 🕒 Material Time Picker
         btnPickDeadline.setOnClickListener {
             val cal = Calendar.getInstance()
             val picker = com.google.android.material.timepicker.MaterialTimePicker.Builder()
@@ -255,7 +339,8 @@ class SettingsActivity : AppCompatActivity() {
                 }.timeInMillis
                 selectedDeadlineEpoch = todayStart + (selectedHour * 60 * 60 * 1000L) + (selectedMinute * 60 * 1000L)
 
-                val display = String.format("%02d:%02d %s",
+                val display = String.format(
+                    "%02d:%02d %s",
                     if (selectedHour % 12 == 0) 12 else selectedHour % 12,
                     selectedMinute,
                     if (selectedHour >= 12) "PM" else "AM"
@@ -279,15 +364,12 @@ class SettingsActivity : AppCompatActivity() {
 
             lifecycleScope.launch {
                 try {
-                    // ✅ Instead of deleting & recreating, perform an update
                     val updatedGoal = goal.copy(
                         targetValue = newTarget,
                         deadline = selectedDeadlineEpoch
                     )
-
                     vm.updateGoal(updatedGoal)
                     Toast.makeText(ctx, "Goal updated", Toast.LENGTH_SHORT).show()
-
                 } catch (e: Exception) {
                     e.printStackTrace()
                     Toast.makeText(ctx, "Failed to update goal", Toast.LENGTH_SHORT).show()
@@ -299,7 +381,6 @@ class SettingsActivity : AppCompatActivity() {
         builder.show()
     }
 
-
     private fun showDeleteConfirm(goal: Goal) {
         AlertDialog.Builder(this)
             .setTitle("Delete goal")
@@ -307,19 +388,5 @@ class SettingsActivity : AppCompatActivity() {
             .setPositiveButton("Delete") { _, _ -> vm.deleteGoal(goal.id) }
             .setNegativeButton("Cancel", null)
             .show()
-    }
-
-    private fun loadInstalledApps(): List<AppInfo> {
-        val pm = packageManager
-        val apps = mutableListOf<AppInfo>()
-        val packages = pm.getInstalledApplications(PackageManager.GET_META_DATA)
-        for (appInfo in packages.sortedBy { it.loadLabel(pm).toString() }) {
-            if ((appInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0) continue
-            val label = appInfo.loadLabel(pm).toString()
-            val pkg = appInfo.packageName
-            val icon = appInfo.loadIcon(pm)
-            apps.add(AppInfo(label, pkg, icon))
-        }
-        return apps
     }
 }

@@ -13,16 +13,12 @@ import com.example.oblique_android.adapters.PlatformPrefsAdapter
 import com.example.oblique_android.network.ApiClient
 import com.example.oblique_android.network.api.UserApi
 import com.example.oblique_android.network.request.UserPreferencesRequest
-import com.example.oblique_android.network.response.UserPreferencesResponse
 import com.example.oblique_android.prefs.PlatformPref
 import com.example.oblique_android.utils.PrefsUtils
+import com.example.oblique_android.utils.setupWindowInsets
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import androidx.core.content.edit
-import java.util.HashMap
-import kotlin.collections.iterator
-import kotlin.collections.toMap
 
 class UserPreferencesActivity : AppCompatActivity() {
 
@@ -30,60 +26,39 @@ class UserPreferencesActivity : AppCompatActivity() {
     private lateinit var rvPlatforms: RecyclerView
     private lateinit var btnSave: Button
     private lateinit var adapter: PlatformPrefsAdapter
-    private lateinit var userApi: UserApi
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_user_preference)
+        setupWindowInsets(R.id.rootUserPreferences)
 
         etDisplayName = findViewById(R.id.etDisplayName)
         rvPlatforms = findViewById(R.id.rvPlatforms)
         btnSave = findViewById(R.id.btnSaveSettings)
 
-        userApi = ApiClient.getClient(this).create(UserApi::class.java)
+        etDisplayName.setText(PrefsUtils.getDisplayName(this).orEmpty())
 
-        val prefs = getSharedPreferences("user_prefs", MODE_PRIVATE)
-
-        // Prefill existing display name
-        val savedName = prefs.getString("displayName", "") ?: ""
-        etDisplayName.setText(savedName)
-
-        // Define supported platforms dynamically
         val platforms = listOf(
             PlatformPref("leetcode", "LeetCode", R.drawable.ic_leetcode),
             PlatformPref("duolingo", "Duolingo", R.drawable.ic_duolingo),
         )
 
-        // Initialize adapter
-        adapter = PlatformPrefsAdapter(platforms, prefs)
+        adapter = PlatformPrefsAdapter(this, platforms)
         rvPlatforms.layoutManager = LinearLayoutManager(this)
         rvPlatforms.adapter = adapter
 
         btnSave.setOnClickListener {
-            lifecycleScope.launch {
-
-            }
-        }
-
-
-        // Handle save button
-        btnSave.setOnClickListener {
             val displayName = etDisplayName.text.toString().trim()
-            val usernames = adapter.getUsernames() // Map<String, String>
+            val usernames = adapter.getUsernames()
 
             if (displayName.isEmpty()) {
                 Toast.makeText(this, "Please enter a display name", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            // Save locally first for offline persistence
-            prefs.edit {
-                putString("displayName", displayName)
-                adapter.saveUsernames(this)
-            }
             PrefsUtils.saveDisplayName(this, displayName)
+            adapter.saveUsernames()
 
-            // Sync to backend
             lifecycleScope.launch {
                 try {
                     val request = UserPreferencesRequest(
@@ -95,20 +70,11 @@ class UserPreferencesActivity : AppCompatActivity() {
                         .create(UserApi::class.java)
                         .updatePreferences(request)
 
-                    // ✅ Store usernames locally in PrefsUtils for validators
-                    val rawMap = adapter.getUsernames() // returns java.util.Map<String, String>
-                    val usernameMap: Map<String, String> = HashMap(rawMap) // safely converted
-
-                    for (entry in usernameMap.entries) {
-                        val platform = entry.key
-                        val uname = entry.value
-
+                    for ((platform, uname) in usernames) {
                         if (uname.isNotBlank()) {
                             PrefsUtils.savePlatformUsername(this@UserPreferencesActivity, platform, uname)
                         }
                     }
-
-
 
                     withContext(Dispatchers.Main) {
                         Toast.makeText(
@@ -118,9 +84,7 @@ class UserPreferencesActivity : AppCompatActivity() {
                         ).show()
                         finish()
                     }
-
                 } catch (e: Exception) {
-                    e.printStackTrace()
                     withContext(Dispatchers.Main) {
                         Toast.makeText(
                             this@UserPreferencesActivity,

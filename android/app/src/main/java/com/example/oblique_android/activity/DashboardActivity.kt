@@ -5,7 +5,6 @@ import android.animation.AnimatorListenerAdapter
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.app.AppOpsManager
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -22,19 +21,19 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.example.oblique_android.R
+import com.example.oblique_android.models.Goal
 import com.example.oblique_android.models.GoalsViewModel
-import com.example.oblique_android.repository.BlockedAppsRepository
+import com.example.oblique_android.activity.DashboardActivity
 import com.example.oblique_android.services.MonitoringService
+import com.example.oblique_android.services.Prefs
 import com.example.oblique_android.utils.BitmapUtils
 import com.example.oblique_android.utils.PrefsUtils
+import com.example.oblique_android.utils.setupWindowInsets
 import kotlinx.coroutines.launch
 import androidx.core.net.toUri
-import com.example.oblique_android.models.Goal
-import com.example.oblique_android.repository.GoalsRepository
-import com.example.oblique_android.validation.GoalValidationScheduler
 import com.example.oblique_android.validation.GoalValidator
+import com.example.oblique_android.validation.ManualValidationLimiter
 
 class DashboardActivity : AppCompatActivity() {
 
@@ -55,6 +54,7 @@ class DashboardActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_dashboard)
+        setupWindowInsets(R.id.scrollRoot)
 
         switchProtection = findViewById(R.id.switchProtection)
         tvProtectionStatus = findViewById(R.id.tvProtectionStatus)
@@ -67,6 +67,7 @@ class DashboardActivity : AppCompatActivity() {
         btnSettings = findViewById(R.id.btnSettings)
         btnManualPoll = findViewById(R.id.manualPoll)
         vm = ViewModelProvider(this)[GoalsViewModel::class.java]
+        Prefs.init(this)
 
         btnSettings.setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
@@ -79,7 +80,9 @@ class DashboardActivity : AppCompatActivity() {
         vm.allBlockedApps.observe(this) { pkgs ->
             tvAppsBlocked.text = pkgs.size.toString()
             showBlockedApps(pkgs)
-            PrefsUtils.saveBlockedSet(this, pkgs.toSet()) // sync cache for MonitoringService
+            val pkgSet = pkgs.toSet()
+            PrefsUtils.saveBlockedSet(this, pkgSet)
+            Prefs.setSelectedApps(pkgSet)
         }
 
         btnStartProtection.setOnClickListener {
@@ -100,31 +103,36 @@ class DashboardActivity : AppCompatActivity() {
         }
 
         btnManualPoll.setOnClickListener {
+            val limiter = ManualValidationLimiter(this)
+            if (!limiter.canTrigger()) {
+                Toast.makeText(this, "Manual validation available once per hour", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
             lifecycleScope.launch {
-                val repo = GoalsRepository(this@DashboardActivity)
-                val goals = repo.listGoals()
                 val username = PrefsUtils.getPlatformUsername(this@DashboardActivity, "leetcode")
                 if (username.isNullOrBlank()) {
                     Toast.makeText(this@DashboardActivity, "No LeetCode username found", Toast.LENGTH_SHORT).show()
                     return@launch
                 }
 
+                val goals = vm.allGoals.value.orEmpty()
                 val validator = GoalValidator(this@DashboardActivity)
                 var anyUpdated = false
 
                 for (goal in goals) {
                     if (goal.platform.lowercase() == "leetcode" && goal.status == "active") {
-                        val changed = validator.validate(goal, username)
-                        if (changed) anyUpdated = true
+                        if (validator.validate(goal, username)) anyUpdated = true
                     }
                 }
 
+                limiter.markTriggered()
                 if (anyUpdated) {
-                    Toast.makeText(this@DashboardActivity, "Progress updated!", Toast.LENGTH_SHORT)
-                        .show()
-                    vm.refreshGoals() // 🔥 triggers LiveData update → UI refresh → tvGoalsDone updated
-                }else
+                    Toast.makeText(this@DashboardActivity, "Progress updated!", Toast.LENGTH_SHORT).show()
+                    vm.refreshDashboard()
+                } else {
                     Toast.makeText(this@DashboardActivity, "No new progress detected", Toast.LENGTH_SHORT).show()
+                }
             }
         }
 
@@ -142,8 +150,7 @@ class DashboardActivity : AppCompatActivity() {
             refreshBlockedStatuses()
         }
 
-        vm.refreshGoals()
-        vm.refreshBlockedApps()
+        vm.refreshDashboard()
     }
 
     private fun ensureUsageAccessPermission(): Boolean {
@@ -332,37 +339,8 @@ class DashboardActivity : AppCompatActivity() {
         }
     }
 
-    private val logoutReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            startActivity(Intent(this@DashboardActivity, LoginActivity::class.java))
-            finish()
-        }
-    }
-
     override fun onResume() {
         super.onResume()
-        lifecycleScope.launch {
-            try {
-                vm.refreshGoals()
-                val blockedAppsRepository = BlockedAppsRepository(this@DashboardActivity)
-                val blocked = blockedAppsRepository.listBlockedApps()
-
-
-                // update the blocked apps counter + UI
-                tvAppsBlocked.text = blocked.size.toString()
-                showBlockedApps(blocked)
-
-                // also update cache for MonitoringService (keeps it consistent everywhere)
-                PrefsUtils.saveBlockedSet(this@DashboardActivity, blocked.toSet())
-            } catch (e: Exception) {
-                Log.e("DashboardActivity", "Failed to refresh blocked apps", e)
-            }
-        }
-    }
-
-
-    override fun onPause() {
-        super.onPause()
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(logoutReceiver)
+        vm.refreshDashboard()
     }
 }

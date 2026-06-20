@@ -1,114 +1,34 @@
-// src/controllers/goal.controller.ts
-import { Request, Response } from 'express';
-import Goal from '../models/goal.model';
+// src/controllers/goals.controller.ts
+import { Response } from 'express';
 import { Types } from 'mongoose';
 import * as goalSvc from '../services/goals.service';
 
-/**
- * GET /api/goals
- * List goals for authenticated user.
- */
 export async function listGoals(req: any, res: Response) {
     try {
-        // Ensure valid user id
-        const userId = new Types.ObjectId(req.user._id);
-
-        const docs = await Goal.find({ user: userId }).sort({ createdAt: -1 }).lean().exec();
-
-        const out = docs.map((g: any) => ({
-            id: g._id,
-            title: g.title,
-            platform: g.platform,
-            platformUsername: g.platformUsername,
-            unit: g.unit,
-            baselineValue: g.baselineValue,
-            targetValue: g.targetValue,
-            progress: g.progress,
-            status: g.status,
-            checkIntervalMs: g.checkIntervalMs,
-            lastCheckedAt: g.lastCheckedAt,
-            completedAt: g.completedAt,
-            completedByDevice: g.completedByDevice,
-            evidence: g.evidence,
-            createdAt: g.createdAt,
-            updatedAt: g.updatedAt,
-            deadline: g.deadline
-        }));
-
-        return res.json(out);
+        const goals = await goalSvc.listGoalsForUser(req.user._id);
+        return res.json(goals);
     } catch (err: any) {
         console.error('listGoals error', err);
         return res.status(500).json({ message: err.message });
     }
 }
 
-/**
- * POST /api/goals
- * Body: { title, platform, platformUsername?, unit?, baselineValue?, targetValue, checkIntervalMs?, deadline?, evidence? }
- * Creates a goal tied to the authenticated user.
- */
 export async function createGoal(req: any, res: Response) {
     try {
-        const userId = new Types.ObjectId(req.user._id);
-
-        // be permissive: pick fields from body but always set user
-        const payload: any = {
-            user: userId,
-            title: req.body.title || `${req.body.platform || 'goal'} goal`,
-            platform: req.body.platform || 'leetcode',
-            platformUsername: req.body.platformUsername || null,
-            deadline: req.body.deadline || null,
-            unit: req.body.unit || req.body.unit || '',
-            baselineValue: typeof req.body.baselineValue === 'number' ? req.body.baselineValue : 0,
-            targetValue: typeof req.body.targetValue === 'number' ? req.body.targetValue : 0,
-            progress: typeof req.body.progress === 'number' ? req.body.progress : 0,
-            status: req.body.status || 'active',
-            checkIntervalMs: typeof req.body.checkIntervalMs === 'number' ? req.body.checkIntervalMs : 3600000,
-            evidence: req.body.evidence || null
-            // deadline handled by service if needed
-        };
-
-        // Basic validation
-        if (!payload.targetValue || payload.targetValue <= 0) {
-            return res.status(400).json({ message: 'targetValue is required and must be > 0' });
-        }
-
-        const g = await Goal.create(payload);
-
-        return res.status(201).json({
-            id: g._id,
-            title: g.title,
-            platform: g.platform,
-            platformUsername: g.platformUsername,
-            unit: g.unit,
-            baselineValue: g.baselineValue,
-            targetValue: g.targetValue,
-            progress: g.progress,
-            status: g.status,
-            checkIntervalMs: g.checkIntervalMs,
-            lastCheckedAt: g.lastCheckedAt,
-            completedAt: g.completedAt,
-            evidence: g.evidence,
-            createdAt: g.createdAt,
-            updatedAt: g.updatedAt,
-            deadline: g.deadline
-        });
+        const goal = await goalSvc.createGoal(req.user._id, req.body);
+        return res.status(201).json(goal);
     } catch (err: any) {
         console.error('createGoal error', err);
         return res.status(400).json({ message: err.message });
     }
 }
 
-/**
- * DELETE /api/goals/:id
- */
 export async function deleteGoal(req: any, res: Response) {
     try {
-        const userId = new Types.ObjectId(req.user._id);
         const id = req.params.id;
         if (!Types.ObjectId.isValid(id)) return res.status(400).json({ message: 'Invalid id' });
-
-        await Goal.deleteOne({ _id: id, user: userId }).exec();
+        const deleted = await goalSvc.deleteGoalForUser(req.user._id, id);
+        if (!deleted) return res.status(404).json({ message: 'Goal not found' });
         return res.json({ ok: true });
     } catch (err: any) {
         console.error('deleteGoal error', err);
@@ -118,134 +38,65 @@ export async function deleteGoal(req: any, res: Response) {
 
 export async function completeGoal(req: any, res: Response) {
     try {
-        const userId = req.user._id;
         const id = req.params.id;
         if (!Types.ObjectId.isValid(id)) return res.status(400).json({ message: 'Invalid id' });
 
-        const now = new Date();
         const result = await goalSvc.markComplete(
-            userId,
+            req.user._id,
             id,
-            now,
+            new Date(),
             { via: 'manual', completedByDevice: !!req.body.completedByDevice },
             req.body.evidence || null
         );
-
-        if (!result) return res.status(404).json({ message: 'Goal not found' });
         return res.json(result);
     } catch (err: any) {
         console.error('completeGoal error', err);
+        if (err.message === 'Goal not found') return res.status(404).json({ message: err.message });
         return res.status(500).json({ message: err.message });
     }
 }
 
-
-
 export async function getGoal(req: any, res: Response) {
     try {
-        const userId = new Types.ObjectId(req.user._id);
         const id = req.params.id;
         if (!Types.ObjectId.isValid(id)) return res.status(400).json({ message: 'Invalid id' });
-
-        const goal = await Goal.findOne({ _id: id, user: userId }).lean().exec();
+        const goal = await goalSvc.getGoalForUser(req.user._id, id);
         if (!goal) return res.status(404).json({ message: 'Goal not found' });
-
-        return res.json({
-            id: goal._id,
-            title: goal.title,
-            platform: goal.platform,
-            platformUsername: goal.platformUsername,
-            unit: goal.unit,
-            baselineValue: goal.baselineValue,
-            targetValue: goal.targetValue,
-            status: goal.status,
-            createdAt: goal.createdAt,
-            updatedAt: goal.updatedAt,
-            deadline: goal.deadline
-        });
+        return res.json(goal);
     } catch (err: any) {
         console.error('getGoal error', err);
         return res.status(500).json({ message: err.message });
     }
 }
 
-
 export async function updateGoalProgress(req: any, res: Response) {
     try {
-        const userId = req.user._id;
         const id = req.params.id;
         const { progress } = req.body;
-        if (!progress || typeof progress !== 'number') {
+        if (progress === undefined || typeof progress !== 'number') {
             return res.status(400).json({ message: 'Missing or invalid progress' });
         }
-
-        const updated = await goalSvc.updateGoalProgress(id, progress, userId);
+        const updated = await goalSvc.updateGoalProgress(id, progress, req.user._id);
         if (!updated) return res.status(404).json({ message: 'Goal not found' });
-
         return res.json(updated);
     } catch (err: any) {
         console.error('updateGoalProgress error', err);
         return res.status(500).json({ message: err.message });
     }
-    
 }
 
-/**
- * PUT /api/goals/:id
- * Update selected fields of an existing goal (partial update).
- */
 export async function updateGoal(req: any, res: Response) {
     try {
-        const userId = new Types.ObjectId(req.user._id);
         const id = req.params.id;
-
         if (!Types.ObjectId.isValid(id)) {
             return res.status(400).json({ message: 'Invalid goal id' });
         }
-
-        const allowedFields = ['title', 'targetValue', 'deadline', 'unit', 'checkIntervalMs'];
-        const updatePayload: Record<string, any> = {};
-
-        for (const key of allowedFields) {
-            if (req.body[key] !== undefined) {
-                updatePayload[key] = req.body[key];
-            }
-        }
-
-        if (Object.keys(updatePayload).length === 0) {
-            return res.status(400).json({ message: 'No valid fields to update' });
-        }
-
-        updatePayload.updatedAt = new Date();
-
-        const updatedGoal = await Goal.findOneAndUpdate(
-            { _id: id, user: userId },
-            { $set: updatePayload },
-            { new: true }
-        ).lean();
-
-        if (!updatedGoal) {
-            return res.status(404).json({ message: 'Goal not found' });
-        }
-
-        return res.json({
-            id: updatedGoal._id,
-            title: updatedGoal.title,
-            platform: updatedGoal.platform,
-            platformUsername: updatedGoal.platformUsername,
-            unit: updatedGoal.unit,
-            baselineValue: updatedGoal.baselineValue,
-            targetValue: updatedGoal.targetValue,
-            progress: updatedGoal.progress,
-            status: updatedGoal.status,
-            deadline: updatedGoal.deadline,
-            checkIntervalMs: updatedGoal.checkIntervalMs,
-            createdAt: updatedGoal.createdAt,
-            updatedAt: updatedGoal.updatedAt,
-        });
+        const updatedGoal = await goalSvc.updateGoalForUser(req.user._id, id, req.body);
+        if (!updatedGoal) return res.status(404).json({ message: 'Goal not found' });
+        return res.json(updatedGoal);
     } catch (err: any) {
         console.error('updateGoal error', err);
-        return res.status(500).json({ message: err.message });
+        const status = err.message === 'No valid fields to update' ? 400 : 500;
+        return res.status(status).json({ message: err.message });
     }
 }
-

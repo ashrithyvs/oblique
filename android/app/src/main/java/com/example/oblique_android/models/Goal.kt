@@ -58,10 +58,10 @@ data class Goal(
             val deadlineMs = parseDeadline(dto.deadline)
             val progressValue = when (dto.status.lowercase(Locale.ROOT)) {
                 "completed" -> dto.targetValue
-                else -> 0
+                else -> dto.progress.coerceAtLeast(0)
             }
 
-            val goal = Goal(
+            return Goal(
                 id = dto.id,
                 platform = dto.platform,
                 unit = dto.unit.ifBlank { "unknown" },
@@ -71,10 +71,6 @@ data class Goal(
                 deadline = deadlineMs,
                 status = dto.status
             )
-
-            // 🔍 Debug log
-            println("Goal.fromDto → id=${goal.id}, platform=${goal.platform}, status=${goal.status}, deadline=${goal.deadline}")
-            return goal
         }
     }
 }

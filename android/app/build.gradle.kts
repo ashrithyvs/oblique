@@ -1,7 +1,54 @@
+import java.io.FileInputStream
+import java.net.URI
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    id("kotlin-kapt")
+}
+
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+require(localPropertiesFile.exists()) {
+    "Missing android/local.properties. Copy local.properties.example and set API_BASE_URL."
+}
+FileInputStream(localPropertiesFile).use { localProperties.load(it) }
+
+val apiBaseUrlRaw = localProperties.getProperty("API_BASE_URL")?.trim().orEmpty()
+require(apiBaseUrlRaw.isNotBlank()) {
+    "API_BASE_URL must be set in android/local.properties"
+}
+
+val apiBaseUrl = if (apiBaseUrlRaw.endsWith("/")) apiBaseUrlRaw else "$apiBaseUrlRaw/"
+
+val apiHost = URI(apiBaseUrl).host
+require(!apiHost.isNullOrBlank()) {
+    "API_BASE_URL must be a valid URL with a host (e.g. http://10.0.2.2:3000/)"
+}
+
+val generatedNetworkSecurityDir = layout.buildDirectory.dir("generated/network_security_config")
+
+tasks.register("generateNetworkSecurityConfig") {
+    val outDir = generatedNetworkSecurityDir.get().asFile
+    val outFile = outDir.resolve("xml/network_security_config.xml")
+    outputs.file(outFile)
+    doLast {
+        outFile.parentFile.mkdirs()
+        outFile.writeText(
+            """
+            <?xml version="1.0" encoding="utf-8"?>
+            <network-security-config>
+                <domain-config cleartextTrafficPermitted="true">
+                    <domain includeSubdomains="true">$apiHost</domain>
+                </domain-config>
+            </network-security-config>
+            """.trimIndent()
+        )
+    }
+}
+
+tasks.named("preBuild").configure {
+    dependsOn("generateNetworkSecurityConfig")
 }
 
 android {
@@ -15,19 +62,11 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        // Base URL (fallback + override via buildTypes)
-        val apiBaseUrl: String = project.findProperty("API_BASE_URL") as String?
-            ?: "http://192.168.29.115:3000/"
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
     }
 
     buildTypes {
-        debug {
-            buildConfigField("String", "API_BASE_URL", "\"http://192.168.29.115:3000/\"")
-            isMinifyEnabled = false
-        }
         release {
-            buildConfigField("String", "API_BASE_URL", "\"https://api.regretnt.com/\"")
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -45,38 +84,34 @@ android {
     }
     buildFeatures {
         viewBinding = true
-        buildConfig = true   // 👈 this is missing
+        buildConfig = true
+    }
+
+    sourceSets {
+        getByName("main") {
+            res.srcDir(generatedNetworkSecurityDir)
+        }
     }
 }
 
 dependencies {
-    // AndroidX + UI
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
-    implementation(libs.androidx.navigation.fragment.ktx)
-    implementation(libs.androidx.navigation.ui.ktx)
     implementation(libs.androidx.recyclerview)
     implementation("androidx.cardview:cardview:1.0.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.core:core-splashscreen:1.0.1")
+    implementation("androidx.activity:activity-ktx:1.9.3")
 
-    // PIN & Security
     implementation("io.github.chaosleung:pinview:1.4.4")
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
-    // Lifecycle & coroutines
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.6")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
-    // Room
-    implementation("androidx.room:room-runtime:2.6.1")
-    implementation("androidx.room:room-ktx:2.6.1")
-    kapt("androidx.room:room-compiler:2.6.1")
-
-    // Networking (Retrofit + Moshi + OkHttp)
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-moshi:2.11.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
@@ -85,9 +120,7 @@ dependencies {
 
     implementation("androidx.work:work-runtime-ktx:2.9.0")
 
-    // Tests
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-
 }

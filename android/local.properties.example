@@ -1,0 +1,9 @@
+## Copy this file to local.properties and adjust for your machine.
+## local.properties must NOT be committed to version control.
+
+sdk.dir=/path/to/Android/Sdk
+
+# Backend API base URL (must end with /)
+# Emulator → host machine: http://10.0.2.2:3000/
+# Physical device on same LAN: http://<your-machine-ip>:3000/
+API_BASE_URL=http://10.0.2.2:3000/

@@ -8,13 +8,16 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.oblique_android.network.api.GoalRequest
 import com.example.oblique_android.repository.BlockedAppsRepository
+import com.example.oblique_android.repository.DashboardRepository
 import com.example.oblique_android.repository.GoalsRepository
+import com.example.oblique_android.models.Goal
 import kotlinx.coroutines.launch
 
 class GoalsViewModel(application: Application) : AndroidViewModel(application) {
 
     private val goalsRepo = GoalsRepository(application)
     private val blockedRepo = BlockedAppsRepository(application)
+    private val dashboardRepo = DashboardRepository(application)
 
     private val _goals = MutableLiveData<List<Goal>>(emptyList())
     val allGoals: LiveData<List<Goal>> = _goals
@@ -91,6 +94,20 @@ class GoalsViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 _blockedApps.postValue(blockedRepo.listBlockedApps())
             } catch (_: Exception) { }
+        }
+    }
+
+    /** Single round-trip: goals + blocked apps from GET /api/dashboard */
+    fun refreshDashboard() {
+        viewModelScope.launch {
+            try {
+                val dash = dashboardRepo.fetchDashboard() ?: return@launch
+                _goals.postValue(dash.goals.map { Goal.fromDto(it) })
+                _blockedApps.postValue(dash.blockedApps)
+            } catch (_: Exception) {
+                refreshGoals()
+                refreshBlockedApps()
+            }
         }
     }
 

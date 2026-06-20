@@ -8,6 +8,9 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.chaos.view.PinView
 import com.example.oblique_android.R
+import com.example.oblique_android.utils.OnboardingRouter
+import com.example.oblique_android.utils.PinConstants
+import com.example.oblique_android.utils.setupWindowInsets
 import com.google.android.material.button.MaterialButton
 
 class PinSetupActivity : AppCompatActivity() {
@@ -16,8 +19,10 @@ class PinSetupActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_pin_setup)
+        setupWindowInsets(R.id.rootPinSetup)
 
         val pinView = findViewById<PinView>(R.id.pinView)
+        pinView.itemCount = PinConstants.LENGTH
         val togglePassword = findViewById<ImageView>(R.id.togglePassword)
         val btnContinue = findViewById<MaterialButton>(R.id.btnContinuePinSetup)
 
@@ -34,8 +39,12 @@ class PinSetupActivity : AppCompatActivity() {
         btnContinue.setOnClickListener {
             val pin = pinView.text?.toString()?.trim()
 
-            if (pin.isNullOrEmpty() || pin.length != 6) {
-                Toast.makeText(this, "Please enter a 6-digit PIN", Toast.LENGTH_SHORT).show()
+            if (!PinConstants.isValid(pin)) {
+                Toast.makeText(
+                    this,
+                    getString(R.string.pin_enter_length, PinConstants.LENGTH),
+                    Toast.LENGTH_SHORT
+                ).show()
                 return@setOnClickListener
             }
 

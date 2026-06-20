@@ -24,7 +24,7 @@ class BlockedAppsRepository(context: Context) {
     }
 
     suspend fun removeBlockedApp(pkg: String): List<String> {
-        return api.removeBlockedApp(pkg)
+        return api.removeBlockedApp(pkg).map { it.packageName }
     }
 
     suspend fun replaceBlockedApps(apps: List<String>): List<String> {

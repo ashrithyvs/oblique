@@ -45,10 +45,6 @@
             android:name=".activity.DashboardActivity"
             android:theme="@style/Theme.Oblique.NoEdgeToEdge" />
 
-        <activity
-            android:name=".activity.PromptActivity"
-            android:theme="@style/Theme.Oblique.Dialog" />
-
         <activity android:name=".activity.WelcomeActivity" />
         <activity android:name=".activity.LoginActivity" android:theme="@style/Theme.Oblique"/>
         <activity android:name=".activity.RegisterActivity" />

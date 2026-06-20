@@ -1,23 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- path: app/src/main/res/layout/activity_settings.xml -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/settingsContainer"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:clipToPadding="false">
+
+<LinearLayout
     android:id="@+id/rootSettings"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@color/bg_white"
     android:paddingHorizontal="24dp"
-    android:fillViewport="true"
-    android:scrollbars="none"
     android:clipToPadding="false">
 
     <!-- Header -->
     <LinearLayout
-        android:paddingTop="48dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:paddingTop="16dp">
 
         <TextView
             android:id="@+id/tvHeader"
@@ -53,9 +56,9 @@
         android:layout_marginTop="12dp">
 
         <LinearLayout
-            android:layout_height="wrap_content"
             android:id="@+id/tabGoals"
             android:layout_width="0dp"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
             android:orientation="vertical"
             android:gravity="center">
@@ -80,8 +83,8 @@
         <LinearLayout
             android:id="@+id/tabApps"
             android:layout_width="0dp"
-            android:layout_weight="1"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:orientation="vertical"
             android:gravity="center">
 
@@ -100,13 +103,14 @@
                 android:layout_height="3dp"
                 android:layout_marginTop="6dp"
                 android:background="@color/text_primary"
-                android:visibility="gone" />
+                android:visibility="invisible" />
         </LinearLayout>
+
         <LinearLayout
             android:id="@+id/tabPreferences"
             android:layout_width="0dp"
-            android:layout_weight="1"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:orientation="vertical"
             android:gravity="center">
 
@@ -125,13 +129,13 @@
                 android:layout_height="3dp"
                 android:layout_marginTop="6dp"
                 android:background="@color/text_primary"
-                android:visibility="gone" />
+                android:visibility="invisible" />
         </LinearLayout>
-
     </LinearLayout>
 
-    <!-- Goals header + add button -->
+    <!-- Goals / Apps section header -->
     <LinearLayout
+        android:id="@+id/sectionHeaderRow"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -144,7 +148,7 @@
             android:layout_weight="1"
             android:layout_height="wrap_content"
             android:text="Daily Goals"
-            android:textSize="24dp"
+            android:textSize="24sp"
             android:textStyle="bold"
             android:textColor="@color/text_primary" />
 
@@ -161,14 +165,12 @@
             android:textColor="@color/white" />
     </LinearLayout>
 
-    <!-- Content area: both RecyclerViews exist; we toggle visibility in activity -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:layout_marginTop="12dp">
 
-        <!-- Goals list -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvGoals"
             android:layout_width="match_parent"
@@ -177,7 +179,6 @@
             android:paddingBottom="8dp"
             android:visibility="visible" />
 
-        <!-- Apps list (initially hidden) -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerViewApps"
             android:layout_width="match_parent"
@@ -185,19 +186,105 @@
             android:clipToPadding="false"
             android:paddingBottom="8dp"
             android:visibility="gone" />
+
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/preferencesPanel"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone"
+            android:clipToPadding="false"
+            android:fillViewport="true"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingBottom="8dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Display Name"
+                    android:textStyle="bold"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary"
+                    android:layout_marginBottom="8dp" />
+
+                <EditText
+                    android:id="@+id/etDisplayName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/input_bg"
+                    android:padding="12dp"
+                    android:hint="Your name"
+                    android:inputType="textPersonName" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Platform Usernames"
+                    android:textStyle="bold"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary"
+                    android:layout_marginTop="24dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Optional — add usernames for platforms you use"
+                    android:textSize="12sp"
+                    android:textColor="@color/text_muted"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginBottom="8dp" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvPlatformPrefs"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false"
+                    android:overScrollMode="never" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSavePreferences"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginTop="20dp"
+                    android:text="@string/save_settings"
+                    android:textAllCaps="false"
+                    app:cornerRadius="12dp"
+                    android:backgroundTint="@color/btn_dark"
+                    android:textColor="@color/white" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSignOut"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginTop="12dp"
+                    android:text="@string/sign_out"
+                    android:textAllCaps="false"
+                    app:cornerRadius="12dp"
+                    app:strokeColor="@color/text_primary"
+                    android:textColor="@color/text_primary" />
+            </LinearLayout>
+        </androidx.core.widget.NestedScrollView>
     </FrameLayout>
 
-    <!-- Save button -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnSave"
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:layout_marginTop="12dp"
-        android:text="Save Settings"
+        android:text="@string/save_settings"
         android:textAllCaps="false"
-        android:layout_gravity="bottom"
+        android:visibility="gone"
         app:cornerRadius="12dp"
         android:backgroundTint="@color/btn_dark"
         android:textColor="@color/white" />
 
 </LinearLayout>
+
+    <include layout="@layout/view_loading_overlay" />
+
+</FrameLayout>

@@ -2,6 +2,7 @@
 import { Request, Response } from 'express';
 import * as userSvc from '../services/user.service';
 import Goal from '../models/goal.model';
+import { toBlockedAppDtos } from '../utils/goalDto';
 
 
 /**
@@ -29,6 +30,8 @@ export async function getCurrentUser(req: any, res: Response) {
             id: userDoc._id,
             email: userDoc.email,
             name: userDoc.name,
+            displayName: userDoc.displayName ?? userDoc.name ?? null,
+            platformUsernames: userDoc.platformUsernames || {},
             hasPin: !!userDoc.hashedPin,
             blockedApps: userDoc.blockedApps || [],
             goals: goals.map(g => ({
@@ -93,7 +96,8 @@ export async function removeBlockedApp(req: any, res: Response) {
             return res.status(400).json({ message: 'Missing packageName' });
         }
         await userSvc.removeBlockedApp(req.user._id, pkg);
-        return res.json({ ok: true });
+        const pkgs = await userSvc.getBlockedApps(req.user._id);
+        return res.json(toBlockedAppDtos(pkgs));
     } catch (err: any) {
         console.error('removeBlockedApp error', err);
         return res.status(500).json({ message: err.message });
@@ -109,7 +113,7 @@ export async function replaceBlockedApps(req: any, res: Response) {
         const list = Array.isArray(req.body.blockedApps) ? req.body.blockedApps : [];
         await userSvc.updateBlockedApps(req.user._id, list);
         const pkgs = await userSvc.getBlockedApps(req.user._id);
-        return res.json(pkgs.map(p => ({ packageName: p })));
+        return res.json(toBlockedAppDtos(pkgs));
     } catch (err: any) {
         console.error('replaceBlockedApps error', err);
         return res.status(500).json({ message: err.message });

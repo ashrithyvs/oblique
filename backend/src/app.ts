@@ -7,7 +7,7 @@ import rateLimit from 'express-rate-limit';
 import compression from 'compression';
 import routes from './routes';
 import { errorHandler } from './middleware/errorHandler';
-import { AUTH_RATE_LIMIT_MAX, AUTH_RATE_LIMIT_WINDOW_MS, GOAL_COMPLETE_RATE_LIMIT_MAX, GOAL_COMPLETE_RATE_LIMIT_WINDOW_MS, ALLOWED_ORIGINS, ENFORCE_HTTPS, PORT } from './config';
+import { AUTH_RATE_LIMIT_MAX, AUTH_RATE_LIMIT_WINDOW_MS, ALLOWED_ORIGINS, ENFORCE_HTTPS } from './config';
 import { logger, morganStream } from './utils/logger';
 
 const app = express();
@@ -31,7 +31,7 @@ const corsOptions: cors.CorsOptions = {
             return callback(new Error('Not allowed by CORS'), false);
         }
     },
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
     credentials: true,
     maxAge: 3600
@@ -58,16 +58,7 @@ const authLimiter = rateLimit({
     max: AUTH_RATE_LIMIT_MAX,
     message: { message: 'Too many auth requests, please try again later.' }
 });
-const goalCompleteLimiter = rateLimit({
-    windowMs: GOAL_COMPLETE_RATE_LIMIT_WINDOW_MS,
-    max: GOAL_COMPLETE_RATE_LIMIT_MAX,
-    message: { message: 'Too many goal-complete requests, slow down.' }
-});
-
-// Apply rate-limits to route prefixes
 app.use('/api/auth', authLimiter);
-// The path pattern with param isn't supported in app.use directly for limiter; middleware should be applied per-route.
-// We'll also apply limiter in routes file for /goals/:id/complete if necessary.
 
 // Mount API routes
 app.use('/api', routes);

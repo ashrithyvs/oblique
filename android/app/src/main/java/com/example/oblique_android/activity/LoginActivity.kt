@@ -10,7 +10,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import com.example.oblique_android.R
 import com.example.oblique_android.models.AuthViewModel
-import com.example.oblique_android.utils.FlowDecider
+import com.example.oblique_android.utils.OnboardingRouter
+import com.example.oblique_android.utils.setupWindowInsets
 import com.example.oblique_android.utils.PermissionUtils
 
 class LoginActivity : AppCompatActivity() {
@@ -19,19 +20,21 @@ class LoginActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
+        setupWindowInsets(R.id.rootLogin)
 
         val etEmail = findViewById<EditText>(R.id.inputEmail)
         val etPassword = findViewById<EditText>(R.id.inputPassword)
         val btnLogin = findViewById<Button>(R.id.btnLogin)
         val btnRegister = findViewById<Button>(R.id.btnGoRegister)
 
-        authVm.authResult.observe(this, Observer { success ->
-            if (success) {
-                val next = FlowDecider.nextActivity(this)
+        authVm.authResult.observe(this, Observer { outcome ->
+            if (outcome.success) {
+                val next = OnboardingRouter.next(this)
                 startActivity(Intent(this, next))
                 finish()
             } else {
-                Toast.makeText(this, "Login failed", Toast.LENGTH_SHORT).show()
+                val message = outcome.errorMessage ?: getString(R.string.login_failed)
+                Toast.makeText(this, message, Toast.LENGTH_LONG).show()
             }
         })
 

@@ -1,93 +1,83 @@
 // src/services/goals.service.ts
-import Goal, { IGoal } from '../models/goal.model';
+import Goal from '../models/goal.model';
 import GoalCheckHistory from '../models/goalCheckHistory.model';
 import mongoose, { Types } from 'mongoose';
+import { toGoalDto } from '../utils/goalDto';
+import { createGoalSchema } from '../utils/validators';
 
-/**
- * Create a new goal for a user.
- */
-export async function createGoal(userId: string, data: {
-    platform?: string;
-    platformUsername?: string;
-    baselineValue?: number | null;
-    targetValue: number;
-    deadline?: string | null;
-    checkIntervalMs?: number;
-    title?: string;
-    evidence?: any;
-}): Promise<IGoal> {
-    const doc: Partial<IGoal> = {
+export type GoalDtoResponse = ReturnType<typeof toGoalDto>;
+
+export async function createGoal(userId: string, body: unknown): Promise<GoalDtoResponse> {
+    const parsed = createGoalSchema.parse(body);
+    const doc = await Goal.create({
         user: new Types.ObjectId(userId),
-        platform: data.platform ?? 'leetcode',
-        platformUsername: data.platformUsername ?? '',
-        baselineValue: typeof data.baselineValue === 'number' ? data.baselineValue : 0,
-        targetValue: data.targetValue,
-        deadline: data.deadline ? new Date(data.deadline as any) : null,
-        checkIntervalMs: data.checkIntervalMs ?? 3600000,
-        title: data.title ?? '',
-        evidence: data.evidence ?? null
-    } as any;
-
-    const created = await Goal.create(doc);
-    return created;
+        title: parsed.title || `${parsed.platform || 'goal'} goal`,
+        platform: parsed.platform ?? 'leetcode',
+        platformUsername: parsed.platformUsername ?? null,
+        unit: (body as any).unit ?? '',
+        baselineValue: parsed.baselineValue ?? 0,
+        targetValue: parsed.targetValue,
+        progress: 0,
+        status: 'active',
+        deadline: (body as any).deadline ?? null,
+        checkIntervalMs: parsed.checkIntervalMs ?? 3600000,
+        evidence: parsed.evidence ?? null,
+    });
+    return toGoalDto(doc.toObject());
 }
 
-/**
- * List goals for a user. Optional `since` returns only updated goals since that date.
- */
-export async function listGoals(userId: string, since?: Date | undefined) {
-    const q: any = { user: new Types.ObjectId(userId) };
-    if (since) {
-        q.updatedAt = { $gte: since };
-    }
-    const docs = await Goal.find(q).sort({ createdAt: -1 }).lean().exec();
-    return docs.map(d => ({
-        id: d._id,
-        title: d.title,
-        platform: d.platform,
-        platformUsername: d.platformUsername,
-        baselineValue: d.baselineValue,
-        targetValue: d.targetValue,
-        status: d.status,
-        deadline: d.deadline,
-        checkIntervalMs: d.checkIntervalMs,
-        evidence: d.evidence,
-        completedAt: d.completedAt ?? null,
-        createdAt: d.createdAt,
-        updatedAt: d.updatedAt
-    }));
+export async function listGoalsForUser(userId: string): Promise<GoalDtoResponse[]> {
+    const docs = await Goal.find({ user: new Types.ObjectId(userId) })
+        .sort({ createdAt: -1 })
+        .lean()
+        .exec();
+    return docs.map(toGoalDto);
 }
 
-/**
- * Get a single goal by id (only if it belongs to the user).
- */
-export async function getGoal(userId: string, goalId: string) {
+export async function getGoalForUser(userId: string, goalId: string): Promise<GoalDtoResponse | null> {
     if (!mongoose.isValidObjectId(goalId)) return null;
     const g = await Goal.findOne({ _id: goalId, user: new Types.ObjectId(userId) }).lean().exec();
-    if (!g) return null;
-    return {
-        id: g._id,
-        title: g.title,
-        platform: g.platform,
-        platformUsername: g.platformUsername,
-        baselineValue: g.baselineValue,
-        targetValue: g.targetValue,
-        status: g.status,
-        deadline: g.deadline,
-        checkIntervalMs: g.checkIntervalMs,
-        evidence: g.evidence,
-        completedAt: g.completedAt ?? null,
-        createdAt: g.createdAt,
-        updatedAt: g.updatedAt
-    };
+    return g ? toGoalDto(g) : null;
 }
+
+export async function deleteGoalForUser(userId: string, goalId: string): Promise<boolean> {
+    if (!mongoose.isValidObjectId(goalId)) return false;
+    const result = await Goal.deleteOne({ _id: goalId, user: new Types.ObjectId(userId) }).exec();
+    return result.deletedCount > 0;
+}
+
+export async function updateGoalForUser(
+    userId: string,
+    goalId: string,
+    body: Record<string, unknown>
+): Promise<GoalDtoResponse | null> {
+    if (!mongoose.isValidObjectId(goalId)) return null;
+
+    const allowedFields = ['title', 'targetValue', 'deadline', 'unit', 'checkIntervalMs'];
+    const updatePayload: Record<string, unknown> = {};
+    for (const key of allowedFields) {
+        if (body[key] !== undefined) updatePayload[key] = body[key];
+    }
+    if (Object.keys(updatePayload).length === 0) {
+        throw new Error('No valid fields to update');
+    }
+    updatePayload.updatedAt = new Date();
+
+    const updated = await Goal.findOneAndUpdate(
+        { _id: goalId, user: new Types.ObjectId(userId) },
+        { $set: updatePayload },
+        { new: true }
+    ).lean();
+    return updated ? toGoalDto(updated) : null;
+}
+
 export async function markComplete(
     userId: string,
     goalId: string,
     completedAt: Date,
-    details: any,
-    evidence: any = null
-) {
+    details: Record<string, unknown>,
+    evidence: unknown = null
+): Promise<GoalDtoResponse> {
     if (!mongoose.isValidObjectId(goalId)) throw new Error('Invalid goal id');
     const gid = new Types.ObjectId(goalId);
     const uid = new Types.ObjectId(userId);
@@ -98,8 +88,8 @@ export async function markComplete(
     if (goal.status !== 'completed') {
         goal.status = 'completed';
         goal.completedAt = completedAt;
-        goal.evidence = evidence ?? goal.evidence ?? null;
-        goal.progress = Math.max(goal.progress, goal.targetValue); // ensure full progress
+        goal.evidence = (evidence ?? goal.evidence ?? null) as any;
+        goal.progress = Math.max(goal.progress, goal.targetValue);
         await goal.save();
     }
 
@@ -110,38 +100,31 @@ export async function markComplete(
             checkedAt: completedAt,
             result: 'completed',
             details,
-            evidence
+            evidence,
         });
     } catch (err) {
         console.warn('Failed to write GoalCheckHistory:', err);
     }
 
-    return {
-        id: goal._id,
-        status: goal.status,
-        progress: goal.progress,
-        completedAt: goal.completedAt,
-        evidence: goal.evidence,
-        createdAt: goal.createdAt,
-        updatedAt: goal.updatedAt
-    };
+    return toGoalDto(goal.toObject());
 }
 
-
-export async function updateGoalProgress(goalId: string, currentValue: number, userId: string) {
-    const goal = await Goal.findById(goalId);
+export async function updateGoalProgress(
+    goalId: string,
+    currentValue: number,
+    userId: string
+): Promise<GoalDtoResponse | null> {
+    const goal = await Goal.findOne({ _id: goalId, user: new Types.ObjectId(userId) }).exec();
     if (!goal) return null;
 
-    // Compute progress
     const computedProgress = Math.max(0, currentValue - goal.baselineValue);
     goal.progress = computedProgress;
 
-    // If reached/exceeded target -> delegate to markComplete
     if (computedProgress >= goal.targetValue && goal.status !== 'completed') {
-        await goal.save(); // save progress before marking
+        await goal.save();
         return markComplete(userId, goalId, new Date(), { via: 'progressUpdate' });
     }
 
     await goal.save();
-    return goal.toObject();
+    return toGoalDto(goal.toObject());
 }

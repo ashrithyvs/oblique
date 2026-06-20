@@ -1,6 +1,5 @@
 package com.example.oblique_android.adapters
 
-import android.graphics.drawable.Drawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,9 +8,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.oblique_android.R
-
-// Simple model used across the app; if you already have AppInfo.kt, keep only one definition.
-data class AppInfo(val label: String, val pkg: String, val icon: Drawable)
+import com.example.oblique_android.models.AppInfo
 
 class AppsSettingsAdapter(
     private var apps: List<AppInfo>,
@@ -30,28 +27,18 @@ class AppsSettingsAdapter(
 
     override fun getItemCount(): Int = apps.size
 
-    /**
-     * Called from Activities when the blocked list from server / prefs changes.
-     * Accepts any Set (mutable or immutable) — we copy it into the adapter's blockedSet.
-     */
     fun updateBlockedApps(newBlocked: Set<String>) {
         blockedSet.clear()
         blockedSet.addAll(newBlocked)
         notifyDataSetChanged()
     }
 
-    /**
-     * Replace app list (useful if you re-scan installed apps)
-     */
     fun submitList(newList: List<AppInfo>) {
         apps = newList
         notifyDataSetChanged()
     }
 
-    fun getSelectedPackages(): List<String> {
-        return blockedSet.toList()
-    }
-
+    fun getSelectedPackages(): List<String> = blockedSet.toList()
 
     inner class VH(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val iv = itemView.findViewById<ImageView>(R.id.ivAppIcon)
@@ -60,18 +47,16 @@ class AppsSettingsAdapter(
         private var currentPkg: String? = null
 
         fun bind(app: AppInfo) {
-            currentPkg = app.pkg
+            currentPkg = app.packageName
             iv.setImageDrawable(app.icon)
-            tv.text = app.label
+            tv.text = app.name
 
-            // clear previous listener to avoid double-calls during recycling
             cb.setOnCheckedChangeListener(null)
-            cb.isChecked = blockedSet.contains(app.pkg)
+            cb.isChecked = blockedSet.contains(app.packageName)
 
             cb.setOnCheckedChangeListener { _, checked ->
                 currentPkg?.let { pkg ->
                     if (checked) blockedSet.add(pkg) else blockedSet.remove(pkg)
-                    // notify caller (SettingsActivity / ViewModel) to handle API + prefs
                     onToggle(pkg, checked)
                 }
             }
