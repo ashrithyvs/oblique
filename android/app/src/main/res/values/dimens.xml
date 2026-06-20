@@ -1,5 +1,4 @@
 <resources>
-    <dimen name="fab_margin">16dp</dimen>
     <dimen name="screen_horizontal_padding">16dp</dimen>
     <dimen name="header_top_margin">18dp</dimen>
     <dimen name="header_icon_spacing">8dp</dimen>

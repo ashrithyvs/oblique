@@ -1,26 +1,5 @@
 <resources>
-
-    <!-- Use this file for widget/component-level styling -->
-
-    <!-- Example button style -->
-    <style name="Oblique.Button.Primary" parent="Widget.Material3.Button">
-        <item name="android:backgroundTint">@color/purple_500</item>
-        <item name="android:textColor">@android:color/white</item>
-    </style>
-
-    <!-- Example text appearance -->
-    <style name="Oblique.Text.Title" parent="TextAppearance.Material3.TitleLarge">
-        <item name="android:textColor">@color/black</item>
-    </style>
-
-    <!-- Poppins or system fallback -->
     <string name="font_family_poppins">sans-serif</string>
-
-    <!-- If you have a theme override, keep AppTheme light -->
-    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="android:colorBackground">@color/bg_white</item>
-        <item name="android:windowBackground">@color/bg_white</item>
-    </style>
 
     <style name="PinKeypadButton">
         <item name="android:layout_width">@dimen/pin_keypad_btn_size</item>
@@ -35,5 +14,4 @@
         <item name="android:textSize">22sp</item>
         <item name="android:textStyle">bold</item>
     </style>
-
 </resources>

@@ -22,10 +22,4 @@
         <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
     </style>
 
-    <!-- PIN / Prompt dialog -->
-    <style name="Theme.Oblique.Dialog" parent="Theme.Material3.DayNight.Dialog.Alert">
-        <item name="android:windowIsTranslucent">true</item>
-        <item name="android:windowCloseOnTouchOutside">false</item>
-    </style>
-
 </resources>

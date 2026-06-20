@@ -11,8 +11,7 @@ import com.google.android.material.card.MaterialCardView
 
 class GoalsAdapter(
     private var goals: List<Goal> = emptyList(),
-    private val onDelete: (Goal) -> Unit,
-    private val onVerify: (Goal) -> Unit
+    private val onDelete: (Goal) -> Unit
 ) : RecyclerView.Adapter<GoalsAdapter.VH>() {
 
     inner class VH(view: View) : RecyclerView.ViewHolder(view) {
@@ -21,7 +20,6 @@ class GoalsAdapter(
         val tvPlatformName: TextView = view.findViewById(R.id.tvPlatformName)
         val tvGoalSummary: TextView = view.findViewById(R.id.tvGoalSummary)
         val tvProgress: TextView = view.findViewById(R.id.tvProgress)
-//        val btnVerify: Button = view.findViewById(R.id.btnVerify)
         val btnDelete: ImageButton = view.findViewById(R.id.btnDelete)
     }
 
@@ -41,8 +39,6 @@ class GoalsAdapter(
         holder.tvGoalSummary.text = "${g.targetValue} $unitText daily"
         holder.tvProgress.text = if (g.progress >= g.targetValue) "Done" else "${g.progress}/${g.targetValue}"
 
-        // Choose an icon if you have specific icons; fallback to launcher
-        val ctx = holder.itemView.context
         val iconRes = when (g.platform) {
             "LeetCode" -> R.drawable.ic_leetcode
             "Duolingo" -> R.drawable.ic_duolingo
@@ -50,11 +46,7 @@ class GoalsAdapter(
         }
         holder.ivIcon.setImageResource(iconRes)
 
-//        holder.btnVerify.setOnClickListener { onVerify(g) }
         holder.btnDelete.setOnClickListener { onDelete(g) }
-
-        // optional: show outline if selected or completed
-        holder.rootCard?.strokeColor = if (g.progress >= g.targetValue) android.graphics.Color.TRANSPARENT else android.graphics.Color.TRANSPARENT
     }
 
     override fun getItemCount(): Int = goals.size

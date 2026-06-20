@@ -12,8 +12,6 @@
     <string name="paused">Paused</string>
     <string name="registration_failed">Registration failed</string>
     <string name="login_failed">Login failed</string>
-    <string name="pin_enter_length">Please enter a %1$d-digit PIN</string>
-    <string name="pin_saved">PIN saved successfully</string>
     <string name="save_settings">Save Settings</string>
 
     <string name="auth_welcome_back">Welcome back</string>

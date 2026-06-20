@@ -101,8 +101,7 @@ class GoalsActivity : AppCompatActivity(), PlatformsAdapter.PlatformClickListene
         rvGoalTypes.adapter = goalTypeAdapter
 
         goalsAdapter = GoalsAdapter(
-            onDelete = { goal -> lifecycleScope.launch { vm.deleteGoal(goal.id) } },
-            onVerify = { goal -> lifecycleScope.launch { vm.completeGoal(goal.id) } }
+            onDelete = { goal -> lifecycleScope.launch { vm.deleteGoal(goal.id) } }
         )
         rvGoals.layoutManager = LinearLayoutManager(this)
         rvGoals.adapter = goalsAdapter
