@@ -1,5 +1,6 @@
 package com.example.oblique_android.activity
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.TextView
 import android.widget.Toast
@@ -12,6 +13,10 @@ import com.example.oblique_android.utils.setupWindowInsets
 
 class PinUnlockActivity : AppCompatActivity() {
 
+    companion object {
+        const val EXTRA_VERIFY_FOR_RESET = "verify_for_reset"
+    }
+
     private lateinit var keypad: PinKeypadController
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,9 +25,15 @@ class PinUnlockActivity : AppCompatActivity() {
         setupWindowInsets(R.id.rootPinUnlock)
 
         val blockedApp = intent.getStringExtra("blockedApp")
+        val verifyForReset = intent.getBooleanExtra(EXTRA_VERIFY_FOR_RESET, false)
 
-        findViewById<TextView>(R.id.tvPinTitle).setText(R.string.pin_unlock_title)
-        findViewById<TextView>(R.id.tvPinSubtitle).setText(R.string.pin_unlock_subtitle)
+        if (verifyForReset) {
+            findViewById<TextView>(R.id.tvPinTitle).setText(R.string.pin_reset_verify_title)
+            findViewById<TextView>(R.id.tvPinSubtitle).setText(R.string.pin_reset_verify_subtitle)
+        } else {
+            findViewById<TextView>(R.id.tvPinTitle).setText(R.string.pin_unlock_title)
+            findViewById<TextView>(R.id.tvPinSubtitle).setText(R.string.pin_unlock_subtitle)
+        }
 
         keypad = PinKeypadController(findViewById(R.id.pinScreenRoot)) { entered ->
             if (!PINManager.isPinSet(applicationContext)) {
@@ -32,6 +43,16 @@ class PinUnlockActivity : AppCompatActivity() {
             }
 
             if (PINManager.verifyPin(applicationContext, entered)) {
+                if (verifyForReset) {
+                    startActivity(
+                        Intent(this, PinSetupActivity::class.java).apply {
+                            putExtra(PinSetupActivity.EXTRA_RESET_PIN, true)
+                        }
+                    )
+                    finish()
+                    return@PinKeypadController
+                }
+
                 if (blockedApp != null) {
                     TempUnlockManager.setTempUnlock(this, blockedApp, 5 * 60 * 1000L)
                 }

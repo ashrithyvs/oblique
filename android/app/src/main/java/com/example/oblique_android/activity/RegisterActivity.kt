@@ -3,16 +3,18 @@ package com.example.oblique_android.activity
 import android.content.Intent
 import android.os.Bundle
 import android.widget.EditText
-import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import com.example.oblique_android.R
 import com.example.oblique_android.models.AuthViewModel
+import com.example.oblique_android.utils.AuthFormHelper
 import com.example.oblique_android.utils.OnboardingRouter
 import com.example.oblique_android.utils.PasswordFieldHelper
 import com.example.oblique_android.utils.setupWindowInsets
+import kotlinx.coroutines.launch
+import androidx.lifecycle.lifecycleScope
 
 class RegisterActivity : AppCompatActivity() {
     private val authVm: AuthViewModel by viewModels()
@@ -31,13 +33,18 @@ class RegisterActivity : AppCompatActivity() {
 
         PasswordFieldHelper.wireToggle(etPassword, findViewById(R.id.togglePassword))
         PasswordFieldHelper.wireToggle(etConfirmPassword, findViewById(R.id.toggleConfirmPassword))
+        val refreshRegisterForm = AuthFormHelper.wireRegisterForm(
+            etName, etEmail, etPassword, etConfirmPassword, btnRegister
+        )
 
         authVm.authResult.observe(this, Observer { outcome ->
-            btnRegister.isEnabled = true
+            refreshRegisterForm()
             if (outcome.success) {
-                val next = OnboardingRouter.next(this)
-                startActivity(Intent(this, next))
-                finish()
+                lifecycleScope.launch {
+                    val next = OnboardingRouter.nextSuspend(this@RegisterActivity, validateToken = false)
+                    startActivity(Intent(this@RegisterActivity, next))
+                    finish()
+                }
             } else {
                 val message = outcome.errorMessage ?: getString(R.string.registration_failed)
                 Toast.makeText(this, message, Toast.LENGTH_LONG).show()

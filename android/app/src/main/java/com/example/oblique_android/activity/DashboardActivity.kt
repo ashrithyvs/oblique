@@ -4,13 +4,9 @@ import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
-import android.app.AppOpsManager
-import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -24,14 +20,14 @@ import androidx.lifecycle.lifecycleScope
 import com.example.oblique_android.R
 import com.example.oblique_android.models.Goal
 import com.example.oblique_android.models.GoalsViewModel
-import com.example.oblique_android.activity.DashboardActivity
 import com.example.oblique_android.services.MonitoringService
 import com.example.oblique_android.services.Prefs
 import com.example.oblique_android.utils.BitmapUtils
+import com.example.oblique_android.utils.PermissionGuard
+import com.example.oblique_android.utils.PermissionUtils
 import com.example.oblique_android.utils.PrefsUtils
 import com.example.oblique_android.utils.setupWindowInsets
 import kotlinx.coroutines.launch
-import androidx.core.net.toUri
 import com.example.oblique_android.validation.GoalValidator
 import com.example.oblique_android.validation.ManualValidationLimiter
 
@@ -86,14 +82,7 @@ class DashboardActivity : AppCompatActivity() {
         }
 
         btnStartProtection.setOnClickListener {
-            if (!ensureUsageAccessPermission()) return@setOnClickListener
-            if (!Settings.canDrawOverlays(this)) {
-                val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    "package:$packageName".toUri())
-                startActivity(intent)
-                Toast.makeText(this, "Please grant overlay permission", Toast.LENGTH_LONG).show()
-                return@setOnClickListener
-            }
+            if (!ensureRequiredPermissions()) return@setOnClickListener
             protectionActive = true
             tvProtectionStatus.text = getString(R.string.protection_active)
             btnStartProtection.visibility = View.GONE
@@ -137,6 +126,10 @@ class DashboardActivity : AppCompatActivity() {
         }
 
         switchProtection.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked && !ensureRequiredPermissions()) {
+                switchProtection.isChecked = false
+                return@setOnCheckedChangeListener
+            }
             protectionActive = isChecked
             if (isChecked) {
                 tvProtectionStatus.text = getString(R.string.protection_active)
@@ -153,21 +146,16 @@ class DashboardActivity : AppCompatActivity() {
         vm.refreshDashboard()
     }
 
-    private fun ensureUsageAccessPermission(): Boolean {
-        val appOps = getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
-        val mode = appOps.checkOpNoThrow(
-            AppOpsManager.OPSTR_GET_USAGE_STATS,
-            android.os.Process.myUid(),
-            packageName
-        )
-        val granted = mode == AppOpsManager.MODE_ALLOWED
-        if (!granted) {
-            val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            startActivity(intent)
-            Toast.makeText(this, "Please grant Usage Access permission", Toast.LENGTH_LONG).show()
-        }
-        return granted
+    override fun onResume() {
+        super.onResume()
+        if (!PermissionGuard.ensureGranted(this)) return
+        vm.refreshDashboard()
+    }
+
+    private fun ensureRequiredPermissions(): Boolean {
+        if (PermissionUtils.hasRequiredPermissions(this)) return true
+        PermissionGuard.ensureGranted(this)
+        return false
     }
 
 
@@ -340,10 +328,5 @@ class DashboardActivity : AppCompatActivity() {
             val tvStatus = v.findViewById<TextView>(R.id.tvBlockedStatus)
             tvStatus.text = if (protectionActive) getString(R.string.active) else getString(R.string.paused)
         }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        vm.refreshDashboard()
     }
 }

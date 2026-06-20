@@ -31,6 +31,7 @@
     <color name="auth_title">#1F2937</color>
     <color name="auth_subtitle">#6B7280</color>
     <color name="auth_btn_primary">#7C7C8A</color>
+    <color name="auth_btn_primary_disabled">#D1D5DB</color>
     <color name="auth_card_stroke">#E5E7EB</color>
     <color name="auth_btn_outlined_stroke">#D1D5DB</color>
 
@@ -47,4 +48,15 @@
     <color name="stat_goals_bg">#EAFBF2</color>
     <color name="stat_success_icon">#D946EF</color>
     <color name="stat_success_bg">#FDF2F8</color>
+
+    <color name="permissions_header_bg">#FFF0E6</color>
+    <color name="permissions_shield_icon">#F97316</color>
+    <color name="permissions_icon_bg_blue">#E8F0FE</color>
+    <color name="permissions_icon_blue">#2563EB</color>
+    <color name="permissions_icon_bg_green">#E8F5E9</color>
+    <color name="permissions_icon_green">#16A34A</color>
+    <color name="permissions_note_bg">#F3F4F6</color>
+    <color name="permissions_success_bg">#ECFDF3</color>
+    <color name="permissions_success_border">#86EFAC</color>
+    <color name="permissions_success_text">#15803D</color>
 </resources>

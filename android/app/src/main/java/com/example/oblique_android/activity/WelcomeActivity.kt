@@ -17,7 +17,7 @@ class WelcomeActivity : AppCompatActivity() {
 
         findViewById<Button>(R.id.btnGetStarted).setOnClickListener {
             OnboardingRouter.markOnboardingDone(this)
-            startActivity(Intent(this, OnboardingRouter.next(this, validateToken = false)))
+            startActivity(Intent(this, PermissionsActivity::class.java))
             finish()
         }
     }

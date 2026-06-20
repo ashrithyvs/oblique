@@ -22,7 +22,7 @@ import com.example.oblique_android.adapters.PlatformsAdapter
 import com.example.oblique_android.models.GoalType
 import com.example.oblique_android.models.GoalsViewModel
 import com.example.oblique_android.network.api.GoalRequest
-import com.example.oblique_android.utils.OnboardingRouter
+import com.example.oblique_android.utils.PermissionGuard
 import com.example.oblique_android.utils.PrefsUtils
 import com.example.oblique_android.utils.setupWindowInsets
 import com.google.android.material.timepicker.MaterialTimePicker
@@ -156,13 +156,17 @@ class GoalsActivity : AppCompatActivity(), PlatformsAdapter.PlatformClickListene
         }
 
         btnStart.setOnClickListener {
-            val next = OnboardingRouter.next(this)
-            startActivity(Intent(this, next))
+            startActivity(Intent(this, AppListActivity::class.java))
             finish()
         }
 
         cardSelectedPlatform.visibility = View.GONE
         updateProgressiveSteps()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        PermissionGuard.ensureGranted(this)
     }
 
     private fun showDeadlinePicker() {

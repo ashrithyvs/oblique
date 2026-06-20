@@ -14,6 +14,7 @@ import com.example.oblique_android.network.ApiClient
 import com.example.oblique_android.network.api.UserApi
 import com.example.oblique_android.network.request.UserPreferencesRequest
 import com.example.oblique_android.prefs.PlatformPref
+import com.example.oblique_android.utils.PermissionGuard
 import com.example.oblique_android.utils.PrefsUtils
 import com.example.oblique_android.utils.setupWindowInsets
 import kotlinx.coroutines.Dispatchers
@@ -95,5 +96,10 @@ class UserPreferencesActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        PermissionGuard.ensureGranted(this)
     }
 }

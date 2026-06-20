@@ -7,8 +7,8 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.oblique_android.R
 import com.example.oblique_android.services.PINManager
-import com.example.oblique_android.services.Prefs
 import com.example.oblique_android.utils.OnboardingRouter
+import com.example.oblique_android.utils.PermissionGuard
 import com.example.oblique_android.utils.PinKeypadController
 import com.example.oblique_android.utils.setupWindowInsets
 
@@ -16,18 +16,20 @@ class PinConfirmActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_PIN = "PIN"
+        const val EXTRA_RESET_PIN = "reset_pin"
     }
 
     private lateinit var keypad: PinKeypadController
     private var originalPin: String? = null
+    private var isResetPin = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_pin_confirm)
         setupWindowInsets(R.id.rootPinConfirm)
-        Prefs.init(this)
 
         originalPin = intent.getStringExtra(EXTRA_PIN)
+        isResetPin = intent.getBooleanExtra(EXTRA_RESET_PIN, false)
         if (originalPin.isNullOrBlank()) {
             finish()
             return
@@ -44,11 +46,19 @@ class PinConfirmActivity : AppCompatActivity() {
             }
 
             PINManager.savePin(applicationContext, confirmPin)
-            Prefs.setPinSet(true)
 
-            val next = OnboardingRouter.next(this, validateToken = false)
-            startActivity(Intent(this, next))
-            finish()
+            if (isResetPin) {
+                Toast.makeText(this, R.string.pin_reset_success, Toast.LENGTH_SHORT).show()
+                finish()
+            } else {
+                startActivity(Intent(this, OnboardingRouter.afterPin(this)))
+                finish()
+            }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        PermissionGuard.ensureGranted(this)
     }
 }

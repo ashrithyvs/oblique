@@ -9,7 +9,6 @@ import android.net.Uri
 import android.os.Build
 import android.os.Process
 import android.provider.Settings
-import androidx.core.app.NotificationManagerCompat
 
 object PermissionUtils {
 
@@ -23,40 +22,47 @@ object PermissionUtils {
         return mode == AppOpsManager.MODE_ALLOWED
     }
 
-    fun requestUsageAccess(context: Context) {
-        val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
-        intent.data = Uri.parse("package:${context.packageName}")
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        context.startActivity(intent)
-    }
-
     fun hasOverlayPermission(context: Context): Boolean {
         return Settings.canDrawOverlays(context)
-    }
-
-    fun requestOverlayPermission(context: Context) {
-        val intent = Intent(
-            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-            Uri.parse("package:${context.packageName}")
-        )
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        context.startActivity(intent)
     }
 
     fun hasNotificationPermission(context: Context): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) ==
-                    PackageManager.PERMISSION_GRANTED
+                PackageManager.PERMISSION_GRANTED
         } else {
-            true // older versions auto-grant
+            true
         }
     }
+
     fun hasRequiredPermissions(ctx: Context): Boolean {
-        val usage = hasUsageAccess(ctx)
-        val overlay = Settings.canDrawOverlays(ctx)
-        val notifications = if (Build.VERSION.SDK_INT >= 33) {
-            NotificationManagerCompat.from(ctx).areNotificationsEnabled()
-        } else true
-        return usage && overlay && notifications
+        return hasUsageAccess(ctx) &&
+            hasOverlayPermission(ctx) &&
+            hasNotificationPermission(ctx)
+    }
+
+    fun usageAccessSettingsIntent(context: Context): Intent {
+        return Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply {
+            data = Uri.parse("package:${context.packageName}")
+        }
+    }
+
+    fun overlaySettingsIntent(context: Context): Intent {
+        return Intent(
+            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+            Uri.parse("package:${context.packageName}")
+        )
+    }
+
+    fun requestUsageAccess(context: Context) {
+        context.startActivity(
+            usageAccessSettingsIntent(context).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        )
+    }
+
+    fun requestOverlayPermission(context: Context) {
+        context.startActivity(
+            overlaySettingsIntent(context).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        )
     }
 }

@@ -1,10 +1,10 @@
 package com.example.oblique_android.utils
 
 import android.content.Context
-import android.content.Intent
 import android.util.Log
 import com.example.oblique_android.activity.AppListActivity
 import com.example.oblique_android.activity.DashboardActivity
+import com.example.oblique_android.activity.GoalsActivity
 import com.example.oblique_android.activity.LoginActivity
 import com.example.oblique_android.activity.PermissionsActivity
 import com.example.oblique_android.activity.PinSetupActivity
@@ -12,6 +12,7 @@ import com.example.oblique_android.activity.WelcomeActivity
 import com.example.oblique_android.network.ApiClient
 import com.example.oblique_android.network.api.UserApi
 import com.example.oblique_android.prefs.TokenManager
+import com.example.oblique_android.repository.GoalsRepository
 import com.example.oblique_android.services.PINManager
 import com.example.oblique_android.services.Prefs
 import com.example.oblique_android.utils.PrefsUtils
@@ -21,6 +22,10 @@ import retrofit2.HttpException
 
 /**
  * Single source of truth for onboarding / post-auth navigation.
+ *
+ * Flow:
+ * 1. Fresh install: Welcome -> Permissions -> Auth -> Goals -> App list -> PIN -> Dashboard
+ * 2. Returning user: Splash resolves the first incomplete step
  */
 object OnboardingRouter {
 
@@ -29,16 +34,13 @@ object OnboardingRouter {
         Prefs.setOnboardingDone(true)
     }
 
-    /**
-     * @param validateToken When true (cold start), validates token via GET /api/user/me.
-     */
     suspend fun nextSuspend(context: Context, validateToken: Boolean = true): Class<*> {
         Prefs.init(context)
 
         if (!Prefs.isOnboardingDone()) {
             return WelcomeActivity::class.java
         }
-        if (!Prefs.hasAllPermissions()) {
+        if (!PermissionUtils.hasRequiredPermissions(context)) {
             return PermissionsActivity::class.java
         }
 
@@ -69,38 +71,46 @@ object OnboardingRouter {
             }
         }
 
-        if (needsPinSetup(context)) {
-            return PinSetupActivity::class.java
-        }
-        if (Prefs.getSelectedApps().isEmpty()) {
-            return AppListActivity::class.java
-        }
-        return DashboardActivity::class.java
+        return resolvePostAuth(context)
     }
 
-    fun next(context: Context, validateToken: Boolean = false): Class<*> {
+    fun afterGoals(context: Context): Class<*> {
         Prefs.init(context)
-        if (!Prefs.isOnboardingDone()) return WelcomeActivity::class.java
-        if (!Prefs.hasAllPermissions()) return PermissionsActivity::class.java
-        if (TokenManager.getInstance(context).getToken().isNullOrEmpty()) return LoginActivity::class.java
-        if (needsPinSetup(context)) return PinSetupActivity::class.java
-        if (Prefs.getSelectedApps().isEmpty()) return AppListActivity::class.java
-        return DashboardActivity::class.java
+        return AppListActivity::class.java
     }
 
-    fun start(context: Context, cls: Class<*>) {
-        context.startActivity(Intent(context, cls))
-    }
-
-    /**
-     * Device unlock PIN lives only in [PINManager]. [Prefs.isPinSet] is a legacy flag kept in sync.
-     */
-    fun needsPinSetup(context: Context): Boolean {
+    fun afterApps(context: Context): Class<*> {
         Prefs.init(context)
-        val stored = PINManager.isPinSet(context)
-        if (Prefs.isPinSet() && !stored) {
-            Prefs.setPinSet(false)
-        }
-        return !stored
+        return if (needsPinSetup(context)) PinSetupActivity::class.java
+        else DashboardActivity::class.java
     }
+
+    fun afterPin(context: Context): Class<*> = DashboardActivity::class.java
+
+    private suspend fun resolvePostAuth(context: Context): Class<*> {
+        return try {
+            val goals = withContext(Dispatchers.IO) {
+                GoalsRepository(context).listGoals()
+            }
+            when {
+                goals.isEmpty() -> GoalsActivity::class.java
+                !Prefs.isAppSelectionDone() -> AppListActivity::class.java
+                needsPinSetup(context) -> PinSetupActivity::class.java
+                else -> DashboardActivity::class.java
+            }
+        } catch (e: Exception) {
+            Log.e("OnboardingRouter", "Could not load goals, using local state", e)
+            resolvePostAuthOffline(context)
+        }
+    }
+
+    private fun resolvePostAuthOffline(context: Context): Class<*> {
+        return when {
+            !Prefs.isAppSelectionDone() -> AppListActivity::class.java
+            needsPinSetup(context) -> PinSetupActivity::class.java
+            else -> DashboardActivity::class.java
+        }
+    }
+
+    fun needsPinSetup(context: Context): Boolean = !PINManager.isPinSet(context)
 }

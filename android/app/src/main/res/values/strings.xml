@@ -46,6 +46,11 @@
     <string name="pin_wrong">Wrong PIN</string>
     <string name="pin_not_set">No PIN has been set yet!</string>
     <string name="pin_unlocked">Unlocked successfully!</string>
+    <string name="pin_reset">Reset PIN</string>
+    <string name="pin_reset_verify_title">Verify Current PIN</string>
+    <string name="pin_reset_verify_subtitle">Enter your current PIN to set a new one</string>
+    <string name="pin_reset_success">PIN updated successfully</string>
+    <string name="pin_reset_setup_subtitle">Choose a new 6-digit PIN</string>
     <string name="sign_out">Sign out</string>
     <string name="sign_out_confirm">Are you sure you want to sign out?</string>
     <string name="display_name_required">Please enter a display name</string>
@@ -67,5 +72,23 @@
     <string name="goals_add_this_goal">+ Add this goal</string>
     <string name="goals_edit_target_hint">New target value</string>
     <string name="goals_deadline_preview">Deadline: %1$s</string>
+
+    <string name="permissions_title">Permissions Required</string>
+    <string name="permissions_subtitle">To block apps effectively, we need some permissions</string>
+    <string name="permissions_overlay_title">Display Over Other Apps</string>
+    <string name="permissions_overlay_desc">Required to show the blocking overlay when you try to open restricted apps</string>
+    <string name="permissions_overlay_note">This allows us to display a full-screen overlay that prevents app usage</string>
+    <string name="permissions_usage_title">Usage Access</string>
+    <string name="permissions_usage_desc">Needed to detect when blocked apps are opened and monitor usage patterns</string>
+    <string name="permissions_usage_note">We only monitor apps you\'ve selected to block - no personal data is collected</string>
+    <string name="permissions_privacy_title">Privacy First:</string>
+    <string name="permissions_privacy_desc">All data stays on your device. We never collect personal information or share your usage data.</string>
+    <string name="permissions_success">Permissions granted successfully! You can now set up app blocking.</string>
+    <string name="permissions_continue">Continue Setup</string>
+    <string name="permissions_grant">Grant Permissions</string>
+    <string name="permissions_footer">You can modify these permissions later in device settings</string>
+    <string name="permissions_overlay_required">Overlay permission required</string>
+    <string name="permissions_usage_required">Usage access permission required</string>
+    <string name="permissions_notification_required">Notification permission required</string>
 
 </resources>

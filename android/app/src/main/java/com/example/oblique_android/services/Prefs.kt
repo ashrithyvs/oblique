@@ -7,8 +7,7 @@ import com.example.oblique_android.utils.PrefsUtils
 object Prefs {
     private const val PREFS_NAME = "oblique_prefs"
     private const val KEY_ONBOARDING_DONE = "onboarding_done"
-    private const val KEY_PIN_SET = "pin_set"
-    private const val KEY_HAS_ALL_PERMISSIONS = "has_all_permissions"
+    private const val KEY_APP_SELECTION_DONE = "app_selection_done"
     private const val KEY_MIGRATED_BLOCKED_APPS = "migrated_blocked_apps_v1"
 
     private lateinit var prefs: SharedPreferences
@@ -21,6 +20,7 @@ object Prefs {
         appContext = context.applicationContext
         prefs = appContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         migrateBlockedAppsIfNeeded()
+        migrateAppSelectionIfNeeded()
     }
 
     private fun migrateBlockedAppsIfNeeded() {
@@ -40,14 +40,19 @@ object Prefs {
     fun isOnboardingDone(): Boolean = prefs.getBoolean(KEY_ONBOARDING_DONE, false)
     fun setOnboardingDone(done: Boolean) = prefs.edit().putBoolean(KEY_ONBOARDING_DONE, done).apply()
 
-    fun isPinSet(): Boolean = prefs.getBoolean(KEY_PIN_SET, false)
-    fun setPinSet(set: Boolean) = prefs.edit().putBoolean(KEY_PIN_SET, set).apply()
+    fun isAppSelectionDone(): Boolean = prefs.getBoolean(KEY_APP_SELECTION_DONE, false)
+    fun setAppSelectionDone(done: Boolean) = prefs.edit().putBoolean(KEY_APP_SELECTION_DONE, done).apply()
+
+    private fun migrateAppSelectionIfNeeded() {
+        if (prefs.contains(KEY_APP_SELECTION_DONE)) return
+        // Users who already finished PIN setup completed app selection in a prior version.
+        if (PINManager.isPinSet(appContext)) {
+            prefs.edit().putBoolean(KEY_APP_SELECTION_DONE, true).apply()
+        }
+    }
 
     /** Blocked apps — delegated to [PrefsUtils] (single source of truth). */
     fun getSelectedApps(): Set<String> = PrefsUtils.loadBlockedSet(appContext)
 
     fun setSelectedApps(apps: Set<String>) = PrefsUtils.saveBlockedSet(appContext, apps)
-
-    fun hasAllPermissions(): Boolean = prefs.getBoolean(KEY_HAS_ALL_PERMISSIONS, false)
-    fun setHasAllPermissions(value: Boolean) = prefs.edit().putBoolean(KEY_HAS_ALL_PERMISSIONS, value).apply()
 }

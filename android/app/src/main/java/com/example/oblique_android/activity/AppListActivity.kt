@@ -19,6 +19,7 @@ import com.example.oblique_android.repository.AppRepository
 import com.example.oblique_android.repository.BlockedAppsRepository
 import com.example.oblique_android.services.Prefs
 import com.example.oblique_android.utils.OnboardingRouter
+import com.example.oblique_android.utils.PermissionGuard
 import com.example.oblique_android.utils.PrefsUtils
 import com.example.oblique_android.utils.setupWindowInsets
 import kotlinx.coroutines.launch
@@ -82,8 +83,9 @@ class AppListActivity : AppCompatActivity() {
                     val blockedRepo = BlockedAppsRepository(this@AppListActivity)
                     val updated = blockedRepo.replaceBlockedApps(selectedApps.toList())
                     saveSelectedApps(updated.toSet())
+                    Prefs.setAppSelectionDone(true)
                     Log.d("AppListActivity", "Synced blocked apps: $updated")
-                    val next = OnboardingRouter.next(this@AppListActivity)
+                    val next = OnboardingRouter.afterApps(this@AppListActivity)
                     startActivity(Intent(this@AppListActivity, next))
                     finish()
                 } catch (e: Exception) {
@@ -91,6 +93,11 @@ class AppListActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        PermissionGuard.ensureGranted(this)
     }
 
     private fun toggleSelection(pkg: String) {

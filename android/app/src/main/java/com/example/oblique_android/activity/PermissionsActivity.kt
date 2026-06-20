@@ -3,46 +3,38 @@ package com.example.oblique_android.activity
 import android.Manifest
 import android.content.Intent
 import android.os.Bundle
-import android.provider.Settings
-import android.widget.Button
-import android.widget.Toast
+import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import com.example.oblique_android.services.PINManager
+import androidx.lifecycle.lifecycleScope
+import com.example.oblique_android.R
+import com.example.oblique_android.utils.OnboardingRouter
 import com.example.oblique_android.utils.PermissionUtils
 import com.example.oblique_android.utils.setupWindowInsets
-import com.example.oblique_android.R
+import com.google.android.material.button.MaterialButton
+import kotlinx.coroutines.launch
 
 class PermissionsActivity : AppCompatActivity() {
+
+    private lateinit var successBanner: View
+    private lateinit var btnContinue: MaterialButton
 
     private val usageAccessLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) {
-        if (PermissionUtils.hasUsageAccess(this)) {
-            checkAndProceed()
-        } else {
-            Toast.makeText(this, "Usage access permission required", Toast.LENGTH_SHORT).show()
-        }
+        refreshUi()
     }
 
     private val overlayLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) {
-        if (PermissionUtils.hasOverlayPermission(this)) {
-            checkAndProceed()
-        } else {
-            Toast.makeText(this, "Overlay permission required", Toast.LENGTH_SHORT).show()
-        }
+        refreshUi()
     }
 
     private val notificationLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) {
-            checkAndProceed()
-        } else {
-            Toast.makeText(this, "Notification permission required", Toast.LENGTH_SHORT).show()
-        }
+    ) {
+        refreshUi()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -50,37 +42,60 @@ class PermissionsActivity : AppCompatActivity() {
         setContentView(R.layout.activity_permissions)
         setupWindowInsets(R.id.rootPermissions)
 
-        val btnGrant = findViewById<Button>(R.id.btnGrantPermissions)
-        btnGrant.setOnClickListener {
-            when {
-                !PermissionUtils.hasUsageAccess(this) -> {
-                    usageAccessLauncher.launch(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
-                }
-                !PermissionUtils.hasOverlayPermission(this) -> {
-                    overlayLauncher.launch(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION))
-                }
-                !PermissionUtils.hasNotificationPermission(this) -> {
-                    notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                }
-                else -> checkAndProceed()
+        successBanner = findViewById(R.id.permissionSuccess)
+        btnContinue = findViewById(R.id.btnContinueSetup)
+
+        btnContinue.setOnClickListener {
+            if (PermissionUtils.hasRequiredPermissions(this)) {
+                proceedToNextStep()
+            } else {
+                requestNextMissingPermission()
             }
+        }
+
+        refreshUi()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        refreshUi()
+    }
+
+    private fun refreshUi() {
+        val allGranted = PermissionUtils.hasRequiredPermissions(this)
+        successBanner.visibility = if (allGranted) View.VISIBLE else View.GONE
+        btnContinue.text = if (allGranted) {
+            getString(R.string.permissions_continue)
+        } else {
+            getString(R.string.permissions_grant)
         }
     }
 
-    private fun checkAndProceed() {
-        if (PermissionUtils.hasUsageAccess(this)
-            && PermissionUtils.hasOverlayPermission(this)
-            && PermissionUtils.hasNotificationPermission(this)
-        ) {
-            // ✅ Mark in Prefs that permissions are granted
-            com.example.oblique_android.services.Prefs.setHasAllPermissions(true)
+    private fun requestNextMissingPermission() {
+        when {
+            !PermissionUtils.hasOverlayPermission(this) -> {
+                overlayLauncher.launch(PermissionUtils.overlaySettingsIntent(this))
+            }
+            !PermissionUtils.hasUsageAccess(this) -> {
+                usageAccessLauncher.launch(PermissionUtils.usageAccessSettingsIntent(this))
+            }
+            !PermissionUtils.hasNotificationPermission(this) -> {
+                notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+            else -> proceedToNextStep()
+        }
+    }
 
-            // ✅ Return to SplashActivity to re-run the whole flow
-            val intent = Intent(this, SplashActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
-            startActivity(intent)
+    private fun proceedToNextStep() {
+        if (!PermissionUtils.hasRequiredPermissions(this)) {
+            refreshUi()
+            return
+        }
+
+        lifecycleScope.launch {
+            val next = OnboardingRouter.nextSuspend(this@PermissionsActivity, validateToken = false)
+            startActivity(Intent(this@PermissionsActivity, next))
             finish()
         }
     }
-
 }

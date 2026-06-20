@@ -5,245 +5,279 @@
     android:id="@+id/rootPermissions"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingHorizontal="20dp"
-    android:paddingTop="16dp"
-    android:paddingBottom="16dp"
+    android:background="@color/white"
     android:clipToPadding="false"
-    android:background="@android:color/white"
     tools:context=".activity.PermissionsActivity">
 
-    <!-- Shield Icon -->
-    <ImageView
-        android:id="@+id/shieldIcon"
-        android:layout_width="64dp"
-        android:layout_height="64dp"
-        android:src="@drawable/ic_shield"
-        android:layout_marginTop="16dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <!-- Title -->
-    <TextView
-        android:id="@+id/titleText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Permissions Required"
-        android:textStyle="bold"
-        android:textSize="22sp"
-        android:textColor="@android:color/black"
-        app:layout_constraintTop_toBottomOf="@id/shieldIcon"
-        android:layout_marginTop="12dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <!-- Subtitle -->
-    <TextView
-        android:id="@+id/subTitleText"
+    <ScrollView
+        android:id="@+id/permissionsScroll"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:text="To block apps effectively, we need some permissions"
-        android:textSize="14sp"
-        android:textColor="@android:color/darker_gray"
-        app:layout_constraintTop_toBottomOf="@id/titleText"
-        android:layout_marginTop="6dp"
+        android:layout_height="0dp"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:scrollbars="none"
+        app:layout_constraintBottom_toTopOf="@id/btnContinueSetup"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <!-- Card: Overlay permission -->
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cardOverlay"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="2dp"
-        app:layout_constraintTop_toBottomOf="@id/subTitleText"
-        android:layout_marginTop="24dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintTop_toTopOf="parent">
 
         <LinearLayout
-            android:orientation="vertical"
-            android:padding="16dp"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingHorizontal="24dp"
+            android:paddingTop="24dp"
+            android:paddingBottom="16dp">
 
-            <LinearLayout
-                android:orientation="horizontal"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+            <FrameLayout
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:background="@drawable/permissions_header_circle_bg">
 
                 <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_eye"
-                    app:tint="@color/primaryColor" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Display Over Other Apps"
-                    android:textStyle="bold"
-                    android:textSize="16sp"
-                    android:layout_marginStart="12dp" />
-            </LinearLayout>
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_stat_shield_outline"
+                    app:tint="@color/permissions_shield_icon" />
+            </FrameLayout>
 
             <TextView
-                android:layout_width="match_parent"
+                android:id="@+id/titleText"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="Required to show the blocking overlay when you try to open restricted apps"
-                android:textSize="14sp"
-                android:textColor="@android:color/darker_gray" />
+                android:layout_marginTop="16dp"
+                android:text="@string/permissions_title"
+                android:textColor="@color/text_primary"
+                android:textSize="24sp"
+                android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/subTitleText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="0dp"
-                android:background="#F0F0F0"
-                android:padding="12dp"
-                android:text="This allows us to display a full-screen overlay that prevents app usage"
-                android:textSize="12sp"
-                android:textColor="@android:color/black" />
-        </LinearLayout>
-    </androidx.cardview.widget.CardView>
-
-    <!-- Card: Usage Access -->
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cardUsage"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="2dp"
-        app:layout_constraintTop_toBottomOf="@id/cardOverlay"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
-
-        <LinearLayout
-            android:orientation="vertical"
-            android:padding="16dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+                android:layout_marginTop="8dp"
+                android:gravity="center"
+                android:text="@string/permissions_subtitle"
+                android:textColor="@color/text_muted"
+                android:textSize="15sp" />
 
             <LinearLayout
-                android:orientation="horizontal"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_settings"
-                    app:tint="@color/primaryColor" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Usage Access"
-                    android:textStyle="bold"
-                    android:textSize="16sp"
-                    android:layout_marginStart="12dp" />
-            </LinearLayout>
-
-            <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="Needed to detect when blocked apps are opened and monitor usage patterns"
-                android:textSize="14sp"
-                android:textColor="@android:color/darker_gray" />
+                android:layout_marginTop="24dp"
+                android:background="@drawable/permissions_card_bg"
+                android:orientation="vertical"
+                android:padding="16dp">
 
-            <TextView
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <FrameLayout
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/permissions_icon_bg_blue">
+
+                        <ImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:layout_gravity="center"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_eye"
+                            app:tint="@color/permissions_icon_blue" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:text="@string/permissions_overlay_title"
+                        android:textColor="@color/text_primary"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="@string/permissions_overlay_desc"
+                    android:textColor="@color/text_muted"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/permissions_note_bg"
+                    android:padding="12dp"
+                    android:text="@string/permissions_overlay_note"
+                    android:textColor="@color/auth_title"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:background="#F0F0F0"
-                android:padding="6dp"
-                android:text="We only monitor apps you've selected to block - no personal data is collected"
-                android:textSize="12sp"
-                android:textColor="@android:color/black" />
-        </LinearLayout>
-    </androidx.cardview.widget.CardView>
+                android:background="@drawable/permissions_card_bg"
+                android:orientation="vertical"
+                android:padding="16dp">
 
-    <!-- Card: Privacy -->
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cardPrivacy"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="2dp"
-        app:layout_constraintTop_toBottomOf="@id/cardUsage"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
-        <LinearLayout
-            android:orientation="vertical"
-            android:padding="16dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+                    <FrameLayout
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/permissions_icon_bg_green">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Privacy First:"
-                android:textStyle="bold"
-                android:textSize="16sp" />
+                        <ImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:layout_gravity="center"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_settings_black_24dp"
+                            app:tint="@color/permissions_icon_green" />
+                    </FrameLayout>
 
-            <TextView
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:text="@string/permissions_usage_title"
+                        android:textColor="@color/text_primary"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="@string/permissions_usage_desc"
+                    android:textColor="@color/text_muted"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/permissions_note_bg"
+                    android:padding="12dp"
+                    android:text="@string/permissions_usage_note"
+                    android:textColor="@color/auth_title"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="All data stays on your device. We never collect personal information or share your usage data."
-                android:textSize="14sp"
-                android:textColor="@android:color/darker_gray" />
+                android:layout_marginTop="12dp"
+                android:background="@drawable/permissions_card_bg"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_info_outline"
+                        app:tint="@color/text_primary" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="@string/permissions_privacy_title"
+                        android:textColor="@color/text_primary"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/permissions_privacy_desc"
+                    android:textColor="@color/text_muted"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/permissionSuccess"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/permissions_success_bg"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="14dp"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_stat_check_circle"
+                    app:tint="@color/permissions_success_text" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_weight="1"
+                    android:text="@string/permissions_success"
+                    android:textColor="@color/permissions_success_text"
+                    android:textSize="14sp" />
+            </LinearLayout>
         </LinearLayout>
-    </androidx.cardview.widget.CardView>
+    </ScrollView>
 
-    <!-- Success message -->
-    <TextView
-        android:id="@+id/permissionSuccess"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:padding="12dp"
-        android:background="@drawable/success_bg"
-        android:text="Permissions granted successfully! You can now set up app blocking."
-        android:textColor="#34A853"
-        android:visibility="gone"
-        app:layout_constraintTop_toBottomOf="@id/cardPrivacy"
-        android:layout_margin="16dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <!-- Button -->
     <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnGrantPermissions"
+        android:id="@+id/btnContinueSetup"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="Grant Permissions"
+        android:layout_height="@dimen/auth_btn_height"
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginBottom="8dp"
+        android:text="@string/permissions_grant"
+        android:textAllCaps="false"
+        android:textColor="@color/white"
         android:textSize="16sp"
-        app:cornerRadius="12dp"
-        android:layout_margin="16dp"
-        android:backgroundTint="@color/black"
-        android:textColor="@android:color/white"
-        app:layout_constraintTop_toBottomOf="@id/permissionSuccess"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        android:textStyle="bold"
+        app:backgroundTint="@color/btn_dark"
+        app:cornerRadius="@dimen/auth_btn_radius"
+        app:layout_constraintBottom_toTopOf="@id/tvPermissionsFooter"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
-    <!-- Info text -->
     <TextView
+        android:id="@+id/tvPermissionsFooter"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginBottom="16dp"
         android:gravity="center"
-        android:text="You can modify these permissions later in device settings"
+        android:text="@string/permissions_footer"
+        android:textColor="@color/text_muted"
         android:textSize="12sp"
-        android:textColor="@android:color/darker_gray"
         app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_marginBottom="12dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

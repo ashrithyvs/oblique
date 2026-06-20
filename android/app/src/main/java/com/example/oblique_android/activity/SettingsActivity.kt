@@ -23,8 +23,10 @@ import com.example.oblique_android.network.request.UserPreferencesRequest
 import com.example.oblique_android.prefs.PlatformPref
 import com.example.oblique_android.repository.AppRepository
 import com.example.oblique_android.repository.AuthRepository
+import com.example.oblique_android.services.PINManager
 import com.example.oblique_android.services.Prefs
 import com.example.oblique_android.utils.PrefsUtils
+import com.example.oblique_android.utils.PermissionGuard
 import com.example.oblique_android.utils.setupWindowInsets
 import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.Dispatchers
@@ -55,6 +57,7 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var etDisplayName: EditText
     private lateinit var rvPlatformPrefs: RecyclerView
     private lateinit var btnSavePreferences: MaterialButton
+    private lateinit var btnResetPin: MaterialButton
     private lateinit var btnSignOut: MaterialButton
 
     private lateinit var goalsAdapter: GoalsSettingsAdapter
@@ -84,6 +87,11 @@ class SettingsActivity : AppCompatActivity() {
         vm.refreshBlockedApps()
     }
 
+    override fun onResume() {
+        super.onResume()
+        PermissionGuard.ensureGranted(this)
+    }
+
     private fun bindViews() {
         tabGoals = findViewById(R.id.tabGoals)
         tabApps = findViewById(R.id.tabApps)
@@ -104,6 +112,7 @@ class SettingsActivity : AppCompatActivity() {
         etDisplayName = findViewById(R.id.etDisplayName)
         rvPlatformPrefs = findViewById(R.id.rvPlatformPrefs)
         btnSavePreferences = findViewById(R.id.btnSavePreferences)
+        btnResetPin = findViewById(R.id.btnResetPin)
         btnSignOut = findViewById(R.id.btnSignOut)
 
         vm = ViewModelProvider(
@@ -205,6 +214,8 @@ class SettingsActivity : AppCompatActivity() {
 
         btnSavePreferences.setOnClickListener { savePreferences() }
 
+        btnResetPin.setOnClickListener { startResetPinFlow() }
+
         btnSignOut.setOnClickListener {
             AlertDialog.Builder(this)
                 .setTitle(R.string.sign_out)
@@ -213,6 +224,18 @@ class SettingsActivity : AppCompatActivity() {
                 .setNegativeButton(android.R.string.cancel, null)
                 .show()
         }
+    }
+
+    private fun startResetPinFlow() {
+        if (!PINManager.isPinSet(this)) {
+            Toast.makeText(this, R.string.pin_not_set, Toast.LENGTH_SHORT).show()
+            return
+        }
+        startActivity(
+            Intent(this, PinUnlockActivity::class.java).apply {
+                putExtra(PinUnlockActivity.EXTRA_VERIFY_FOR_RESET, true)
+            }
+        )
     }
 
     private fun savePreferences() {

@@ -10,9 +10,12 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import com.example.oblique_android.R
 import com.example.oblique_android.models.AuthViewModel
+import androidx.lifecycle.lifecycleScope
+import com.example.oblique_android.utils.AuthFormHelper
 import com.example.oblique_android.utils.OnboardingRouter
 import com.example.oblique_android.utils.PasswordFieldHelper
 import com.example.oblique_android.utils.setupWindowInsets
+import kotlinx.coroutines.launch
 
 class LoginActivity : AppCompatActivity() {
     private val authVm: AuthViewModel by viewModels()
@@ -29,13 +32,16 @@ class LoginActivity : AppCompatActivity() {
         val togglePassword = findViewById<ImageView>(R.id.togglePassword)
 
         PasswordFieldHelper.wireToggle(etPassword, togglePassword)
+        val refreshLoginForm = AuthFormHelper.wireLoginForm(etEmail, etPassword, btnLogin)
 
         authVm.authResult.observe(this, Observer { outcome ->
-            btnLogin.isEnabled = true
+            refreshLoginForm()
             if (outcome.success) {
-                val next = OnboardingRouter.next(this)
-                startActivity(Intent(this, next))
-                finish()
+                lifecycleScope.launch {
+                    val next = OnboardingRouter.nextSuspend(this@LoginActivity, validateToken = false)
+                    startActivity(Intent(this@LoginActivity, next))
+                    finish()
+                }
             } else {
                 val message = outcome.errorMessage ?: getString(R.string.login_failed)
                 Toast.makeText(this, message, Toast.LENGTH_LONG).show()
