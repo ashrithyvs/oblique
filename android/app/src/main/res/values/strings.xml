@@ -14,15 +14,60 @@
     <string name="login_failed">Login failed</string>
     <string name="pin_enter_length">Please enter a %1$d-digit PIN</string>
     <string name="pin_saved">PIN saved successfully</string>
-    <string name="pin_setup_subtitle">Choose a 4-digit PIN to unlock blocked apps</string>
-    <string name="pin_confirm_subtitle">Re-enter your 4-digit PIN</string>
-    <string name="pin_unlock_subtitle">Enter your 4-digit PIN to continue</string>
     <string name="save_settings">Save Settings</string>
+
+    <string name="auth_welcome_back">Welcome back</string>
+    <string name="auth_sign_in_subtitle">Sign in to continue your journey</string>
+    <string name="auth_email_label">Email</string>
+    <string name="auth_email_hint">your.email@example.com</string>
+    <string name="auth_password_label">Password</string>
+    <string name="auth_password_hint">Enter your password</string>
+    <string name="auth_sign_in">Sign In</string>
+    <string name="auth_no_account">Don\'t have an account?</string>
+    <string name="auth_create_account">Create Account</string>
+
+    <string name="auth_create_account_title">Create Account</string>
+    <string name="auth_register_subtitle">Start your productivity journey today</string>
+    <string name="auth_full_name_label">Full Name</string>
+    <string name="auth_full_name_hint">Enter your name</string>
+    <string name="auth_password_create_hint">Create a strong password</string>
+    <string name="auth_confirm_password_label">Confirm Password</string>
+    <string name="auth_confirm_password_hint">Confirm your password</string>
+    <string name="auth_already_have_account">Already have an account?</string>
+    <string name="auth_password_mismatch">Passwords do not match</string>
+    <string name="auth_password_min_length">Password must be at least 8 characters</string>
+    <string name="auth_fill_all_fields">Please fill all fields</string>
+
+    <string name="pin_create_title">Create Your PIN</string>
+    <string name="pin_setup_subtitle">Choose a 6-digit PIN to secure your app settings</string>
+    <string name="pin_confirm_title">Confirm Your PIN</string>
+    <string name="pin_confirm_subtitle">Re-enter your 6-digit PIN</string>
+    <string name="pin_unlock_title">Enter PIN</string>
+    <string name="pin_unlock_subtitle">Enter your 6-digit PIN to continue</string>
+    <string name="pin_mismatch">PINs do not match</string>
+    <string name="pin_wrong">Wrong PIN</string>
+    <string name="pin_not_set">No PIN has been set yet!</string>
+    <string name="pin_unlocked">Unlocked successfully!</string>
     <string name="sign_out">Sign out</string>
     <string name="sign_out_confirm">Are you sure you want to sign out?</string>
     <string name="display_name_required">Please enter a display name</string>
     <string name="preferences_saved">Preferences saved for %1$s</string>
     <string name="preferences_save_failed">Failed to save preferences</string>
     <string name="failed_load_apps">Could not load installed apps</string>
+
+    <string name="app_list_title">Choose your distractions</string>
+    <string name="app_list_subtitle">Select apps that steal your time ⏰</string>
+    <string name="dashboard_apps_blocked">Apps blocked</string>
+    <string name="dashboard_goals_done">Goals done</string>
+    <string name="dashboard_success_rate">Success rate</string>
+
+    <string name="goals_whats_your_goal">What\'s your goal?</string>
+    <string name="goals_target_problems">Target (%1$s)</string>
+    <string name="goals_select_deadline">Select daily deadline</string>
+    <string name="goals_no_deadline">No deadline selected</string>
+    <string name="goals_pick_time">Pick time</string>
+    <string name="goals_add_this_goal">+ Add this goal</string>
+    <string name="goals_edit_target_hint">New target value</string>
+    <string name="goals_deadline_preview">Deadline: %1$s</string>
 
 </resources>

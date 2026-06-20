@@ -7,10 +7,11 @@ import android.text.InputType
 import android.util.Log
 import android.view.View
 import android.widget.*
-import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -21,13 +22,12 @@ import com.example.oblique_android.adapters.PlatformsAdapter
 import com.example.oblique_android.models.GoalType
 import com.example.oblique_android.models.GoalsViewModel
 import com.example.oblique_android.network.api.GoalRequest
-import kotlinx.coroutines.launch
-import androidx.lifecycle.lifecycleScope
 import com.example.oblique_android.utils.OnboardingRouter
 import com.example.oblique_android.utils.PrefsUtils
 import com.example.oblique_android.utils.setupWindowInsets
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
+import kotlinx.coroutines.launch
 import java.util.Calendar
 
 class GoalsActivity : AppCompatActivity(), PlatformsAdapter.PlatformClickListener {
@@ -44,6 +44,8 @@ class GoalsActivity : AppCompatActivity(), PlatformsAdapter.PlatformClickListene
     private lateinit var scrollView: ScrollView
     private lateinit var tvTargetLabel: TextView
     private lateinit var emptyStateCard: View
+    private lateinit var sectionGoalType: View
+    private lateinit var sectionGoalDetails: View
     private lateinit var platformsAdapter: PlatformsAdapter
     private lateinit var goalsAdapter: GoalsAdapter
     private lateinit var goalTypeAdapter: GoalTypeAdapter
@@ -51,7 +53,7 @@ class GoalsActivity : AppCompatActivity(), PlatformsAdapter.PlatformClickListene
     private var selectedPlatform: String? = null
     private var selectedGoalType: GoalType? = null
     private lateinit var proTipCard: CardView
-    private lateinit var btnPickDeadline: Button
+    private lateinit var btnPickDeadline: ImageButton
     private lateinit var tvDeadlinePreview: TextView
 
     private var selectedDeadlineMsOfDay: Long = -1L
@@ -74,6 +76,8 @@ class GoalsActivity : AppCompatActivity(), PlatformsAdapter.PlatformClickListene
         scrollView = findViewById(R.id.scrollView)
         tvTargetLabel = findViewById(R.id.tvTargetLabel)
         emptyStateCard = findViewById(R.id.emptyStateCard)
+        sectionGoalType = findViewById(R.id.sectionGoalType)
+        sectionGoalDetails = findViewById(R.id.sectionGoalDetails)
         proTipCard = findViewById(R.id.proTipCard)
         btnPickDeadline = findViewById(R.id.btnPickDeadline)
         tvDeadlinePreview = findViewById(R.id.tvDeadlinePreview)
@@ -110,46 +114,10 @@ class GoalsActivity : AppCompatActivity(), PlatformsAdapter.PlatformClickListene
             proTipCard.visibility = if (list.isEmpty()) View.VISIBLE else View.GONE
             updateBottomCTA(list.size)
         }
-        btnPickDeadline.setOnClickListener {
-            val now = Calendar.getInstance()
-            val hour = now.get(Calendar.HOUR_OF_DAY)
-            val minute = now.get(Calendar.MINUTE)
 
-            val picker = MaterialTimePicker.Builder()
-                .setTitleText("Select goal deadline")
-                .setHour(hour)
-                .setMinute(minute)
-                .setTimeFormat(TimeFormat.CLOCK_12H)
-                .build()
-
-            picker.addOnPositiveButtonClickListener {
-                val selectedHour = picker.hour
-                val selectedMinute = picker.minute
-                val display = String.format("%02d:%02d %s",
-                    if (selectedHour % 12 == 0) 12 else selectedHour % 12,
-                    selectedMinute,
-                    if (selectedHour >= 12) "PM" else "AM"
-                )
-                tvDeadlinePreview.text = "Deadline: $display"
-
-                // compute ms since midnight
-                selectedDeadlineMsOfDay = (selectedHour * 60 * 60 * 1000L) + (selectedMinute * 60 * 1000L)
-
-                // compute absolute epoch (today + selected time)
-                val todayStart = Calendar.getInstance().apply {
-                    set(Calendar.HOUR_OF_DAY, 0)
-                    set(Calendar.MINUTE, 0)
-                    set(Calendar.SECOND, 0)
-                    set(Calendar.MILLISECOND, 0)
-                }.timeInMillis
-                selectedDeadlineEpoch = todayStart + selectedDeadlineMsOfDay
-
-                Log.i("GoalsActivity", "Deadline selected: $display")
-                Log.i("GoalsActivity", "→ sinceMidnight=$selectedDeadlineMsOfDay, absolute=$selectedDeadlineEpoch")
-            }
-
-            picker.show(supportFragmentManager, "deadline_picker")
-        }
+        val alarmTint = ContextCompat.getColor(this, R.color.auth_title)
+        btnPickDeadline.setColorFilter(alarmTint, android.graphics.PorterDuff.Mode.SRC_IN)
+        btnPickDeadline.setOnClickListener { showDeadlinePicker() }
 
         btnAddGoal.setOnClickListener {
             val platform = selectedPlatform ?: return@setOnClickListener toast("Pick a platform")
@@ -171,7 +139,7 @@ class GoalsActivity : AppCompatActivity(), PlatformsAdapter.PlatformClickListene
                 unit = gt.unit,
                 targetValue = target,
                 baselineValue = 0,
-                deadline = selectedDeadlineEpoch, // ✅ using absolute timestamp (Option A)
+                deadline = selectedDeadlineEpoch,
                 title = "${gt.title} on $platform",
                 checkIntervalMs = 3600000L
             )
@@ -195,37 +163,97 @@ class GoalsActivity : AppCompatActivity(), PlatformsAdapter.PlatformClickListene
         }
 
         cardSelectedPlatform.visibility = View.GONE
+        updateProgressiveSteps()
+    }
+
+    private fun showDeadlinePicker() {
+        val now = Calendar.getInstance()
+        val picker = MaterialTimePicker.Builder()
+            .setTitleText(getString(R.string.goals_select_deadline))
+            .setHour(now.get(Calendar.HOUR_OF_DAY))
+            .setMinute(now.get(Calendar.MINUTE))
+            .setTimeFormat(TimeFormat.CLOCK_12H)
+            .build()
+
+        picker.addOnPositiveButtonClickListener {
+            val selectedHour = picker.hour
+            val selectedMinute = picker.minute
+            val display = String.format(
+                "%02d:%02d %s",
+                if (selectedHour % 12 == 0) 12 else selectedHour % 12,
+                selectedMinute,
+                if (selectedHour >= 12) "PM" else "AM"
+            )
+            tvDeadlinePreview.text = getString(R.string.goals_deadline_preview, display)
+
+            selectedDeadlineMsOfDay =
+                (selectedHour * 60 * 60 * 1000L) + (selectedMinute * 60 * 1000L)
+
+            val todayStart = Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }.timeInMillis
+            selectedDeadlineEpoch = todayStart + selectedDeadlineMsOfDay
+
+            Log.i("GoalsActivity", "Deadline selected: $display")
+        }
+
+        picker.show(supportFragmentManager, "deadline_picker")
     }
 
     private fun onGoalTypeSelected(goalType: GoalType) {
         selectedGoalType = goalType
-        tvTargetLabel.text = "Target (${goalType.unit})"
+        tvTargetLabel.text = getString(R.string.goals_target_problems, goalType.unit)
         etTarget.hint = goalType.suggested.toString()
         etTarget.inputType = InputType.TYPE_CLASS_NUMBER
         goalTypeAdapter.select(goalType)
+        updateProgressiveSteps()
+        scrollView.post { scrollView.smoothScrollTo(0, sectionGoalDetails.top) }
     }
 
     private fun clearSelectionAfterAdd() {
         selectedGoalType = null
         selectedPlatform = null
+        selectedDeadlineEpoch = -1L
+        selectedDeadlineMsOfDay = -1L
         goalTypeAdapter.clearSelection()
         platformsAdapter.clearSelection()
         etTarget.setText("")
+        tvDeadlinePreview.text = getString(R.string.goals_no_deadline)
         cardSelectedPlatform.visibility = View.GONE
+        updateProgressiveSteps()
     }
 
     override fun onPlatformSelected(platform: String) {
         if (platform.isEmpty()) {
             selectedPlatform = null
+            selectedGoalType = null
+            goalTypeAdapter.clearSelection()
             cardSelectedPlatform.visibility = View.GONE
             tvSelectedPlatformName.text = ""
         } else {
             selectedPlatform = platform
+            selectedGoalType = null
+            goalTypeAdapter.clearSelection()
+            etTarget.setText("")
+            selectedDeadlineEpoch = -1L
+            tvDeadlinePreview.text = getString(R.string.goals_no_deadline)
             tvSelectedPlatformName.text = platform
             ivSelectedIcon.setImageResource(platformIconRes(platform))
             cardSelectedPlatform.visibility = View.VISIBLE
-            scrollView.post { scrollView.smoothScrollTo(0, cardSelectedPlatform.top) }
+            scrollView.post { scrollView.smoothScrollTo(0, sectionGoalType.top) }
         }
+        updateProgressiveSteps()
+    }
+
+    private fun updateProgressiveSteps() {
+        val hasPlatform = !selectedPlatform.isNullOrBlank()
+        val hasGoalType = selectedGoalType != null
+
+        sectionGoalType.visibility = if (hasPlatform) View.VISIBLE else View.GONE
+        sectionGoalDetails.visibility = if (hasPlatform && hasGoalType) View.VISIBLE else View.GONE
     }
 
     private fun platformIconRes(platform: String): Int = when (platform.lowercase()) {

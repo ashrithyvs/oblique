@@ -162,10 +162,25 @@
                 android:layout_marginEnd="8dp"
                 android:gravity="center">
 
+                <FrameLayout
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/stat_icon_bg_lavender">
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:layout_gravity="center"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_stat_shield_outline"
+                        app:tint="@color/stat_shield_icon" />
+                </FrameLayout>
+
                 <TextView
                     android:id="@+id/tvAppsBlocked"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
                     android:text="0"
                     android:textSize="18sp"
                     android:textStyle="bold"
@@ -174,9 +189,10 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Apps blocked"
+                    android:text="@string/dashboard_apps_blocked"
                     android:textSize="12sp"
                     android:textColor="@color/text_muted"
+                    android:gravity="center"
                     android:layout_marginTop="6dp" />
             </LinearLayout>
 
@@ -190,10 +206,25 @@
                 android:layout_marginEnd="8dp"
                 android:gravity="center">
 
+                <FrameLayout
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/stat_icon_bg_mint">
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:layout_gravity="center"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_stat_check_circle"
+                        app:tint="@color/stat_goals_icon" />
+                </FrameLayout>
+
                 <TextView
                     android:id="@+id/tvGoalsDone"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
                     android:text="0"
                     android:textSize="18sp"
                     android:textStyle="bold"
@@ -202,9 +233,10 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Goals done"
+                    android:text="@string/dashboard_goals_done"
                     android:textSize="12sp"
                     android:textColor="@color/text_muted"
+                    android:gravity="center"
                     android:layout_marginTop="6dp" />
             </LinearLayout>
 
@@ -217,11 +249,26 @@
                 android:padding="12dp"
                 android:gravity="center">
 
+                <FrameLayout
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/stat_icon_bg_rose">
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:layout_gravity="center"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_stat_trending_up"
+                        app:tint="@color/stat_success_icon" />
+                </FrameLayout>
+
                 <TextView
                     android:id="@+id/tvTimeSaved"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="0h"
+                    android:layout_marginTop="10dp"
+                    android:text="0%"
                     android:textSize="18sp"
                     android:textStyle="bold"
                     android:textColor="@color/text_primary" />
@@ -229,9 +276,10 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Success rate"
+                    android:text="@string/dashboard_success_rate"
                     android:textSize="12sp"
                     android:textColor="@color/text_muted"
+                    android:gravity="center"
                     android:layout_marginTop="6dp" />
             </LinearLayout>
 

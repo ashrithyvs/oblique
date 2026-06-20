@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/pinScreenRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    android:clipToPadding="false"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:paddingHorizontal="24dp">
+
+    <FrameLayout
+        android:layout_width="@dimen/pin_icon_circle_size"
+        android:layout_height="@dimen/pin_icon_circle_size"
+        android:layout_marginTop="32dp"
+        android:background="@drawable/pin_icon_circle_bg">
+
+        <ImageView
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_gravity="center"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_lock_outline" />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/tvPinTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="@string/pin_create_title"
+        android:textColor="@color/auth_title"
+        android:textSize="22sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvPinSubtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:text="@string/pin_setup_subtitle"
+        android:textColor="@color/auth_subtitle"
+        android:textSize="14sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/pin_display_height"
+        android:layout_marginTop="32dp"
+        android:background="@drawable/pin_display_box_bg"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="20dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <FrameLayout
+                android:layout_width="@dimen/pin_dot_slot_size"
+                android:layout_height="match_parent"
+                android:layout_marginHorizontal="4dp">
+
+                <ImageView
+                    android:id="@+id/pinDot0"
+                    android:layout_width="@dimen/pin_dot_size"
+                    android:layout_height="@dimen/pin_dot_size"
+                    android:layout_gravity="center"
+                    android:contentDescription="@null"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/pin_dot_empty" />
+
+                <TextView
+                    android:id="@+id/pinDigit0"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:includeFontPadding="false"
+                    android:textColor="@color/auth_title"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+            </FrameLayout>
+
+            <FrameLayout
+                android:layout_width="@dimen/pin_dot_slot_size"
+                android:layout_height="match_parent"
+                android:layout_marginHorizontal="4dp">
+
+                <ImageView
+                    android:id="@+id/pinDot1"
+                    android:layout_width="@dimen/pin_dot_size"
+                    android:layout_height="@dimen/pin_dot_size"
+                    android:layout_gravity="center"
+                    android:contentDescription="@null"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/pin_dot_empty" />
+
+                <TextView
+                    android:id="@+id/pinDigit1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:includeFontPadding="false"
+                    android:textColor="@color/auth_title"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+            </FrameLayout>
+
+            <FrameLayout
+                android:layout_width="@dimen/pin_dot_slot_size"
+                android:layout_height="match_parent"
+                android:layout_marginHorizontal="4dp">
+
+                <ImageView
+                    android:id="@+id/pinDot2"
+                    android:layout_width="@dimen/pin_dot_size"
+                    android:layout_height="@dimen/pin_dot_size"
+                    android:layout_gravity="center"
+                    android:contentDescription="@null"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/pin_dot_empty" />
+
+                <TextView
+                    android:id="@+id/pinDigit2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:includeFontPadding="false"
+                    android:textColor="@color/auth_title"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+            </FrameLayout>
+
+            <FrameLayout
+                android:layout_width="@dimen/pin_dot_slot_size"
+                android:layout_height="match_parent"
+                android:layout_marginHorizontal="4dp">
+
+                <ImageView
+                    android:id="@+id/pinDot3"
+                    android:layout_width="@dimen/pin_dot_size"
+                    android:layout_height="@dimen/pin_dot_size"
+                    android:layout_gravity="center"
+                    android:contentDescription="@null"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/pin_dot_empty" />
+
+                <TextView
+                    android:id="@+id/pinDigit3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:includeFontPadding="false"
+                    android:textColor="@color/auth_title"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+            </FrameLayout>
+
+            <FrameLayout
+                android:layout_width="@dimen/pin_dot_slot_size"
+                android:layout_height="match_parent"
+                android:layout_marginHorizontal="4dp">
+
+                <ImageView
+                    android:id="@+id/pinDot4"
+                    android:layout_width="@dimen/pin_dot_size"
+                    android:layout_height="@dimen/pin_dot_size"
+                    android:layout_gravity="center"
+                    android:contentDescription="@null"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/pin_dot_empty" />
+
+                <TextView
+                    android:id="@+id/pinDigit4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:includeFontPadding="false"
+                    android:textColor="@color/auth_title"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+            </FrameLayout>
+
+            <FrameLayout
+                android:layout_width="@dimen/pin_dot_slot_size"
+                android:layout_height="match_parent"
+                android:layout_marginHorizontal="4dp">
+
+                <ImageView
+                    android:id="@+id/pinDot5"
+                    android:layout_width="@dimen/pin_dot_size"
+                    android:layout_height="@dimen/pin_dot_size"
+                    android:layout_gravity="center"
+                    android:contentDescription="@null"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/pin_dot_empty" />
+
+                <TextView
+                    android:id="@+id/pinDigit5"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:includeFontPadding="false"
+                    android:textColor="@color/auth_title"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+            </FrameLayout>
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/togglePassword"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/auth_password_label"
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_eye"
+            app:tint="@color/auth_label" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <include layout="@layout/layout_pin_keypad" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="24dp" />
+</LinearLayout>

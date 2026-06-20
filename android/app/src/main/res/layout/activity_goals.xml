@@ -128,8 +128,9 @@
 
                         <ImageView
                             android:id="@+id/ivSelectedIcon"
-                            android:layout_width="36dp"
-                            android:layout_height="36dp"
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
+                            android:scaleType="fitCenter"
                             android:src="@drawable/ic_leetcode"
                             android:contentDescription="@string/platform_icon" />
 
@@ -145,86 +146,108 @@
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
 
-                <!-- What's your goal -->
-                <TextView
-                    android:id="@+id/tvWhatsGoal"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="What's your goal?"
-                    android:textSize="14sp"
-                    android:layout_marginTop="@dimen/section_spacing"
-                    android:textColor="@color/text_primary" />
-
-                <!-- Vertical list of goal types -->
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rvGoalTypes"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/tiles_margin_top"
-                    android:overScrollMode="never"
-                    android:scrollbars="none" />
-
-                <!-- Target label + input -->
-                <TextView
-                    android:id="@+id/tvTargetLabel"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Target (problems)"
-                    android:layout_marginTop="@dimen/section_spacing"
-                    android:textColor="@color/text_primary" />
-
-                <EditText
-                    android:id="@+id/etTarget"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:layout_marginTop="@dimen/target_margin_top"
-                    android:hint="2"
-                    android:background="@drawable/bg_input_rounded"
-                    android:padding="@dimen/input_padding"
-                    android:inputType="number" />
-
-                <!-- Deadline picker -->
-                <TextView
-                    android:id="@+id/tvDeadlineLabel"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Select daily deadline"
-                    android:layout_marginTop="@dimen/section_spacing"
-                    android:textColor="@color/text_primary" />
+                <!-- Step 2: goal types (shown after platform selected) -->
                 <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical">
-                <TextView
-                    android:id="@+id/tvDeadlinePreview"
+                    android:id="@+id/sectionGoalType"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textAlignment="center"
-                    android:text="No deadline selected"
-                    android:textSize="16sp"
-                    android:textColor="@color/text_muted"
-                    android:layout_margin="16dp" />
-                <Button
-                    android:id="@+id/btnPickDeadline"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:text="Pick Time"
-                    android:layout_marginTop="8dp"
-                    android:background="@drawable/btn_dark_pill"
-                    android:textColor="@color/white"
-                    android:textAllCaps="false" />
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:id="@+id/tvWhatsGoal"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/goals_whats_your_goal"
+                        android:textSize="14sp"
+                        android:layout_marginTop="@dimen/section_spacing"
+                        android:textColor="@color/text_primary" />
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvGoalTypes"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/tiles_margin_top"
+                        android:overScrollMode="never"
+                        android:scrollbars="none" />
                 </LinearLayout>
 
-                <!-- Add this goal button (dark pill) -->
-                <Button
-                    android:id="@+id/btnAddGoal"
+                <!-- Step 3: target + deadline + add (shown after goal type selected) -->
+                <LinearLayout
+                    android:id="@+id/sectionGoalDetails"
                     android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:layout_marginTop="@dimen/btn_add_margin_top"
-                    android:text="+ Add this goal"
-                    android:background="@drawable/btn_dark_pill"
-                    android:textColor="@color/white"
-                    android:textAllCaps="false" />
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:id="@+id/tvTargetLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/goals_target_problems"
+                        android:layout_marginTop="@dimen/section_spacing"
+                        android:textColor="@color/text_primary" />
+
+                    <EditText
+                        android:id="@+id/etTarget"
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/auth_input_height"
+                        android:layout_marginTop="@dimen/target_margin_top"
+                        android:hint="2"
+                        android:background="@drawable/auth_input_bg"
+                        android:paddingHorizontal="@dimen/input_padding"
+                        android:inputType="number"
+                        android:textColor="@color/auth_title"
+                        android:textColorHint="@color/auth_label" />
+
+                    <TextView
+                        android:id="@+id/tvDeadlineLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/goals_select_deadline"
+                        android:layout_marginTop="@dimen/section_spacing"
+                        android:textColor="@color/text_primary" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tvDeadlinePreview"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/goals_no_deadline"
+                            android:textColor="@color/text_muted"
+                            android:textSize="15sp" />
+
+                        <ImageButton
+                            android:id="@+id/btnPickDeadline"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:background="@drawable/goal_alarm_btn_bg"
+                            android:contentDescription="@string/goals_pick_time"
+                            android:padding="12dp"
+                            android:scaleType="fitCenter"
+                            android:src="@drawable/ic_alarm_outline"
+                            app:tint="@color/auth_title" />
+                    </LinearLayout>
+
+                    <Button
+                        android:id="@+id/btnAddGoal"
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/auth_btn_height"
+                        android:layout_marginTop="@dimen/btn_add_margin_top"
+                        android:background="@drawable/goal_btn_primary"
+                        android:text="@string/goals_add_this_goal"
+                        android:textAllCaps="false"
+                        android:textColor="@color/white"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
 
             </LinearLayout>
         </androidx.cardview.widget.CardView>

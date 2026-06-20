@@ -303,7 +303,7 @@ class SettingsActivity : AppCompatActivity() {
         val builder = AlertDialog.Builder(ctx)
         val view = layoutInflater.inflate(R.layout.dialog_edit_goal, null)
         val etTarget = view.findViewById<EditText>(R.id.etEditTarget)
-        val btnPickDeadline = view.findViewById<Button>(R.id.btnPickDeadlineEdit)
+        val btnPickDeadline = view.findViewById<ImageButton>(R.id.btnPickDeadlineEdit)
         val tvDeadlinePreview = view.findViewById<TextView>(R.id.tvDeadlinePreviewEdit)
 
         etTarget.setText(goal.targetValue.toString())
@@ -313,11 +313,17 @@ class SettingsActivity : AppCompatActivity() {
             val cal = Calendar.getInstance().apply { timeInMillis = selectedDeadlineEpoch }
             val hour = cal.get(Calendar.HOUR_OF_DAY)
             val minute = cal.get(Calendar.MINUTE)
-            val amPm = if (hour >= 12) "PM" else "AM"
-            val display = String.format("%02d:%02d %s", if (hour % 12 == 0) 12 else hour % 12, minute, amPm)
-            tvDeadlinePreview.text = "Deadline: $display"
+            val display = String.format(
+                "%02d:%02d %s",
+                if (hour % 12 == 0) 12 else hour % 12,
+                minute,
+                if (hour >= 12) "PM" else "AM"
+            )
+            tvDeadlinePreview.text = getString(R.string.goals_deadline_preview, display)
         }
 
+        val alarmTint = ContextCompat.getColor(ctx, R.color.auth_title)
+        btnPickDeadline.setColorFilter(alarmTint, android.graphics.PorterDuff.Mode.SRC_IN)
         btnPickDeadline.setOnClickListener {
             val cal = Calendar.getInstance()
             val picker = com.google.android.material.timepicker.MaterialTimePicker.Builder()
@@ -345,7 +351,7 @@ class SettingsActivity : AppCompatActivity() {
                     selectedMinute,
                     if (selectedHour >= 12) "PM" else "AM"
                 )
-                tvDeadlinePreview.text = "Deadline: $display"
+                tvDeadlinePreview.text = getString(R.string.goals_deadline_preview, display)
             }
 
             picker.show(supportFragmentManager, "deadline_edit_picker")

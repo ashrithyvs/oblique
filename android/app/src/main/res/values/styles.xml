@@ -22,4 +22,18 @@
         <item name="android:windowBackground">@color/bg_white</item>
     </style>
 
+    <style name="PinKeypadButton">
+        <item name="android:layout_width">@dimen/pin_keypad_btn_size</item>
+        <item name="android:layout_height">@dimen/pin_keypad_btn_size</item>
+        <item name="android:layout_margin">@dimen/pin_keypad_spacing</item>
+        <item name="android:background">@drawable/pin_keypad_btn_bg</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:foreground">?attr/selectableItemBackground</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">@color/auth_title</item>
+        <item name="android:textSize">22sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
 </resources>

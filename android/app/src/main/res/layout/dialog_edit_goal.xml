@@ -1,34 +1,48 @@
 <!-- res/layout/dialog_edit_goal.xml -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
-    android:padding="16dp"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
-
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
 
     <EditText
         android:id="@+id/etEditTarget"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="@dimen/auth_input_height"
         android:autofillHints=""
-        android:hint="New target value"
-        android:inputType="number" />
+        android:background="@drawable/auth_input_bg"
+        android:hint="@string/goals_edit_target_hint"
+        android:inputType="number"
+        android:paddingHorizontal="@dimen/input_padding"
+        android:textColor="@color/auth_title"
+        android:textColorHint="@color/auth_label" />
 
-    <TextView
-        android:id="@+id/tvDeadlinePreviewEdit"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textAlignment="center"
-        android:text="No deadline selected"
-        android:textSize="16sp"
-        android:textColor="@color/text_muted"
-        android:layout_margin="16dp" />
-    <Button
-        android:id="@+id/btnPickDeadlineEdit"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:text="Pick Deadline Time"
-        android:background="@drawable/btn_dark_pill"
-        android:textColor="@color/white"
-        android:textAllCaps="false" />
+        android:layout_marginTop="16dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/tvDeadlinePreviewEdit"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/goals_no_deadline"
+            android:textColor="@color/text_muted"
+            android:textSize="15sp" />
+
+        <ImageButton
+            android:id="@+id/btnPickDeadlineEdit"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/goal_alarm_btn_bg"
+            android:contentDescription="@string/goals_pick_time"
+            android:padding="12dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_alarm_outline"
+            app:tint="@color/auth_title" />
+    </LinearLayout>
 </LinearLayout>

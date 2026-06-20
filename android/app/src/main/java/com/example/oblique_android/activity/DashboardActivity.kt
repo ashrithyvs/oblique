@@ -192,6 +192,7 @@ class DashboardActivity : AppCompatActivity() {
             }
             containerGoals.addView(tv)
             tvGoalsDone.text = "0"
+            tvTimeSaved.text = "0%"
             return
         }
 
@@ -298,6 +299,8 @@ class DashboardActivity : AppCompatActivity() {
         }
 
         tvGoalsDone.text = doneCount.toString()
+        val successRate = if (goals.isNotEmpty()) (doneCount * 100) / goals.size else 0
+        tvTimeSaved.text = "$successRate%"
     }
 
 

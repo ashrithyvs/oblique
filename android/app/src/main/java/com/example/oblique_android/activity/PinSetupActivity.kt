@@ -2,54 +2,28 @@ package com.example.oblique_android.activity
 
 import android.content.Intent
 import android.os.Bundle
-import android.text.InputType
-import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.chaos.view.PinView
 import com.example.oblique_android.R
-import com.example.oblique_android.utils.OnboardingRouter
-import com.example.oblique_android.utils.PinConstants
+import com.example.oblique_android.utils.PinKeypadController
 import com.example.oblique_android.utils.setupWindowInsets
-import com.google.android.material.button.MaterialButton
 
 class PinSetupActivity : AppCompatActivity() {
-    private var isPasswordVisible = false
+
+    private lateinit var keypad: PinKeypadController
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_pin_setup)
         setupWindowInsets(R.id.rootPinSetup)
 
-        val pinView = findViewById<PinView>(R.id.pinView)
-        pinView.itemCount = PinConstants.LENGTH
-        val togglePassword = findViewById<ImageView>(R.id.togglePassword)
-        val btnContinue = findViewById<MaterialButton>(R.id.btnContinuePinSetup)
+        findViewById<TextView>(R.id.tvPinTitle).setText(R.string.pin_create_title)
+        findViewById<TextView>(R.id.tvPinSubtitle).setText(R.string.pin_setup_subtitle)
 
-        togglePassword.setOnClickListener {
-            isPasswordVisible = !isPasswordVisible
-            pinView.inputType = if (isPasswordVisible) {
-                InputType.TYPE_CLASS_NUMBER
-            } else {
-                InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
-            }
-            pinView.setSelection(pinView.text?.length ?: 0)
-        }
-
-        btnContinue.setOnClickListener {
-            val pin = pinView.text?.toString()?.trim()
-
-            if (!PinConstants.isValid(pin)) {
-                Toast.makeText(
-                    this,
-                    getString(R.string.pin_enter_length, PinConstants.LENGTH),
-                    Toast.LENGTH_SHORT
-                ).show()
-                return@setOnClickListener
-            }
-
+        keypad = PinKeypadController(findViewById(R.id.pinScreenRoot)) { pin ->
             val intent = Intent(this, PinConfirmActivity::class.java)
-            intent.putExtra("PIN", pin)
+            intent.putExtra(PinConfirmActivity.EXTRA_PIN, pin)
             startActivity(intent)
             finish()
         }

@@ -1,22 +1,143 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/rootLogin"
-    android:orientation="vertical"
-    android:padding="16dp"
-    android:clipToPadding="false"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    android:clipToPadding="false"
+    android:fillViewport="true">
 
-    <EditText android:id="@+id/inputEmail" android:hint="Email"
-        android:inputType="textEmailAddress"
-        android:layout_width="match_parent" android:layout_height="wrap_content"/>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:paddingHorizontal="@dimen/auth_horizontal_padding"
+        android:paddingTop="32dp"
+        android:paddingBottom="32dp">
 
-    <EditText android:id="@+id/inputPassword" android:hint="Password"
-        android:inputType="textPassword"
-        android:layout_width="match_parent" android:layout_height="wrap_content"/>
+        <include layout="@layout/layout_auth_logo_login" />
 
-    <Button android:id="@+id/btnLogin" android:text="Login"
-        android:layout_width="match_parent" android:layout_height="wrap_content"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="@string/auth_welcome_back"
+            android:textColor="@color/auth_title"
+            android:textSize="24sp"
+            android:textStyle="bold" />
 
-    <Button android:id="@+id/btnGoRegister" android:text="Register"
-        android:layout_width="match_parent" android:layout_height="wrap_content"/>
-</LinearLayout>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:text="@string/auth_sign_in_subtitle"
+            android:textColor="@color/auth_subtitle"
+            android:textSize="14sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:background="@drawable/auth_form_card_bg"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/auth_email_label"
+                android:textColor="@color/auth_label"
+                android:textSize="14sp" />
+
+            <EditText
+                android:id="@+id/inputEmail"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/auth_input_height"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/auth_input_bg"
+                android:hint="@string/auth_email_hint"
+                android:inputType="textEmailAddress"
+                android:paddingHorizontal="16dp"
+                android:textColor="@color/auth_title"
+                android:textColorHint="@color/auth_label"
+                android:textSize="15sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/auth_password_label"
+                android:textColor="@color/auth_label"
+                android:textSize="14sp" />
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/auth_input_height"
+                android:layout_marginTop="8dp">
+
+                <EditText
+                    android:id="@+id/inputPassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/auth_input_bg"
+                    android:hint="@string/auth_password_hint"
+                    android:inputType="textPassword"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="48dp"
+                    android:textColor="@color/auth_title"
+                    android:textColorHint="@color/auth_label"
+                    android:textSize="15sp" />
+
+                <ImageView
+                    android:id="@+id/togglePassword"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center_vertical|end"
+                    android:layout_marginEnd="14dp"
+                    android:contentDescription="@string/auth_password_label"
+                    android:src="@drawable/ic_eye"
+                    app:tint="@color/auth_label" />
+            </FrameLayout>
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnLogin"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/auth_btn_height"
+            android:layout_marginTop="24dp"
+            android:background="@drawable/auth_btn_primary"
+            android:text="@string/auth_sign_in"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            app:backgroundTint="@null"
+            app:cornerRadius="@dimen/auth_btn_radius" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="@string/auth_no_account"
+            android:textColor="@color/auth_subtitle"
+            android:textSize="14sp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnGoRegister"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/auth_btn_height"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/auth_btn_outlined"
+            android:text="@string/auth_create_account"
+            android:textAllCaps="false"
+            android:textColor="@color/auth_title"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:backgroundTint="@null"
+            app:cornerRadius="@dimen/auth_btn_radius"
+            app:strokeColor="@color/auth_btn_outlined_stroke"
+            app:strokeWidth="1dp" />
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

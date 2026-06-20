@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center_horizontal">
+
+    <FrameLayout
+        android:layout_width="@dimen/auth_logo_size"
+        android:layout_height="@dimen/auth_logo_size"
+        android:background="@drawable/auth_logo_bg">
+
+        <ImageView
+            android:id="@+id/ivAuthLogo"
+            android:layout_width="@dimen/auth_logo_icon_size"
+            android:layout_height="@dimen/auth_logo_icon_size"
+            android:layout_gravity="center"
+            android:contentDescription="@string/app_icon"
+            android:src="@drawable/ic_auth_user_plus" />
+    </FrameLayout>
+
+    <FrameLayout
+        android:layout_width="@dimen/auth_badge_size"
+        android:layout_height="@dimen/auth_badge_size"
+        android:layout_gravity="top|end"
+        android:background="@drawable/auth_badge_bg">
+
+        <ImageView
+            android:layout_width="12dp"
+            android:layout_height="12dp"
+            android:layout_gravity="center"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_sparkle" />
+    </FrameLayout>
+</FrameLayout>

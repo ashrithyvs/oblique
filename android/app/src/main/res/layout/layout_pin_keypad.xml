@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<GridLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/pinKeypad"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:alignmentMode="alignBounds"
+    android:columnCount="3"
+    android:rowCount="4"
+    android:useDefaultMargins="false">
+
+    <TextView android:id="@+id/keypad1" style="@style/PinKeypadButton" android:text="1" />
+    <TextView android:id="@+id/keypad2" style="@style/PinKeypadButton" android:text="2" />
+    <TextView android:id="@+id/keypad3" style="@style/PinKeypadButton" android:text="3" />
+    <TextView android:id="@+id/keypad4" style="@style/PinKeypadButton" android:text="4" />
+    <TextView android:id="@+id/keypad5" style="@style/PinKeypadButton" android:text="5" />
+    <TextView android:id="@+id/keypad6" style="@style/PinKeypadButton" android:text="6" />
+    <TextView android:id="@+id/keypad7" style="@style/PinKeypadButton" android:text="7" />
+    <TextView android:id="@+id/keypad8" style="@style/PinKeypadButton" android:text="8" />
+    <TextView android:id="@+id/keypad9" style="@style/PinKeypadButton" android:text="9" />
+
+    <Space
+        android:layout_width="@dimen/pin_keypad_btn_size"
+        android:layout_height="@dimen/pin_keypad_btn_size"
+        android:layout_margin="@dimen/pin_keypad_spacing" />
+
+    <TextView android:id="@+id/keypad0" style="@style/PinKeypadButton" android:text="0" />
+
+    <FrameLayout
+        android:id="@+id/keypadBackspace"
+        android:layout_width="@dimen/pin_keypad_btn_size"
+        android:layout_height="@dimen/pin_keypad_btn_size"
+        android:layout_margin="@dimen/pin_keypad_spacing"
+        android:background="@drawable/pin_keypad_btn_bg"
+        android:clickable="true"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackground">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center"
+            android:contentDescription="@string/delete"
+            android:src="@drawable/ic_backspace" />
+    </FrameLayout>
+</GridLayout>
