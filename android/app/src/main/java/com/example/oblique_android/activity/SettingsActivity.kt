@@ -21,6 +21,7 @@ import com.example.oblique_android.network.ApiClient
 import com.example.oblique_android.network.api.UserApi
 import com.example.oblique_android.network.request.UserPreferencesRequest
 import com.example.oblique_android.prefs.PlatformPref
+import com.example.oblique_android.utils.PlatformCatalog
 import com.example.oblique_android.repository.AppRepository
 import com.example.oblique_android.repository.AuthRepository
 import com.example.oblique_android.services.PINManager
@@ -167,10 +168,9 @@ class SettingsActivity : AppCompatActivity() {
     private fun setupPreferencesTab() {
         etDisplayName.setText(PrefsUtils.getDisplayName(this).orEmpty())
 
-        val platforms = listOf(
-            PlatformPref("leetcode", "LeetCode", R.drawable.ic_leetcode),
-            PlatformPref("duolingo", "Duolingo", R.drawable.ic_duolingo),
-        )
+        val platforms = PlatformCatalog.all.map {
+            PlatformPref(it.key, it.displayName, it.iconRes)
+        }
         platformPrefsAdapter = PlatformPrefsAdapter(this, platforms)
         rvPlatformPrefs.layoutManager = LinearLayoutManager(this)
         rvPlatformPrefs.adapter = platformPrefsAdapter

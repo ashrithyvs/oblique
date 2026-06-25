@@ -14,6 +14,7 @@ import com.example.oblique_android.network.ApiClient
 import com.example.oblique_android.network.api.UserApi
 import com.example.oblique_android.network.request.UserPreferencesRequest
 import com.example.oblique_android.prefs.PlatformPref
+import com.example.oblique_android.utils.PlatformCatalog
 import com.example.oblique_android.utils.PermissionGuard
 import com.example.oblique_android.utils.PrefsUtils
 import com.example.oblique_android.utils.setupWindowInsets
@@ -39,10 +40,9 @@ class UserPreferencesActivity : AppCompatActivity() {
 
         etDisplayName.setText(PrefsUtils.getDisplayName(this).orEmpty())
 
-        val platforms = listOf(
-            PlatformPref("leetcode", "LeetCode", R.drawable.ic_leetcode),
-            PlatformPref("duolingo", "Duolingo", R.drawable.ic_duolingo),
-        )
+        val platforms = PlatformCatalog.all.map {
+            PlatformPref(it.key, it.displayName, it.iconRes)
+        }
 
         adapter = PlatformPrefsAdapter(this, platforms)
         rvPlatforms.layoutManager = LinearLayoutManager(this)

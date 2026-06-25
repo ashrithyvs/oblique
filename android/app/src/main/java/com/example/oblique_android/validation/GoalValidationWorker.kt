@@ -4,40 +4,44 @@ import android.content.Context
 import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.example.oblique_android.repository.GoalsRepository
 import com.example.oblique_android.utils.NetworkUtils
-import com.example.oblique_android.utils.PrefsUtils
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import com.example.oblique_android.utils.ValidationConstants
 
 /**
- * Worker that validates all active LeetCode goals
- * (only if internet is available).
+ * Validates a single goal identified by [ValidationConstants.EXTRA_GOAL_ID] in input data.
  */
 class GoalValidationWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, params) {
 
-    override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+    override suspend fun doWork(): Result {
         if (!NetworkUtils.hasInternet(applicationContext)) {
-            Log.w("GoalValidationWorker", "Skipping: no internet connection")
-            return@withContext Result.success()
+            Log.w(TAG, "Skipping: no internet connection")
+            return Result.success()
         }
 
-        val username = PrefsUtils.getPlatformUsername(applicationContext, "leetcode")
-        if (username.isNullOrBlank()) {
-            Log.w("GoalValidationWorker", "No username set for LeetCode platform")
-            return@withContext Result.success()
+        val goalId = inputData.getString(ValidationConstants.EXTRA_GOAL_ID)
+        if (goalId.isNullOrBlank()) {
+            Log.w(TAG, "Missing goal id in work input")
+            return Result.failure()
         }
 
-        val repo = GoalsRepository(applicationContext)
-        val goals = repo.listGoals()
-        val validator = GoalValidator(applicationContext)
-
-        for (goal in goals) {
-            if (goal.platform.lowercase() == "leetcode" && goal.status == "active") {
-                validator.validate(goal, username)
+        val service = GoalValidationService(applicationContext)
+        when (val outcome = service.validateGoalById(goalId)) {
+            is ValidationOutcome.Failed -> {
+                Log.w(TAG, "Validation failed for goal=$goalId code=${outcome.code}")
             }
+            is ValidationOutcome.Updated -> {
+                Log.i(TAG, "Progress updated for goal=$goalId")
+            }
+            is ValidationOutcome.Completed -> {
+                Log.i(TAG, "Goal completed: $goalId")
+            }
+            else -> Log.d(TAG, "Validation outcome for goal=$goalId: $outcome")
         }
 
-        Result.success()
+        return Result.success()
+    }
+
+    companion object {
+        private const val TAG = "GoalValidationWorker"
     }
 }

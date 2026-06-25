@@ -7,7 +7,6 @@ import android.animation.ValueAnimator
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -23,13 +22,18 @@ import com.example.oblique_android.models.GoalsViewModel
 import com.example.oblique_android.services.MonitoringService
 import com.example.oblique_android.services.Prefs
 import com.example.oblique_android.utils.BitmapUtils
+import com.example.oblique_android.utils.GoalStatusConstants
 import com.example.oblique_android.utils.PermissionGuard
 import com.example.oblique_android.utils.PermissionUtils
+import com.example.oblique_android.utils.PlatformCatalog
+import com.example.oblique_android.utils.PlatformConstants
 import com.example.oblique_android.utils.PrefsUtils
 import com.example.oblique_android.utils.setupWindowInsets
-import kotlinx.coroutines.launch
-import com.example.oblique_android.validation.GoalValidator
+import com.example.oblique_android.validation.GoalValidationScheduleManager
+import com.example.oblique_android.validation.GoalValidationService
 import com.example.oblique_android.validation.ManualValidationLimiter
+import com.example.oblique_android.validation.ValidationOutcome
+import kotlinx.coroutines.launch
 
 class DashboardActivity : AppCompatActivity() {
 
@@ -46,6 +50,8 @@ class DashboardActivity : AppCompatActivity() {
 
     private var protectionActive = false
     private lateinit var vm: GoalsViewModel
+    private lateinit var scheduleManager: GoalValidationScheduleManager
+    private lateinit var validationService: GoalValidationService
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,6 +69,8 @@ class DashboardActivity : AppCompatActivity() {
         btnSettings = findViewById(R.id.btnSettings)
         btnManualPoll = findViewById(R.id.manualPoll)
         vm = ViewModelProvider(this)[GoalsViewModel::class.java]
+        scheduleManager = GoalValidationScheduleManager(this)
+        validationService = GoalValidationService(this)
         Prefs.init(this)
 
         btnSettings.setOnClickListener {
@@ -88,39 +96,60 @@ class DashboardActivity : AppCompatActivity() {
             btnStartProtection.visibility = View.GONE
             switchProtection.isChecked = true
             startMonitoring()
+            scheduleManager.refreshForGoals(vm.allGoals.value.orEmpty())
             refreshBlockedStatuses()
         }
 
         btnManualPoll.setOnClickListener {
             val limiter = ManualValidationLimiter(this)
             if (!limiter.canTrigger()) {
-                Toast.makeText(this, "Manual validation available once per hour", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.manual_validation_rate_limit), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
             lifecycleScope.launch {
-                val username = PrefsUtils.getPlatformUsername(this@DashboardActivity, "leetcode")
+                val username = PrefsUtils.getPlatformUsername(
+                    this@DashboardActivity,
+                    PlatformConstants.KEY_LEETCODE,
+                )
                 if (username.isNullOrBlank()) {
-                    Toast.makeText(this@DashboardActivity, "No LeetCode username found", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@DashboardActivity,
+                        getString(R.string.manual_validation_no_username),
+                        Toast.LENGTH_SHORT,
+                    ).show()
                     return@launch
                 }
 
                 val goals = vm.allGoals.value.orEmpty()
-                val validator = GoalValidator(this@DashboardActivity)
                 var anyUpdated = false
 
                 for (goal in goals) {
-                    if (goal.platform.lowercase() == "leetcode" && goal.status == "active") {
-                        if (validator.validate(goal, username)) anyUpdated = true
+                    if (PlatformConstants.normalizePlatform(goal.platform) == PlatformConstants.KEY_LEETCODE &&
+                        goal.status == GoalStatusConstants.ACTIVE
+                    ) {
+                        when (validationService.validateGoal(goal, username)) {
+                            is ValidationOutcome.Updated,
+                            is ValidationOutcome.Completed -> anyUpdated = true
+                            else -> {}
+                        }
                     }
                 }
 
                 limiter.markTriggered()
                 if (anyUpdated) {
-                    Toast.makeText(this@DashboardActivity, "Progress updated!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@DashboardActivity,
+                        getString(R.string.manual_validation_progress_updated),
+                        Toast.LENGTH_SHORT,
+                    ).show()
                     vm.refreshDashboard()
                 } else {
-                    Toast.makeText(this@DashboardActivity, "No new progress detected", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@DashboardActivity,
+                        getString(R.string.manual_validation_no_progress),
+                        Toast.LENGTH_SHORT,
+                    ).show()
                 }
             }
         }
@@ -135,10 +164,12 @@ class DashboardActivity : AppCompatActivity() {
                 tvProtectionStatus.text = getString(R.string.protection_active)
                 btnStartProtection.visibility = View.GONE
                 startMonitoring()
+                scheduleManager.refreshForGoals(vm.allGoals.value.orEmpty())
             } else {
                 tvProtectionStatus.text = getString(R.string.protection_paused)
                 btnStartProtection.visibility = View.VISIBLE
                 stopMonitoring()
+                scheduleManager.cancelAll()
             }
             refreshBlockedStatuses()
         }
@@ -157,7 +188,6 @@ class DashboardActivity : AppCompatActivity() {
         PermissionGuard.ensureGranted(this)
         return false
     }
-
 
     private fun startMonitoring() {
         val intent = Intent(this, MonitoringService::class.java)
@@ -197,11 +227,9 @@ class DashboardActivity : AppCompatActivity() {
             val fillView = view.findViewById<View>(R.id.viewProgressFill)
             val glowView = view.findViewById<View>(R.id.viewProgressGlow)
 
-            // --- Compute values safely ---
             val target = if (g.targetValue > 0) g.targetValue else 1
             val currentProgress = g.progress.coerceAtMost(target)
 
-            // --- Title and progress text ---
             val unitLabel = when (g.unit.lowercase()) {
                 "minutes" -> "minutes"
                 "pages" -> "pages"
@@ -211,26 +239,16 @@ class DashboardActivity : AppCompatActivity() {
             tvTitle.text = "${g.platform} • ${g.targetValue} $unitLabel"
             tvProgress.text = "$currentProgress/$target"
 
-            // --- icon ---
-            val iconRes = when (g.platform.lowercase()) {
-                "leetcode" -> R.drawable.ic_leetcode
-                "duolingo" -> R.drawable.ic_duolingo
-                else -> R.drawable.ic_meditation
-            }
-            ivIcon.setImageResource(iconRes)
+            ivIcon.setImageResource(PlatformCatalog.iconFor(g.platform))
 
-            // Ensure fillView + glowView initial width = previous saved width (or 0)
-            // We'll animate width to target width after layout is measured
             progressContainer.post {
                 val totalW = progressContainer.width.takeIf { it > 0 } ?: return@post
 
                 val ratio = currentProgress.toFloat() / target.toFloat()
                 val newWidth = (totalW * ratio).toInt()
 
-                // Read old width (if previously set). Default 0.
                 val oldWidth = fillView.width.takeIf { it > 0 } ?: 0
 
-                // Animate fill width smoothly
                 val widthAnimator = ValueAnimator.ofInt(oldWidth, newWidth).apply {
                     duration = 700
                     interpolator = AccelerateDecelerateInterpolator()
@@ -240,17 +258,14 @@ class DashboardActivity : AppCompatActivity() {
                         lp.width = w
                         fillView.layoutParams = lp
 
-                        // keep glowView same width so overlay matches fill
                         val gLp = glowView.layoutParams
                         gLp.width = w
                         glowView.layoutParams = gLp
                     }
                 }
 
-                // When completed -> pulse glow; when partial -> subtle breathing on the filled portion
                 if (currentProgress >= target) {
                     doneCount++
-                    // Completed: make fill fully opaque and loop a gentle pulse on glow
                     glowView.alpha = 0.35f
                     val pulse = ObjectAnimator.ofFloat(glowView, "alpha", 0.35f, 0.9f, 0.35f).apply {
                         duration = 900
@@ -258,14 +273,12 @@ class DashboardActivity : AppCompatActivity() {
                         repeatMode = ValueAnimator.REVERSE
                         interpolator = AccelerateDecelerateInterpolator()
                     }
-                    // ensure fill gets to final width then start pulse
                     widthAnimator.addListener(object : AnimatorListenerAdapter() {
                         override fun onAnimationEnd(animation: Animator) {
                             pulse.start()
                         }
                     })
                 } else {
-                    // Partial: subtle breathing effect, smaller amplitude
                     glowView.alpha = 0.18f
                     val breathe = ObjectAnimator.ofFloat(glowView, "alpha", 0.12f, 0.28f, 0.12f).apply {
                         duration = 1100
@@ -290,7 +303,6 @@ class DashboardActivity : AppCompatActivity() {
         val successRate = if (goals.isNotEmpty()) (doneCount * 100) / goals.size else 0
         tvTimeSaved.text = "$successRate%"
     }
-
 
     private fun showBlockedApps(pkgs: List<String>) {
         containerBlockedApps.removeAllViews()

@@ -8,14 +8,7 @@ import android.content.Intent
 import android.os.*
 import android.util.Log
 import com.example.oblique_android.R
-import com.example.oblique_android.repository.GoalsRepository
-import com.example.oblique_android.utils.NetworkUtils
-import com.example.oblique_android.utils.PrefsUtils
 import com.example.oblique_android.utils.TempUnlockManager
-import com.example.oblique_android.validation.GoalValidationScheduler
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 class MonitoringService : Service() {
 
@@ -24,7 +17,6 @@ class MonitoringService : Service() {
     private lateinit var usageStatsManager: UsageStatsManager
     private var currentBlockedApp: String? = null
     private val TAG = "MonitoringService"
-    private val ioScope = CoroutineScope(Dispatchers.IO)
 
     override fun onCreate() {
         super.onCreate()
@@ -40,32 +32,11 @@ class MonitoringService : Service() {
 
         usageStatsManager = getSystemService(USAGE_STATS_SERVICE) as UsageStatsManager
         handler.post(checkRunnable)
-
-        if (!NetworkUtils.hasInternet(this)) {
-            Log.w(TAG, "Internet unavailable — skipping validation scheduling")
-            return
-        }
-
-        val scheduler = GoalValidationScheduler(applicationContext)
-        ioScope.launch {
-            try {
-                val repo = GoalsRepository(applicationContext)
-                val goals = repo.listGoals()
-                for (g in goals) {
-                    if (g.platform.lowercase() == "leetcode" && g.status == "active") {
-                        scheduler.schedule(g.id, g.deadline)
-                    }
-                }
-                Log.i(TAG, "Goal validation schedules initialized")
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to schedule validations: ${e.message}")
-            }
-        }
     }
 
     private val checkRunnable = object : Runnable {
         override fun run() {
-            val blockedApps = PrefsUtils.loadBlockedSet(this@MonitoringService)
+            val blockedApps = com.example.oblique_android.utils.PrefsUtils.loadBlockedSet(this@MonitoringService)
             val foregroundApp = getForegroundApp()
             Log.d(TAG, "Foreground app: $foregroundApp")
 
@@ -97,7 +68,7 @@ class MonitoringService : Service() {
         val mode = appOps.checkOpNoThrow(
             AppOpsManager.OPSTR_GET_USAGE_STATS,
             android.os.Process.myUid(),
-            packageName
+            packageName,
         )
         return mode == AppOpsManager.MODE_ALLOWED
     }
@@ -129,7 +100,6 @@ class MonitoringService : Service() {
 
     override fun onDestroy() {
         handler.removeCallbacks(checkRunnable)
-        GoalValidationScheduler(this).cancelAll()
         super.onDestroy()
     }
 
@@ -141,7 +111,7 @@ class MonitoringService : Service() {
             val channel = NotificationChannel(
                 channelId,
                 "App Monitoring",
-                NotificationManager.IMPORTANCE_LOW
+                NotificationManager.IMPORTANCE_LOW,
             )
             getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
         }

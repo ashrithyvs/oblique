@@ -10,7 +10,7 @@ import com.example.oblique_android.network.api.GoalRequest
 import com.example.oblique_android.repository.BlockedAppsRepository
 import com.example.oblique_android.repository.DashboardRepository
 import com.example.oblique_android.repository.GoalsRepository
-import com.example.oblique_android.models.Goal
+import com.example.oblique_android.validation.GoalValidationScheduleManager
 import kotlinx.coroutines.launch
 
 class GoalsViewModel(application: Application) : AndroidViewModel(application) {
@@ -18,14 +18,13 @@ class GoalsViewModel(application: Application) : AndroidViewModel(application) {
     private val goalsRepo = GoalsRepository(application)
     private val blockedRepo = BlockedAppsRepository(application)
     private val dashboardRepo = DashboardRepository(application)
+    private val scheduleManager = GoalValidationScheduleManager(application)
 
     private val _goals = MutableLiveData<List<Goal>>(emptyList())
     val allGoals: LiveData<List<Goal>> = _goals
 
     private val _blockedApps = MutableLiveData<List<String>>(emptyList())
     val allBlockedApps: LiveData<List<String>> = _blockedApps
-
-    // ----------------- Goals -----------------
 
     fun refreshGoals() {
         viewModelScope.launch {
@@ -40,9 +39,8 @@ class GoalsViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val newGoal = goalsRepo.createGoal(req)
                 Log.i("GoalsViewModel", newGoal.toString())
-                if (newGoal != null) {
-                    _goals.postValue((_goals.value ?: emptyList()) + newGoal)
-                }
+                _goals.postValue((_goals.value ?: emptyList()) + newGoal)
+                scheduleManager.scheduleGoal(newGoal)
                 onResult?.invoke(newGoal)
             } catch (e: Exception) {
                 Log.e("GoalsViewModel", "Failed to create goal", e)
@@ -56,38 +54,40 @@ class GoalsViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 goalsRepo.updateGoal(goal)
                 refreshGoals()
+                scheduleManager.rescheduleGoal(goal)
             } catch (e: Exception) {
                 e.printStackTrace()
             }
         }
     }
 
-
     fun deleteGoal(id: String, onComplete: (() -> Unit)? = null) {
         viewModelScope.launch {
             try {
                 goalsRepo.deleteGoal(id)
+                scheduleManager.cancelGoal(id)
                 _goals.postValue(_goals.value?.filter { it.id != id })
                 onComplete?.invoke()
             } catch (_: Exception) { }
         }
     }
 
+    @Deprecated(
+        message = "Use GoalValidationService + GoalProgressSyncer for completion with evidence",
+        replaceWith = ReplaceWith("GoalProgressSyncer(GoalsRepository(getApplication())).sync(goal, currentValue, evidence)"),
+    )
     fun completeGoal(id: String, onComplete: ((Goal?) -> Unit)? = null) {
         viewModelScope.launch {
             try {
                 val updated = goalsRepo.completeGoal(id)
-                if (updated != null) {
-                    _goals.postValue(_goals.value?.map { if (it.id == id) updated else it })
-                }
+                scheduleManager.cancelGoal(id)
+                _goals.postValue(_goals.value?.map { if (it.id == id) updated else it })
                 onComplete?.invoke(updated)
             } catch (_: Exception) {
                 onComplete?.invoke(null)
             }
         }
     }
-
-    // ----------------- Blocked Apps -----------------
 
     fun refreshBlockedApps() {
         viewModelScope.launch {
@@ -97,7 +97,6 @@ class GoalsViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    /** Single round-trip: goals + blocked apps from GET /api/dashboard */
     fun refreshDashboard() {
         viewModelScope.launch {
             try {
@@ -140,5 +139,4 @@ class GoalsViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
-
 }

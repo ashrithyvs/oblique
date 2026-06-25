@@ -48,13 +48,13 @@ interface GoalsApi {
     @POST("/api/goals/{id}/complete")
     suspend fun completeGoal(
         @Path("id") id: String,
-        @Body body: Map<String, Long>
+        @Body body: Map<String, @JvmSuppressWildcards Any>
     ): GoalDto
 
     @PATCH("/api/goals/{id}/progress")
     suspend fun updateGoalProgress(
         @Path("id") id: String,
-        @Body body: Map<String, Int>
-    )
+        @Body body: Map<String, @JvmSuppressWildcards Any>
+    ): GoalDto
 
 }

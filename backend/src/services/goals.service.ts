@@ -7,6 +7,16 @@ import { createGoalSchema } from '../utils/validators';
 
 export type GoalDtoResponse = ReturnType<typeof toGoalDto>;
 
+export class GoalServiceError extends Error {
+    constructor(
+        message: string,
+        public readonly code: string = 'GOAL_SERVICE_ERROR',
+    ) {
+        super(message);
+        this.name = 'GoalServiceError';
+    }
+}
+
 export async function createGoal(userId: string, body: unknown): Promise<GoalDtoResponse> {
     const parsed = createGoalSchema.parse(body);
     const doc = await Goal.create({
@@ -49,9 +59,15 @@ export async function deleteGoalForUser(userId: string, goalId: string): Promise
 export async function updateGoalForUser(
     userId: string,
     goalId: string,
-    body: Record<string, unknown>
+    body: Record<string, unknown>,
 ): Promise<GoalDtoResponse | null> {
     if (!mongoose.isValidObjectId(goalId)) return null;
+
+    const existing = await Goal.findOne({ _id: goalId, user: new Types.ObjectId(userId) }).exec();
+    if (!existing) return null;
+    if (existing.status === 'completed') {
+        throw new GoalServiceError('Cannot update completed goal', 'GOAL_COMPLETED');
+    }
 
     const allowedFields = ['title', 'targetValue', 'deadline', 'unit', 'checkIntervalMs'];
     const updatePayload: Record<string, unknown> = {};
@@ -59,14 +75,14 @@ export async function updateGoalForUser(
         if (body[key] !== undefined) updatePayload[key] = body[key];
     }
     if (Object.keys(updatePayload).length === 0) {
-        throw new Error('No valid fields to update');
+        throw new GoalServiceError('No valid fields to update', 'NO_VALID_FIELDS');
     }
     updatePayload.updatedAt = new Date();
 
     const updated = await Goal.findOneAndUpdate(
-        { _id: goalId, user: new Types.ObjectId(userId) },
+        { _id: goalId, user: new Types.ObjectId(userId), status: { $ne: 'completed' } },
         { $set: updatePayload },
-        { new: true }
+        { new: true },
     ).lean();
     return updated ? toGoalDto(updated) : null;
 }
@@ -76,34 +92,40 @@ export async function markComplete(
     goalId: string,
     completedAt: Date,
     details: Record<string, unknown>,
-    evidence: unknown = null
+    evidence: unknown = null,
 ): Promise<GoalDtoResponse> {
-    if (!mongoose.isValidObjectId(goalId)) throw new Error('Invalid goal id');
+    if (!mongoose.isValidObjectId(goalId)) throw new GoalServiceError('Invalid goal id', 'INVALID_ID');
     const gid = new Types.ObjectId(goalId);
     const uid = new Types.ObjectId(userId);
 
     const goal = await Goal.findOne({ _id: gid, user: uid }).exec();
-    if (!goal) throw new Error('Goal not found');
+    if (!goal) throw new GoalServiceError('Goal not found', 'NOT_FOUND');
 
-    if (goal.status !== 'completed') {
+    const wasAlreadyCompleted = goal.status === 'completed';
+
+    if (!wasAlreadyCompleted) {
         goal.status = 'completed';
         goal.completedAt = completedAt;
         goal.evidence = (evidence ?? goal.evidence ?? null) as any;
         goal.progress = Math.max(goal.progress, goal.targetValue);
+        goal.lastCheckedAt = completedAt;
         await goal.save();
-    }
 
-    try {
-        await GoalCheckHistory.create({
-            goal: gid,
-            user: uid,
-            checkedAt: completedAt,
-            result: 'completed',
-            details,
-            evidence,
-        });
-    } catch (err) {
-        console.warn('Failed to write GoalCheckHistory:', err);
+        try {
+            await GoalCheckHistory.create({
+                goal: gid,
+                user: uid,
+                checkedAt: completedAt,
+                result: 'completed',
+                details,
+                evidence,
+            });
+        } catch (err) {
+            console.warn('Failed to write GoalCheckHistory:', err);
+        }
+    } else if (evidence != null) {
+        goal.evidence = evidence as any;
+        await goal.save();
     }
 
     return toGoalDto(goal.toObject());
@@ -112,17 +134,31 @@ export async function markComplete(
 export async function updateGoalProgress(
     goalId: string,
     currentValue: number,
-    userId: string
+    userId: string,
+    evidence?: unknown,
 ): Promise<GoalDtoResponse | null> {
     const goal = await Goal.findOne({ _id: goalId, user: new Types.ObjectId(userId) }).exec();
     if (!goal) return null;
 
-    const computedProgress = Math.max(0, currentValue - goal.baselineValue);
-    goal.progress = computedProgress;
+    if (goal.status === 'completed') {
+        throw new GoalServiceError('Cannot update progress on completed goal', 'GOAL_COMPLETED');
+    }
 
-    if (computedProgress >= goal.targetValue && goal.status !== 'completed') {
+    const computedProgress = Math.max(0, currentValue - goal.baselineValue);
+
+    if (computedProgress < goal.progress) {
+        throw new GoalServiceError('Progress regression not allowed', 'PROGRESS_REGRESSION');
+    }
+
+    goal.progress = computedProgress;
+    goal.lastCheckedAt = new Date();
+    if (evidence !== undefined) {
+        goal.evidence = evidence as any;
+    }
+
+    if (computedProgress >= goal.targetValue) {
         await goal.save();
-        return markComplete(userId, goalId, new Date(), { via: 'progressUpdate' });
+        return markComplete(userId, goalId, new Date(), { via: 'progressUpdate' }, evidence ?? null);
     }
 
     await goal.save();

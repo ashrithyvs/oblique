@@ -2,6 +2,15 @@
 
 Node.js + TypeScript + Express + MongoDB backend for the Regretnt (Oblique) Android app.
 
+## Full documentation
+
+| Doc | Description |
+|-----|-------------|
+| [Architecture](../docs/backend/architecture.md) | HLD, data model, layers, diagrams |
+| [API reference](../docs/backend/api-reference.md) | All routes, payloads, errors |
+| [System overview](../docs/architecture/system-overview.md) | End-to-end client + server |
+| [Android client](../docs/android/README.md) | Mobile app docs |
+
 ## Features
 
 - JWT authentication (email + password register/login).
@@ -21,7 +30,7 @@ Node.js + TypeScript + Express + MongoDB backend for the Regretnt (Oblique) Andr
 | POST | `/api/auth/login` | No | Login with password |
 | GET | `/api/user/me` | Yes | Profile + goals summary + platform usernames |
 | PUT | `/api/user/me/preferences` | Yes | Update display name / platform usernames |
-| GET/PUT | `/api/user/me/blocked-apps` | Yes | List or replace blocked apps |
+| GET/PUT/POST/DELETE | `/api/user/me/blocked-apps` | Yes | Blocked app list CRUD |
 | GET/POST/PUT/PATCH/DELETE | `/api/goals` | Yes | Goal CRUD + progress + complete |
 | GET | `/api/dashboard` | Yes | Goals + blocked apps in one call |
 
@@ -47,7 +56,43 @@ npm run dev
 npm test
 ```
 
+### Test layout
+
+```
+backend/tests/
+├── setup/
+│   ├── jest.setup.ts
+│   ├── global-setup.ts
+│   └── global-teardown.ts
+└── unit/
+    ├── controllers/
+    │   ├── auth.controller.spec.ts
+    │   ├── dashboard.controller.spec.ts
+    │   ├── goals.controller.spec.ts
+    │   └── user.controller.spec.ts
+    ├── middleware/
+    │   └── auth.middleware.spec.ts
+    ├── services/
+    │   ├── goals.service.spec.ts
+    │   └── user.service.spec.ts
+    └── utils/
+        ├── goalDto.spec.ts
+        ├── hash.spec.ts
+        ├── jwt.spec.ts
+        └── validators.spec.ts
+```
+
+Coverage thresholds (see `jest.config.js`):
+
+| Scope | Minimum |
+|-------|---------|
+| Global | 75% |
+| `goals.service.ts` | 90% |
+| `goals.controller.ts` | 85% |
+
 ## Android integration
 
 - Backend base URL: set `API_BASE_URL` in `android/local.properties` (see `android/local.properties.example`). The app reads it via `BuildConfig.API_BASE_URL` for all build types; there are no hardcoded URLs in Gradle.
 - Auth header: `Authorization: Bearer <token>`.
+
+See [docs/android/README.md](../docs/android/README.md) for client setup.

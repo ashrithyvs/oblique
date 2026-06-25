@@ -2,6 +2,20 @@
 import { Response } from 'express';
 import { Types } from 'mongoose';
 import * as goalSvc from '../services/goals.service';
+import { completeGoalSchema, updateGoalProgressSchema } from '../utils/validators';
+import { GoalServiceError } from '../services/goals.service';
+
+function mapServiceError(err: unknown, res: Response, context: string): Response | null {
+    if (err instanceof GoalServiceError) {
+        const status =
+            err.code === 'NOT_FOUND' ? 404 :
+            err.code === 'GOAL_COMPLETED' || err.code === 'PROGRESS_REGRESSION' || err.code === 'NO_VALID_FIELDS' || err.code === 'INVALID_ID'
+                ? 400 : 500;
+        return res.status(status).json({ message: err.message, code: err.code });
+    }
+    console.error(`${context} error`, err);
+    return null;
+}
 
 export async function listGoals(req: any, res: Response) {
     try {
@@ -41,17 +55,20 @@ export async function completeGoal(req: any, res: Response) {
         const id = req.params.id;
         if (!Types.ObjectId.isValid(id)) return res.status(400).json({ message: 'Invalid id' });
 
+        const parsed = completeGoalSchema.parse(req.body ?? {});
+        const completedAt = parsed.completedAt ? new Date(parsed.completedAt) : new Date();
+
         const result = await goalSvc.markComplete(
             req.user._id,
             id,
-            new Date(),
-            { via: 'manual', completedByDevice: !!req.body.completedByDevice },
-            req.body.evidence || null
+            completedAt,
+            parsed.details ?? { via: 'manual', completedByDevice: !!req.body?.completedByDevice },
+            parsed.evidence ?? null,
         );
         return res.json(result);
     } catch (err: any) {
-        console.error('completeGoal error', err);
-        if (err.message === 'Goal not found') return res.status(404).json({ message: err.message });
+        const mapped = mapServiceError(err, res, 'completeGoal');
+        if (mapped) return mapped;
         return res.status(500).json({ message: err.message });
     }
 }
@@ -72,15 +89,22 @@ export async function getGoal(req: any, res: Response) {
 export async function updateGoalProgress(req: any, res: Response) {
     try {
         const id = req.params.id;
-        const { progress } = req.body;
-        if (progress === undefined || typeof progress !== 'number') {
-            return res.status(400).json({ message: 'Missing or invalid progress' });
-        }
-        const updated = await goalSvc.updateGoalProgress(id, progress, req.user._id);
+        const parsed = updateGoalProgressSchema.parse(req.body ?? {});
+
+        const updated = await goalSvc.updateGoalProgress(
+            id,
+            parsed.progress,
+            req.user._id,
+            parsed.evidence,
+        );
         if (!updated) return res.status(404).json({ message: 'Goal not found' });
         return res.json(updated);
     } catch (err: any) {
-        console.error('updateGoalProgress error', err);
+        const mapped = mapServiceError(err, res, 'updateGoalProgress');
+        if (mapped) return mapped;
+        if (err?.name === 'ZodError') {
+            return res.status(400).json({ message: 'Missing or invalid progress' });
+        }
         return res.status(500).json({ message: err.message });
     }
 }
@@ -95,8 +119,8 @@ export async function updateGoal(req: any, res: Response) {
         if (!updatedGoal) return res.status(404).json({ message: 'Goal not found' });
         return res.json(updatedGoal);
     } catch (err: any) {
-        console.error('updateGoal error', err);
-        const status = err.message === 'No valid fields to update' ? 400 : 500;
-        return res.status(status).json({ message: err.message });
+        const mapped = mapServiceError(err, res, 'updateGoal');
+        if (mapped) return mapped;
+        return res.status(500).json({ message: err.message });
     }
 }

@@ -16,9 +16,10 @@ class GoalsRepository(context: Context) {
     suspend fun createGoal(req: GoalRequest): Goal {
         return Goal.fromDto(api.createGoal(req))
     }
+
     suspend fun updateGoal(goal: Goal) {
         val body = mutableMapOf<String, Any>(
-            "targetValue" to goal.targetValue
+            "targetValue" to goal.targetValue,
         )
         if (goal.deadline != null && goal.deadline > 0L) {
             body["deadline"] = goal.deadline
@@ -26,13 +27,29 @@ class GoalsRepository(context: Context) {
         api.updateGoal(goal.id, body)
     }
 
-
     suspend fun deleteGoal(id: String) {
         api.deleteGoal(id)
     }
 
-    suspend fun completeGoal(id: String): Goal {
-        val body = mapOf("completedAt" to System.currentTimeMillis())
+    suspend fun completeGoal(id: String, evidence: Map<String, Any>? = null): Goal {
+        val body = mutableMapOf<String, Any>(
+            "completedAt" to System.currentTimeMillis(),
+        )
+        if (evidence != null) {
+            body["evidence"] = evidence
+        }
         return Goal.fromDto(api.completeGoal(id, body))
+    }
+
+    suspend fun updateGoalProgress(
+        id: String,
+        currentValue: Int,
+        evidence: Map<String, Any>? = null,
+    ): Goal {
+        val body = mutableMapOf<String, Any>("progress" to currentValue)
+        if (evidence != null) {
+            body["evidence"] = evidence
+        }
+        return Goal.fromDto(api.updateGoalProgress(id, body))
     }
 }

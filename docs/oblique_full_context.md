@@ -1,5 +1,11 @@
 # SPEC-1-Oblique — Full Context
 
+> **⚠️ Historical / aspirational.** This document describes an early React Native + Postgres + Realm design. The **implemented stack** is documented in [README.md](README.md):
+> - **Android:** native Kotlin app in `../android/`
+> - **Backend:** Express + MongoDB in `../backend/`
+>
+> Use [architecture/system-overview.md](architecture/system-overview.md) for the current HLD.
+
 ## Background
 
 Oblique is a cross‑platform mobile product that enforces a user’s self‑development goals by restricting access to distracting apps (primarily on Android) and using persuasive prompts on iOS. The core idea is: until a user completes the configured daily goal (e.g., solve N DSA problems, complete concept modules, learn vocabulary, etc.), Oblique either blocks chosen apps with an overlay/Accessibility gate or periodically nudges the user with guilt‑trip messaging. Goals can be configured by the user or a parent (for children’s devices). The app caches today’s and upcoming goals for offline continuity, persists partial progress, and syncs profiles, goals, progress, and blocking configurations to a cloud backend. Shared React Native UI; platform‑specific native services (Android Accessibility/overlays; iOS push/limited overlays).

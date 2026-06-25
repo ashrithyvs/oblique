@@ -31,3 +31,8 @@ export const completeGoalSchema = z.object({
     details: z.any().optional(),
     evidence: z.any().optional()
 });
+
+export const updateGoalProgressSchema = z.object({
+    progress: z.number(),
+    evidence: z.any().optional(),
+});

@@ -91,4 +91,9 @@
     <string name="permissions_usage_required">Usage access permission required</string>
     <string name="permissions_notification_required">Notification permission required</string>
 
+    <string name="manual_validation_rate_limit">Manual validation available once per hour</string>
+    <string name="manual_validation_no_username">No LeetCode username found</string>
+    <string name="manual_validation_progress_updated">Progress updated!</string>
+    <string name="manual_validation_no_progress">No new progress detected</string>
+
 </resources>

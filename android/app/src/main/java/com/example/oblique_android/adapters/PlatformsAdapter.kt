@@ -7,12 +7,15 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.oblique_android.R
+import com.example.oblique_android.utils.PlatformCatalog
 import com.example.oblique_android.utils.TileSelectionStyle
 import com.google.android.material.card.MaterialCardView
 
 class PlatformsAdapter(
-    private val platforms: List<PlatformItem> = defaultPlatforms(),
-    private val listener: PlatformClickListener
+    private val platforms: List<PlatformItem> = PlatformCatalog.all.map {
+        PlatformItem(it.displayName, it.iconRes)
+    },
+    private val listener: PlatformClickListener,
 ) : RecyclerView.Adapter<PlatformsAdapter.VH>() {
 
     interface PlatformClickListener {
@@ -68,11 +71,4 @@ class PlatformsAdapter(
     }
 
     data class PlatformItem(val name: String, val iconRes: Int)
-
-    companion object {
-        private fun defaultPlatforms() = listOf(
-            PlatformItem("LeetCode", R.drawable.ic_leetcode),
-            PlatformItem("Duolingo", R.drawable.ic_duolingo)
-        )
-    }
 }

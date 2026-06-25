@@ -23,6 +23,8 @@ import com.example.oblique_android.models.GoalType
 import com.example.oblique_android.models.GoalsViewModel
 import com.example.oblique_android.network.api.GoalRequest
 import com.example.oblique_android.utils.PermissionGuard
+import com.example.oblique_android.utils.PlatformCatalog
+import com.example.oblique_android.utils.PlatformConstants
 import com.example.oblique_android.utils.PrefsUtils
 import com.example.oblique_android.utils.setupWindowInsets
 import com.google.android.material.timepicker.MaterialTimePicker
@@ -129,7 +131,7 @@ class GoalsActivity : AppCompatActivity(), PlatformsAdapter.PlatformClickListene
                 return@setOnClickListener
             }
 
-            val platformKey = platform.lowercase()
+            val platformKey = PlatformConstants.normalizePlatform(platform)
             val username = PrefsUtils.getPlatformUsername(this, platformKey).orEmpty()
 
             val req = GoalRequest(
@@ -259,11 +261,7 @@ class GoalsActivity : AppCompatActivity(), PlatformsAdapter.PlatformClickListene
         sectionGoalDetails.visibility = if (hasPlatform && hasGoalType) View.VISIBLE else View.GONE
     }
 
-    private fun platformIconRes(platform: String): Int = when (platform.lowercase()) {
-        "leetcode" -> R.drawable.ic_leetcode
-        "duolingo" -> R.drawable.ic_duolingo
-        else -> R.drawable.ic_placeholder
-    }
+    private fun platformIconRes(platform: String): Int = PlatformCatalog.iconFor(platform)
 
     private fun updateBottomCTA(totalGoals: Int) {
         btnStart.apply {
