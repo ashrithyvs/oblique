@@ -5,9 +5,11 @@ import android.animation.AnimatorListenerAdapter
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AccelerateDecelerateInterpolator
@@ -18,9 +20,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.example.oblique_android.R
 import com.example.oblique_android.BuildConfig
+import com.example.oblique_android.gating.MonitoringController
 import com.example.oblique_android.models.Goal
 import com.example.oblique_android.models.GoalsViewModel
-import com.example.oblique_android.services.MonitoringService
 import com.example.oblique_android.services.Prefs
 import com.example.oblique_android.ui.goals.GoalPeriodUiHelper
 import com.example.oblique_android.ui.loading.LoadingOverlayController
@@ -36,6 +38,7 @@ import com.example.oblique_android.utils.setupWindowInsets
 import com.example.oblique_android.validation.GoalValidationScheduleManager
 import com.example.oblique_android.validation.GoalValidationService
 import com.example.oblique_android.validation.ManualValidationLimiter
+import com.google.android.material.button.MaterialButton
 import com.example.oblique_android.validation.ValidationOutcome
 import com.example.oblique_android.validation.platform.GoalPeriodPolicy
 import kotlinx.coroutines.launch
@@ -49,15 +52,26 @@ class DashboardActivity : AppCompatActivity() {
     private lateinit var tvTimeSaved: TextView
     private lateinit var containerBlockedApps: LinearLayout
     private lateinit var containerGoals: LinearLayout
-    private lateinit var btnStartProtection: Button
+    private lateinit var btnStartProtection: MaterialButton
     private lateinit var btnSettings: View
     private lateinit var btnManualPoll: View
+    private var btnDevSimulateHour: View? = null
 
     private var protectionActive = false
     private lateinit var vm: GoalsViewModel
     private lateinit var scheduleManager: GoalValidationScheduleManager
     private lateinit var validationService: GoalValidationService
     private lateinit var loadingOverlay: LoadingOverlayController
+    private var tvDevSimulatedTime: TextView? = null
+    private var tvDevRealTime: TextView? = null
+    private val devSimulateHandler = Handler(Looper.getMainLooper())
+    private var devSimulateHoldStartedAt = 0L
+    private var devSimulateResetTriggered = false
+    private val devSimulateResetHoldMs = 5_000L
+    private val devSimulateResetRunnable = Runnable {
+        devSimulateResetTriggered = true
+        resetSimulatedTime()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -82,18 +96,14 @@ class DashboardActivity : AppCompatActivity() {
         AppTime.init(this)
 
         if (BuildConfig.DEV_MODE) {
-            findViewById<Button?>(R.id.btnDevSimulateHour)?.apply {
-                visibility = View.VISIBLE
-                setOnClickListener {
-                    AppTime.advanceDevTimeMs(this@DashboardActivity, 3_600_000L)
-                    vm.allGoals.value?.let { updateGoalsUI(it) }
-                    Toast.makeText(
-                        this@DashboardActivity,
-                        getString(R.string.dev_simulate_plus_hour),
-                        Toast.LENGTH_SHORT,
-                    ).show()
-                }
-            }
+            findViewById<View>(R.id.devTimePanel)?.visibility = View.VISIBLE
+            tvDevSimulatedTime = findViewById(R.id.tvDevSimulatedTime)
+            tvDevRealTime = findViewById(R.id.tvDevRealTime)
+            btnDevSimulateHour = findViewById(R.id.btnDevSimulateHour)
+            btnDevSimulateHour?.visibility = View.VISIBLE
+            btnDevSimulateHour?.contentDescription = getString(R.string.dev_simulate_hold_reset)
+            updateDevTimeDisplay()
+            setupDevSimulateTouchListener()
         }
 
         btnSettings.setOnClickListener {
@@ -102,6 +112,9 @@ class DashboardActivity : AppCompatActivity() {
 
         vm.allGoals.observe(this) { goals ->
             updateGoalsUI(goals)
+            if (protectionActive) {
+                lifecycleScope.launch { MonitoringController.syncMonitoringState(this@DashboardActivity) }
+            }
         }
 
         vm.allBlockedApps.observe(this) { pkgs ->
@@ -114,13 +127,7 @@ class DashboardActivity : AppCompatActivity() {
 
         btnStartProtection.setOnClickListener {
             if (!ensureRequiredPermissions()) return@setOnClickListener
-            protectionActive = true
-            tvProtectionStatus.text = getString(R.string.protection_active)
-            btnStartProtection.visibility = View.GONE
-            switchProtection.isChecked = true
-            startMonitoring()
-            scheduleManager.refreshForGoals(vm.allGoals.value.orEmpty())
-            refreshBlockedStatuses()
+            enableProtection()
         }
 
         btnManualPoll.setOnClickListener {
@@ -170,6 +177,7 @@ class DashboardActivity : AppCompatActivity() {
                 if (anyUpdated) {
                     loadingOverlay.updateStatus(getString(R.string.loading_updating_progress))
                     vm.refreshDashboard()
+                    MonitoringController.syncMonitoringState(this@DashboardActivity)
                 }
 
                 loadingOverlay.hide()
@@ -204,42 +212,119 @@ class DashboardActivity : AppCompatActivity() {
             }
             protectionActive = isChecked
             if (isChecked) {
-                tvProtectionStatus.text = getString(R.string.protection_active)
-                btnStartProtection.visibility = View.GONE
-                startMonitoring()
-                scheduleManager.refreshForGoals(vm.allGoals.value.orEmpty())
+                enableProtection()
             } else {
-                tvProtectionStatus.text = getString(R.string.protection_paused)
-                btnStartProtection.visibility = View.VISIBLE
-                stopMonitoring()
-                scheduleManager.cancelAll()
+                disableProtection()
             }
             refreshBlockedStatuses()
         }
 
+        protectionActive = Prefs.isProtectionEnabled()
+        switchProtection.isChecked = protectionActive
+        if (protectionActive) {
+            tvProtectionStatus.text = getString(R.string.protection_active)
+            btnStartProtection.visibility = View.GONE
+            scheduleManager.refreshForGoals(vm.allGoals.value.orEmpty())
+            lifecycleScope.launch { MonitoringController.syncMonitoringState(this@DashboardActivity) }
+        } else {
+            tvProtectionStatus.text = getString(R.string.protection_paused)
+            btnStartProtection.visibility = View.VISIBLE
+        }
+
         vm.refreshDashboard()
+        if (BuildConfig.DEV_MODE) updateDevTimeDisplay()
+    }
+
+    private fun setupDevSimulateTouchListener() {
+        btnDevSimulateHour?.setOnTouchListener { _, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    devSimulateResetTriggered = false
+                    devSimulateHoldStartedAt = System.currentTimeMillis()
+                    devSimulateHandler.postDelayed(devSimulateResetRunnable, devSimulateResetHoldMs)
+                    true
+                }
+                MotionEvent.ACTION_UP -> {
+                    devSimulateHandler.removeCallbacks(devSimulateResetRunnable)
+                    if (!devSimulateResetTriggered &&
+                        System.currentTimeMillis() - devSimulateHoldStartedAt < devSimulateResetHoldMs
+                    ) {
+                        advanceSimulatedTimeOneHour()
+                    }
+                    true
+                }
+                MotionEvent.ACTION_CANCEL -> {
+                    devSimulateHandler.removeCallbacks(devSimulateResetRunnable)
+                    true
+                }
+                else -> false
+            }
+        }
+    }
+
+    private fun advanceSimulatedTimeOneHour() {
+        AppTime.advanceDevTimeMs(this, 3_600_000L)
+        updateDevTimeDisplay()
+        vm.allGoals.value?.let { updateGoalsUI(it) }
+        lifecycleScope.launch { MonitoringController.syncMonitoringState(this@DashboardActivity) }
+        Toast.makeText(this, getString(R.string.dev_simulate_plus_hour), Toast.LENGTH_SHORT).show()
+    }
+
+    private fun resetSimulatedTime() {
+        AppTime.resetDevTimeMs(this)
+        updateDevTimeDisplay()
+        vm.allGoals.value?.let { updateGoalsUI(it) }
+        lifecycleScope.launch { MonitoringController.syncMonitoringState(this@DashboardActivity) }
+        Toast.makeText(this, getString(R.string.dev_simulated_time_reset), Toast.LENGTH_SHORT).show()
+    }
+
+    private fun updateDevTimeDisplay() {
+        if (!BuildConfig.DEV_MODE) return
+        val realNow = System.currentTimeMillis()
+        val realFormatted = java.text.SimpleDateFormat("EEE, MMM d h:mm a", java.util.Locale.getDefault())
+            .format(java.util.Date(realNow))
+        tvDevSimulatedTime?.text = getString(
+            R.string.dev_simulated_time,
+            AppTime.formatNowForDisplay(),
+            AppTime.formatOffsetForDisplay(),
+        )
+        tvDevRealTime?.text = getString(R.string.dev_real_time, realFormatted)
+    }
+
+    private fun enableProtection() {
+        protectionActive = true
+        Prefs.setProtectionEnabled(true)
+        tvProtectionStatus.text = getString(R.string.protection_active)
+        btnStartProtection.visibility = View.GONE
+        switchProtection.isChecked = true
+        scheduleManager.refreshForGoals(vm.allGoals.value.orEmpty())
+        lifecycleScope.launch { MonitoringController.syncMonitoringState(this@DashboardActivity) }
+    }
+
+    private fun disableProtection() {
+        protectionActive = false
+        Prefs.setProtectionEnabled(false)
+        tvProtectionStatus.text = getString(R.string.protection_paused)
+        btnStartProtection.visibility = View.VISIBLE
+        switchProtection.isChecked = false
+        MonitoringController.stopMonitoring(this)
+        scheduleManager.cancelAll()
     }
 
     override fun onResume() {
         super.onResume()
         if (!PermissionGuard.ensureGranted(this)) return
         vm.refreshDashboard()
+        if (BuildConfig.DEV_MODE) updateDevTimeDisplay()
+        if (Prefs.isProtectionEnabled()) {
+            lifecycleScope.launch { MonitoringController.syncMonitoringState(this@DashboardActivity) }
+        }
     }
 
     private fun ensureRequiredPermissions(): Boolean {
         if (PermissionUtils.hasRequiredPermissions(this)) return true
         PermissionGuard.ensureGranted(this)
         return false
-    }
-
-    private fun startMonitoring() {
-        val intent = Intent(this, MonitoringService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(intent)
-        else startService(intent)
-    }
-
-    private fun stopMonitoring() {
-        stopService(Intent(this, MonitoringService::class.java))
     }
 
     private fun updateGoalsUI(goals: List<Goal>) {
@@ -275,8 +360,9 @@ class DashboardActivity : AppCompatActivity() {
             val glowView = view.findViewById<View>(R.id.viewProgressGlow)
 
             val target = if (g.targetValue > 0) g.targetValue else 1
-            val currentProgress = g.progress.coerceAtMost(target)
             val periodSatisfied = periodPolicy.isCurrentPeriodSatisfied(g, bufferMs, nowMs)
+            val currentProgress = periodPolicy.currentPeriodProgress(g, bufferMs, nowMs).coerceAtMost(target)
+            if (periodSatisfied) doneCount++
 
             val unitLabel = when (g.unit.lowercase()) {
                 "minutes" -> "minutes"
@@ -321,7 +407,6 @@ class DashboardActivity : AppCompatActivity() {
                 }
 
                 if (periodSatisfied) {
-                    doneCount++
                     glowView.alpha = 0.35f
                     val pulse = ObjectAnimator.ofFloat(glowView, "alpha", 0.35f, 0.9f, 0.35f).apply {
                         duration = 900

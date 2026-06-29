@@ -11,4 +11,7 @@ object WorkConstants {
 
     fun uniqueWorkName(goalId: String, slotIndex: Int): String =
         "$UNIQUE_WORK_PREFIX${goalId}_$slotIndex"
+
+    const val MONITORING_WAKE_WORK = "monitoring_wake"
+    const val MONITORING_WAKE_TAG = "monitoring_wake_tag"
 }

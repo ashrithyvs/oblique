@@ -8,10 +8,12 @@ import android.content.Intent
 import android.os.*
 import android.util.Log
 import com.example.oblique_android.R
-import com.example.oblique_android.gating.GoalGateManager
 import com.example.oblique_android.utils.TempUnlockManager
-import kotlinx.coroutines.runBlocking
 
+/**
+ * Foreground usage-stats polling — only started by [com.example.oblique_android.gating.MonitoringController]
+ * when the daily goal is not met after the deadline buffer has expired.
+ */
 class MonitoringService : Service() {
 
     private val handler = Handler(Looper.getMainLooper())
@@ -43,16 +45,7 @@ class MonitoringService : Service() {
             Log.d(TAG, "Foreground app: $foregroundApp")
 
             if (foregroundApp != null && blockedApps.contains(foregroundApp)) {
-                val goalsGateOpen = runBlocking {
-                    GoalGateManager(this@MonitoringService).shouldBlockApps().not()
-                }
-                if (goalsGateOpen) {
-                    Log.d(TAG, "Skipping $foregroundApp (goals satisfied until next deadline+buffer)")
-                    if (currentBlockedApp != null) {
-                        stopService(Intent(this@MonitoringService, OverlayService::class.java))
-                        currentBlockedApp = null
-                    }
-                } else if (!TempUnlockManager.isTempUnlocked(this@MonitoringService, foregroundApp)) {
+                if (!TempUnlockManager.isTempUnlocked(this@MonitoringService, foregroundApp)) {
                     if (currentBlockedApp != foregroundApp) {
                         currentBlockedApp = foregroundApp
                         Log.d(TAG, "Blocking $foregroundApp")
@@ -111,6 +104,8 @@ class MonitoringService : Service() {
 
     override fun onDestroy() {
         handler.removeCallbacks(checkRunnable)
+        stopService(Intent(this, OverlayService::class.java))
+        currentBlockedApp = null
         super.onDestroy()
     }
 
@@ -128,7 +123,7 @@ class MonitoringService : Service() {
         }
         return Notification.Builder(this, channelId)
             .setContentTitle("Oblique Monitoring")
-            .setContentText("Watching your blocked apps")
+            .setContentText("Blocking apps until today's goal is met")
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setOngoing(true)
             .build()

@@ -96,7 +96,39 @@ class GoalPeriodPolicy {
     fun isCurrentPeriodSatisfied(goal: Goal, bufferMs: Long, nowMs: Long): Boolean {
         val period = currentPeriod(goal, bufferMs, nowMs)
         if (goal.lastSatisfiedPeriodDeadlineMs >= period.deadlineMs) return true
-        return goal.progress >= goal.targetValue
+        return currentPeriodProgress(goal, bufferMs, nowMs) >= goal.targetValue
+    }
+
+    /**
+     * Progress credited toward the period ending at [currentPeriod].deadlineMs.
+     * Stored [Goal.progress] does not carry over once the previous period was satisfied.
+     */
+    fun currentPeriodProgress(goal: Goal, bufferMs: Long, nowMs: Long): Int {
+        val period = currentPeriod(goal, bufferMs, nowMs)
+        if (goal.lastSatisfiedPeriodDeadlineMs >= period.deadlineMs) {
+            return goal.targetValue
+        }
+        val prevDeadline = period.deadlineMs - DAY_MS
+        when {
+            goal.lastSatisfiedPeriodDeadlineMs >= prevDeadline -> {
+                // Previous period was satisfied — new period unless still building partial progress.
+                if (goal.lastSatisfiedPeriodDeadlineMs == prevDeadline &&
+                    goal.progress < goal.targetValue
+                ) {
+                    return goal.progress.coerceAtMost(goal.targetValue)
+                }
+                return 0
+            }
+            goal.lastSatisfiedPeriodDeadlineMs > 0L -> return 0
+            else -> return goal.progress.coerceAtMost(goal.targetValue)
+        }
+    }
+
+    /** True while apps stay unblocked after the last satisfied period (blocking only). */
+    fun isInUnblockWindow(goal: Goal, bufferMs: Long, nowMs: Long): Boolean {
+        val last = goal.lastSatisfiedPeriodDeadlineMs
+        if (last <= 0L) return false
+        return nowMs < unblockUntilMs(last, bufferMs)
     }
 
     /** After satisfying period at [satisfiedDeadlineMs], apps unblock until next deadline + buffer. */

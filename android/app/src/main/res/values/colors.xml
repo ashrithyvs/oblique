@@ -1,27 +1,43 @@
 <resources>
+    <!-- Theme tokens — edit here to re-skin the app -->
+    <color name="theme_primary">#000000</color>
+    <color name="theme_on_primary">#FFFFFF</color>
+    <color name="theme_surface">#FFFFFF</color>
+    <color name="theme_on_surface">#0F1724</color>
+    <color name="theme_secondary">#4A6CF7</color>
+    <color name="theme_on_secondary">#FFFFFF</color>
+    <color name="theme_outline">#E6E6E6</color>
+    <color name="theme_muted">#9AA0A6</color>
+    <color name="theme_disabled">#8E8E93</color>
+    <color name="theme_scrim">#CCFFFFFF</color>
+    <color name="theme_track_inactive">#E0E0E0</color>
+    <color name="theme_header_circle">#EEF5FF</color>
+
+    <!-- Legacy aliases (prefer theme_* in new code) -->
+    <color name="primaryColor">@color/theme_secondary</color>
+    <color name="text_primary">@color/theme_on_surface</color>
+    <color name="text_muted">@color/theme_muted</color>
+    <color name="muted">@color/theme_muted</color>
+    <color name="btn_dark">@color/theme_primary</color>
+    <color name="black">@color/theme_primary</color>
+    <color name="cta">@color/theme_primary</color>
+    <color name="cta_green">@color/theme_primary</color>
+    <color name="green">@color/theme_primary</color>
+    <color name="gray">@color/theme_disabled</color>
+    <color name="input_stroke">@color/theme_outline</color>
+    <color name="bg_white">@color/theme_surface</color>
+    <color name="white">@color/theme_on_primary</color>
+
     <color name="brand">#111327</color>
     <color name="accent_green">#EAFBF2</color>
     <color name="accent_lilac">#F3ECFF</color>
-    <color name="primaryColor">#4A6CF7</color>
     <color name="ink">#111827</color>
-    <color name="cta">#22C55E</color>
-    <color name="gray">#8E8E93</color>
-    <color name="black">#000000</color>
-    <color name="green">#0CAF60</color>
-    <color name="muted">#9AA0A6</color>
-    <color name="bg_white">#FFFFFF</color>
     <color name="header_blue_bg">#E6F0FF</color>
-    <color name="text_primary">#0F1724</color>
-    <color name="text_muted">#9AA0A6</color>
     <color name="divider_light">#F0F0F2</color>
     <color name="selected_card_bg">#F5F5F6</color>
-    <color name="input_stroke">#E6E6E6</color>
-    <color name="btn_dark">#000000</color>
-    <color name="white">#FFFFFF</color>
     <color name="accent_blue">#3A78FF</color>
     <color name="avatar_bg">#F1F1F6</color>
     <color name="badge_bg_color">#F2F6FF</color>
-    <color name="cta_green">#00B050</color>
     <color name="tile_selected_bg">#EEF3FF</color>
 
     <color name="auth_logo_bg">#0A0A14</color>

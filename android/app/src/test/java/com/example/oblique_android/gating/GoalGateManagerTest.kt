@@ -4,7 +4,6 @@ import android.content.Context
 import com.example.oblique_android.models.Goal
 import com.example.oblique_android.utils.GoalStatusConstants
 import com.example.oblique_android.validation.platform.GoalPeriodPolicy
-import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -13,7 +12,6 @@ import java.util.Calendar
 
 class GoalGateManagerTest {
 
-    private val policy = GoalPeriodPolicy()
     private val bufferMs = 3 * 3_600_000L
     private val context = mockk<Context>(relaxed = true)
     private val gateManager = GoalGateManager(context)
@@ -33,7 +31,39 @@ class GoalGateManagerTest {
         dayStart + hour * 3_600_000L + minute * 60_000L
 
     @Test
-    fun satisfiedGoalDoesNotBlockUntilNextDeadlinePlusBuffer() {
+    fun noMonitoringDuringGraceAfterDeadline() {
+        val monday = dayStart(2025, Calendar.JUNE, 16)
+        val deadline745 = 7 * 3_600_000L + 45 * 60_000L
+        val goal = Goal(
+            id = "g1",
+            platform = "leetcode",
+            targetValue = 2,
+            progress = 0,
+            status = GoalStatusConstants.ACTIVE,
+            deadlineTimeOfDayMs = deadline745,
+        )
+        val now = at(monday, 8, 0)
+        assertFalse(gateManager.needsForegroundMonitoring(goal, bufferMs, now))
+    }
+
+    @Test
+    fun monitoringStartsAfterBufferWhenGoalNotMet() {
+        val monday = dayStart(2025, Calendar.JUNE, 16)
+        val deadline745 = 7 * 3_600_000L + 45 * 60_000L
+        val goal = Goal(
+            id = "g1",
+            platform = "leetcode",
+            targetValue = 2,
+            progress = 0,
+            status = GoalStatusConstants.ACTIVE,
+            deadlineTimeOfDayMs = deadline745,
+        )
+        val creditEnd = at(monday, 7, 45) + bufferMs
+        assertTrue(gateManager.needsForegroundMonitoring(goal, bufferMs, creditEnd + 60_000L))
+    }
+
+    @Test
+    fun satisfiedGoalDoesNotMonitorUntilUnblockWindowEnds() {
         val monday = dayStart(2025, Calendar.JUNE, 16)
         val deadline745 = 7 * 3_600_000L + 45 * 60_000L
         val goal = Goal(
@@ -46,11 +76,11 @@ class GoalGateManagerTest {
             lastSatisfiedPeriodDeadlineMs = at(monday, 7, 45),
         )
         val now = at(monday, 8, 0)
-        assertFalse(gateManager.shouldBlockGoal(goal, bufferMs, now))
+        assertFalse(gateManager.needsForegroundMonitoring(goal, bufferMs, now))
     }
 
     @Test
-    fun reblocksAfterUnblockWindowExpires() {
+    fun monitorsAfterUnblockWindowWhenNewPeriodMissed() {
         val monday = dayStart(2025, Calendar.JUNE, 16)
         val tuesday = monday + GoalPeriodPolicy.DAY_MS
         val deadline745 = 7 * 3_600_000L + 45 * 60_000L
@@ -58,12 +88,12 @@ class GoalGateManagerTest {
             id = "g1",
             platform = "leetcode",
             targetValue = 2,
-            progress = 2,
+            progress = 0,
             status = GoalStatusConstants.ACTIVE,
             deadlineTimeOfDayMs = deadline745,
             lastSatisfiedPeriodDeadlineMs = at(monday, 7, 45),
         )
-        val reblockAt = at(tuesday, 7, 45) + bufferMs
-        assertTrue(gateManager.shouldBlockGoal(goal, bufferMs, reblockAt))
+        val afterBuffer = at(tuesday, 7, 45) + bufferMs + 60_000L
+        assertTrue(gateManager.needsForegroundMonitoring(goal, bufferMs, afterBuffer))
     }
 }

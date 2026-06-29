@@ -52,6 +52,17 @@
             </LinearLayout>
 
             <ImageView
+                android:id="@+id/btnDevSimulateHour"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginRight="6dp"
+                android:src="@drawable/ic_time_forward"
+                android:background="@drawable/circle_light"
+                android:contentDescription="@string/dev_simulate_plus_hour"
+                android:padding="6dp"
+                android:visibility="gone" />
+
+            <ImageView
                 android:id="@+id/manualPoll"
                 android:layout_width="36dp"
                 android:layout_height="36dp"
@@ -71,13 +82,38 @@
                 android:padding="6dp" />
         </LinearLayout>
 
-        <Button
-            android:id="@+id/btnDevSimulateHour"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:id="@+id/devTimePanel"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="@string/dev_simulate_plus_hour"
-            android:visibility="gone" />
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/tvDevSimulatedTime"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_primary"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvDevRealTime"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textColor="@color/text_muted"
+                android:textSize="12sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="@string/dev_simulate_hold_reset"
+                android:textColor="@color/text_muted"
+                android:textSize="11sp" />
+        </LinearLayout>
 
         <!-- Protection Card -->
         <LinearLayout
@@ -316,14 +352,12 @@
             android:orientation="vertical"
             android:layout_marginTop="8dp" />
 
-        <!-- CTA -->
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnStartProtection"
+            style="@style/Widget.Oblique.Button.Primary"
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:layout_marginTop="18dp"
-            android:backgroundTint="@color/cta_green"
-            android:textColor="@android:color/white"
             android:text="Start protection" />
 
     </LinearLayout>

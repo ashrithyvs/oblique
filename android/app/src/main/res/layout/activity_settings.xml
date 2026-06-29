@@ -154,15 +154,13 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnAddGoal"
+            style="@style/Widget.Oblique.Button.Primary"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="+ Add"
             android:insetLeft="12dp"
             android:insetRight="12dp"
-            android:textAllCaps="false"
-            app:cornerRadius="18dp"
-            android:backgroundTint="@color/btn_dark"
-            android:textColor="@color/white" />
+            app:cornerRadius="18dp" />
     </LinearLayout>
 
     <FrameLayout
@@ -253,15 +251,13 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnSave"
+        style="@style/Widget.Oblique.Button.Primary"
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:layout_marginTop="12dp"
         android:text="@string/save_settings"
-        android:textAllCaps="false"
         android:visibility="gone"
-        app:cornerRadius="12dp"
-        android:backgroundTint="@color/btn_dark"
-        android:textColor="@color/white" />
+        app:cornerRadius="12dp" />
 
 </LinearLayout>
 

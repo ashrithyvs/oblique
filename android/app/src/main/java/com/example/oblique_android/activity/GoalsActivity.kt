@@ -27,6 +27,7 @@ import com.example.oblique_android.utils.PlatformCatalog
 import com.example.oblique_android.utils.PlatformConstants
 import com.example.oblique_android.utils.PrefsUtils
 import com.example.oblique_android.utils.setupWindowInsets
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
 import kotlinx.coroutines.launch
@@ -38,8 +39,8 @@ class GoalsActivity : AppCompatActivity(), PlatformsAdapter.PlatformClickListene
     private lateinit var rvGoalTypes: RecyclerView
     private lateinit var rvGoals: RecyclerView
     private lateinit var etTarget: EditText
-    private lateinit var btnAddGoal: Button
-    private lateinit var btnStart: Button
+    private lateinit var btnAddGoal: MaterialButton
+    private lateinit var btnStart: MaterialButton
     private lateinit var cardSelectedPlatform: View
     private lateinit var tvSelectedPlatformName: TextView
     private lateinit var ivSelectedIcon: ImageView

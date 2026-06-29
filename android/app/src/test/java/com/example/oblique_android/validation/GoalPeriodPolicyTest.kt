@@ -96,4 +96,57 @@ class GoalPeriodPolicyTest {
         val open = policy.openPeriods(g, bufferMs, now)
         assertEquals(1, open.size)
     }
+
+    @Test
+    fun staleProgressDoesNotSatisfyFuturePeriod() {
+        val june29 = dayStart(2025, Calendar.JUNE, 29)
+        val july3 = dayStart(2025, Calendar.JULY, 3)
+        val deadline745 = 7 * 3_600_000L + 45 * 60_000L
+        val june29Deadline = at(june29, 7, 45)
+        val g = goal(deadline745, lastSatisfied = june29Deadline, progress = 2)
+        val now = at(july3, 10, 0)
+
+        assertFalse(policy.isCurrentPeriodSatisfied(g, bufferMs, now))
+        assertEquals(0, policy.currentPeriodProgress(g, bufferMs, now))
+    }
+
+    @Test
+    fun resetsAfterOneDayWhenPreviousPeriodWasSatisfied() {
+        val june29 = dayStart(2025, Calendar.JUNE, 29)
+        val deadline745 = 7 * 3_600_000L + 45 * 60_000L
+        val june29Deadline = at(june29, 7, 45)
+        val g = goal(deadline745, lastSatisfied = june29Deadline, progress = 2)
+        // +23h from June 29 10:00 AM → June 30 9:00 AM (next period, still within unblock window)
+        val now = at(june29, 10, 0) + 23 * 3_600_000L
+
+        assertFalse(policy.isCurrentPeriodSatisfied(g, bufferMs, now))
+        assertEquals(0, policy.currentPeriodProgress(g, bufferMs, now))
+        assertTrue(policy.isInUnblockWindow(g, bufferMs, now))
+    }
+
+    @Test
+    fun partialProgressCarriesWithinNewPeriodAfterPreviousSatisfied() {
+        val june29 = dayStart(2025, Calendar.JUNE, 29)
+        val deadline745 = 7 * 3_600_000L + 45 * 60_000L
+        val june29Deadline = at(june29, 7, 45)
+        val g = goal(deadline745, lastSatisfied = june29Deadline, progress = 1, target = 2)
+        val now = at(june29, 10, 0) + 23 * 3_600_000L
+
+        assertEquals(1, policy.currentPeriodProgress(g, bufferMs, now))
+        assertFalse(policy.isCurrentPeriodSatisfied(g, bufferMs, now))
+    }
+
+    @Test
+    fun stillIncompleteAfterThirtyHoursSimulated() {
+        val june29 = dayStart(2025, Calendar.JUNE, 29)
+        val deadline745 = 7 * 3_600_000L + 45 * 60_000L
+        val june29Deadline = at(june29, 7, 45)
+        val g = goal(deadline745, lastSatisfied = june29Deadline, progress = 2)
+        // +30h from June 29 10:00 AM → June 30 4:00 PM (next period, unblock window closed)
+        val now = at(june29, 10, 0) + 30 * 3_600_000L
+
+        assertFalse(policy.isCurrentPeriodSatisfied(g, bufferMs, now))
+        assertEquals(0, policy.currentPeriodProgress(g, bufferMs, now))
+        assertFalse(policy.isInUnblockWindow(g, bufferMs, now))
+    }
 }

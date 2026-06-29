@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.example.oblique_android.gating.MonitoringController
 import com.example.oblique_android.utils.NetworkUtils
 import com.example.oblique_android.utils.ValidationConstants
 
@@ -37,6 +38,8 @@ class GoalValidationWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
             }
             else -> Log.d(TAG, "Validation outcome for goal=$goalId: $outcome")
         }
+
+        MonitoringController.syncMonitoringState(applicationContext)
 
         return Result.success()
     }

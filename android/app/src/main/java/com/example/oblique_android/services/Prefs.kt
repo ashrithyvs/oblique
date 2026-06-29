@@ -10,6 +10,7 @@ object Prefs {
     private const val KEY_APP_SELECTION_DONE = "app_selection_done"
     private const val KEY_PLATFORM_SETUP_DONE = "platform_setup_done"
     private const val KEY_MIGRATED_BLOCKED_APPS = "migrated_blocked_apps_v1"
+    private const val KEY_PROTECTION_ENABLED = "protection_enabled"
 
     private lateinit var prefs: SharedPreferences
     private lateinit var appContext: Context
@@ -67,4 +68,9 @@ object Prefs {
     fun getSelectedApps(): Set<String> = PrefsUtils.loadBlockedSet(appContext)
 
     fun setSelectedApps(apps: Set<String>) = PrefsUtils.saveBlockedSet(appContext, apps)
+
+    fun isProtectionEnabled(): Boolean = prefs.getBoolean(KEY_PROTECTION_ENABLED, false)
+
+    fun setProtectionEnabled(enabled: Boolean) =
+        prefs.edit().putBoolean(KEY_PROTECTION_ENABLED, enabled).apply()
 }

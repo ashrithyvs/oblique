@@ -20,5 +20,6 @@
     <dimen name="card_inner_padding">18dp</dimen>
     <dimen name="bottom_cta_margin_top">20dp</dimen>
     <dimen name="badge_padding">6dp</dimen>
+    <dimen name="theme_btn_corner_radius">26dp</dimen>
 
 </resources>

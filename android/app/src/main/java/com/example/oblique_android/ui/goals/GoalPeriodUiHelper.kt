@@ -24,13 +24,15 @@ object GoalPeriodUiHelper {
 
         val current = periodPolicy.currentPeriod(goal, bufferMs, nowMs)
         val deadlineLabel = timeFormat.format(current.deadlineMs)
+        val satisfied = periodPolicy.isCurrentPeriodSatisfied(goal, bufferMs, nowMs)
 
-        if (periodPolicy.isCurrentPeriodSatisfied(goal, bufferMs, nowMs)) {
-            val until = periodPolicy.unblockUntilMs(goal, bufferMs, nowMs)
-            if (until > nowMs) {
-                return context.getString(R.string.period_unlocked_until, formatDateTime(until))
-            }
+        if (satisfied) {
             return context.getString(R.string.period_complete)
+        }
+
+        if (periodPolicy.isInUnblockWindow(goal, bufferMs, nowMs)) {
+            val until = periodPolicy.unblockUntilMs(goal, bufferMs, nowMs)
+            return context.getString(R.string.period_unlocked_until, formatDateTime(until, nowMs))
         }
 
         if (nowMs > current.deadlineMs && nowMs <= current.creditEndMs) {
@@ -43,10 +45,13 @@ object GoalPeriodUiHelper {
         return context.getString(R.string.period_due_by, deadlineLabel)
     }
 
-    private fun formatDateTime(timeMs: Long): String {
+    private fun formatDateTime(timeMs: Long, nowMs: Long): String {
         val cal = Calendar.getInstance().apply { timeInMillis = timeMs }
-        val today = Calendar.getInstance()
-        val tomorrow = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, 1) }
+        val today = Calendar.getInstance().apply { timeInMillis = nowMs }
+        val tomorrow = Calendar.getInstance().apply {
+            timeInMillis = nowMs
+            add(Calendar.DAY_OF_YEAR, 1)
+        }
         val time = timeFormat.format(timeMs)
         return when {
             cal.get(Calendar.YEAR) == today.get(Calendar.YEAR) &&

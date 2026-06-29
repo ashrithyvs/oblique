@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
@@ -21,6 +20,7 @@ import com.example.oblique_android.network.request.UserPreferencesRequest
 import com.example.oblique_android.prefs.PlatformPref
 import com.example.oblique_android.utils.PlatformCatalog
 import com.example.oblique_android.utils.PrefsUtils
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.slider.Slider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -37,7 +37,7 @@ class PlatformPreferencesFragment : Fragment() {
     private lateinit var etDisplayName: EditText
     private lateinit var tvPlatformSubtitle: TextView
     private lateinit var rvPlatforms: RecyclerView
-    private lateinit var btnSave: Button
+    private lateinit var btnSave: MaterialButton
     private lateinit var sliderDeadlineBuffer: Slider
     private lateinit var tvDeadlineBufferValue: TextView
     private lateinit var adapter: PlatformPrefsAdapter

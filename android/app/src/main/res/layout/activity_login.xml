@@ -105,15 +105,12 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnLogin"
+            style="@style/Widget.Oblique.Button.Primary"
             android:layout_width="match_parent"
             android:layout_height="@dimen/auth_btn_height"
             android:layout_marginTop="24dp"
-            android:background="@drawable/auth_btn_primary"
             android:text="@string/auth_sign_in"
-            android:textAllCaps="false"
-            android:textColor="@color/white"
             android:textSize="16sp"
-            app:backgroundTint="@null"
             app:cornerRadius="@dimen/auth_btn_radius" />
 
         <TextView

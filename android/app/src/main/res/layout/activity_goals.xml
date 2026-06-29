@@ -236,17 +236,15 @@
                             app:tint="@color/auth_title" />
                     </LinearLayout>
 
-                    <Button
+                    <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnAddGoal"
+                        style="@style/Widget.Oblique.Button.Primary"
                         android:layout_width="match_parent"
                         android:layout_height="@dimen/auth_btn_height"
                         android:layout_marginTop="@dimen/btn_add_margin_top"
-                        android:background="@drawable/goal_btn_primary"
+                        app:cornerRadius="@dimen/auth_btn_radius"
                         android:text="@string/goals_add_this_goal"
-                        android:textAllCaps="false"
-                        android:textColor="@color/white"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
+                        android:textSize="16sp" />
                 </LinearLayout>
 
             </LinearLayout>
@@ -349,16 +347,13 @@
                 android:textColor="@color/text_muted"/>
         </androidx.cardview.widget.CardView>
 
-        <!-- Bottom CTA -->
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnStart"
+            style="@style/Widget.Oblique.Button.Primary"
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:layout_marginTop="@dimen/bottom_cta_margin_top"
-            android:text="Add at least one goal to continue"
-            android:background="@drawable/btn_dark_pill"
-            android:textColor="@color/white"
-            android:textAllCaps="false" />
+            android:text="Add at least one goal to continue" />
 
         <View android:layout_height="16dp" android:layout_width="match_parent"/>
     </LinearLayout>

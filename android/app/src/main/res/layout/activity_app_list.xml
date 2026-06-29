@@ -111,7 +111,7 @@
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:layout_marginTop="16dp"
-            android:background="#E6E6E6" />
+            android:background="@color/theme_outline" />
     </LinearLayout>
 
     <!-- RecyclerView takes remaining space -->
@@ -138,13 +138,12 @@
         android:paddingBottom="8dp"
         android:background="@android:color/transparent">
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnConfirm"
+            style="@style/Widget.Oblique.Button.Primary"
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:text="Select at least one app"
-            android:backgroundTint="#8E8E93"
-            android:textColor="@android:color/white"
             android:enabled="false"
             android:layout_marginBottom="8dp"
             android:stateListAnimator="@null" />

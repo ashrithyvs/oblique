@@ -196,15 +196,11 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnGetStarted"
-            style="@style/Widget.Material3.Button.IconButton.Filled"
+            style="@style/Widget.Oblique.Button.Primary"
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:text="Get Started"
-            android:textAllCaps="false"
-            android:layout_marginTop="28dp"
-            android:backgroundTint="@color/cta"
-            android:textColor="@android:color/white"
-            />
+            android:layout_marginTop="28dp" />
 
         <TextView
             android:layout_height="wrap_content"

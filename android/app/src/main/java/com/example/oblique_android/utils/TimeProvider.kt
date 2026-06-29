@@ -59,11 +59,38 @@ object AppTime {
 
     fun nowMs(): Long = provider.nowMs()
 
+    fun currentOffsetMs(): Long {
+        val current = provider
+        return if (current is OffsetTimeProvider) current.currentOffsetMs() else 0L
+    }
+
+    fun formatNowForDisplay(): String =
+        java.text.SimpleDateFormat("EEE, MMM d h:mm a", java.util.Locale.getDefault())
+            .format(java.util.Date(nowMs()))
+
+    fun formatOffsetForDisplay(offsetMs: Long = currentOffsetMs()): String {
+        if (offsetMs == 0L) return "0h"
+        val sign = if (offsetMs >= 0) "+" else "-"
+        val abs = kotlin.math.abs(offsetMs)
+        val hours = abs / 3_600_000L
+        val mins = (abs % 3_600_000L) / 60_000L
+        return when {
+            mins == 0L -> "$sign${hours}h"
+            hours == 0L -> "$sign${mins}m"
+            else -> "$sign${hours}h ${mins}m"
+        }
+    }
+
     fun advanceDevTimeMs(context: android.content.Context, delta: Long) {
         val current = provider
         if (current is OffsetTimeProvider) {
             current.advanceMs(delta)
             PrefsUtils.saveValidationTimeOffsetMs(context, current.currentOffsetMs())
         }
+    }
+
+    fun resetDevTimeMs(context: android.content.Context) {
+        PrefsUtils.saveValidationTimeOffsetMs(context, 0L)
+        provider = OffsetTimeProvider(SystemTimeProvider, 0L)
     }
 }

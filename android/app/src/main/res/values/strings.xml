@@ -108,6 +108,10 @@
     <string name="period_unlocked_until">Unlocked until %1$s</string>
     <string name="period_complete">Today\'s goal complete</string>
     <string name="dev_simulate_plus_hour">Simulate +1h</string>
+    <string name="dev_simulated_time_reset">Simulated time reset</string>
+    <string name="dev_simulate_hold_reset">Hold 5s to reset simulated time</string>
+    <string name="dev_simulated_time">Simulated: %1$s (%2$s offset)</string>
+    <string name="dev_real_time">Real: %1$s</string>
     <string name="continue_setup">Continue</string>
     <string name="platform_setup_title">Platform setup</string>
     <string name="platform_setup_subtitle">Link your accounts for goal tracking</string>

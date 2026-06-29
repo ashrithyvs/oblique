@@ -251,16 +251,13 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnContinueSetup"
+        style="@style/Widget.Oblique.Button.Primary"
         android:layout_width="0dp"
         android:layout_height="@dimen/auth_btn_height"
         android:layout_marginHorizontal="24dp"
         android:layout_marginBottom="8dp"
         android:text="@string/permissions_grant"
-        android:textAllCaps="false"
-        android:textColor="@color/white"
         android:textSize="16sp"
-        android:textStyle="bold"
-        app:backgroundTint="@color/btn_dark"
         app:cornerRadius="@dimen/auth_btn_radius"
         app:layout_constraintBottom_toTopOf="@id/tvPermissionsFooter"
         app:layout_constraintEnd_toEndOf="parent"

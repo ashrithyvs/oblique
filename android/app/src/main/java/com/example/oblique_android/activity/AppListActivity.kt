@@ -5,11 +5,10 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
-import android.widget.Button
-import android.widget.EditText
 import android.view.View
+import android.widget.EditText
+import com.google.android.material.button.MaterialButton
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -29,7 +28,7 @@ class AppListActivity : AppCompatActivity() {
     private lateinit var repo: AppRepository
     private lateinit var adapter: AppAdapter
     private lateinit var selectedApps: MutableSet<String>
-    private lateinit var btnConfirm: Button
+    private lateinit var btnConfirm: MaterialButton
     private lateinit var etSearch: EditText
     private lateinit var loadingOverlay: View
 
@@ -114,11 +113,9 @@ class AppListActivity : AppCompatActivity() {
         if (selectedApps.isEmpty()) {
             btnConfirm.text = "Select at least one app"
             btnConfirm.isEnabled = false
-            btnConfirm.setBackgroundColor(ContextCompat.getColor(this, R.color.gray))
         } else {
             btnConfirm.text = "Confirm (${selectedApps.size})"
             btnConfirm.isEnabled = true
-            btnConfirm.setBackgroundColor(ContextCompat.getColor(this, R.color.green))
         }
     }
 }

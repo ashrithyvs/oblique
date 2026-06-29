@@ -11,7 +11,7 @@ object TileSelectionStyle {
         val strokePx = (2 * context.resources.displayMetrics.density).toInt()
         if (selected) {
             card.strokeWidth = strokePx
-            card.strokeColor = ContextCompat.getColor(context, R.color.primaryColor)
+            card.strokeColor = ContextCompat.getColor(context, R.color.theme_secondary)
             card.setCardBackgroundColor(ContextCompat.getColor(context, R.color.tile_selected_bg))
             card.cardElevation = 4f
         } else {
