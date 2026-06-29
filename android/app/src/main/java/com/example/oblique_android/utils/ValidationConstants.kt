@@ -16,4 +16,6 @@ object ValidationConstants {
     const val ERROR_UNSUPPORTED = "UNSUPPORTED"
     const val ERROR_INVALID_WINDOW = "INVALID_WINDOW"
     const val ERROR_NO_VALIDATOR = "NO_VALIDATOR"
+    const val ERROR_USER_NOT_FOUND = "USER_NOT_FOUND"
+    const val ERROR_VERIFY_USER_FAILED = "VERIFY_USER_FAILED"
 }

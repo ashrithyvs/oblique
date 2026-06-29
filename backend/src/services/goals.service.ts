@@ -2,7 +2,7 @@
 import Goal from '../models/goal.model';
 import GoalCheckHistory from '../models/goalCheckHistory.model';
 import mongoose, { Types } from 'mongoose';
-import { toGoalDto } from '../utils/goalDto';
+import { toGoalDto, deriveDeadlineTimeOfDayMs } from '../utils/goalDto';
 import { createGoalSchema } from '../utils/validators';
 
 export type GoalDtoResponse = ReturnType<typeof toGoalDto>;
@@ -19,6 +19,10 @@ export class GoalServiceError extends Error {
 
 export async function createGoal(userId: string, body: unknown): Promise<GoalDtoResponse> {
     const parsed = createGoalSchema.parse(body);
+    const deadline = (body as any).deadline ?? null;
+    const deadlineTimeOfDayMs =
+        (body as any).deadlineTimeOfDayMs ??
+        deriveDeadlineTimeOfDayMs(typeof deadline === 'number' ? deadline : null);
     const doc = await Goal.create({
         user: new Types.ObjectId(userId),
         title: parsed.title || `${parsed.platform || 'goal'} goal`,
@@ -29,7 +33,9 @@ export async function createGoal(userId: string, body: unknown): Promise<GoalDto
         targetValue: parsed.targetValue,
         progress: 0,
         status: 'active',
-        deadline: (body as any).deadline ?? null,
+        deadline,
+        deadlineTimeOfDayMs,
+        lastSatisfiedPeriodDeadlineMs: null,
         checkIntervalMs: parsed.checkIntervalMs ?? 3600000,
         evidence: parsed.evidence ?? null,
     });
@@ -159,6 +165,78 @@ export async function updateGoalProgress(
     if (computedProgress >= goal.targetValue) {
         await goal.save();
         return markComplete(userId, goalId, new Date(), { via: 'progressUpdate' }, evidence ?? null);
+    }
+
+    await goal.save();
+    return toGoalDto(goal.toObject());
+}
+
+export async function setGoalBaseline(
+    userId: string,
+    goalId: string,
+    baselineValue: number,
+    platformUsername?: string,
+    evidence?: unknown,
+): Promise<GoalDtoResponse | null> {
+    if (!mongoose.isValidObjectId(goalId)) return null;
+
+    const goal = await Goal.findOne({ _id: goalId, user: new Types.ObjectId(userId) }).exec();
+    if (!goal) return null;
+
+    if (goal.status === 'completed') {
+        throw new GoalServiceError('Cannot set baseline on completed goal', 'GOAL_COMPLETED');
+    }
+
+    if (goal.progress !== 0) {
+        throw new GoalServiceError(
+            'Baseline can only be set when progress is zero',
+            'BASELINE_LOCKED',
+        );
+    }
+
+    goal.baselineValue = baselineValue;
+    if (platformUsername !== undefined && platformUsername.trim() !== '') {
+        goal.platformUsername = platformUsername.trim();
+    }
+    if (evidence !== undefined) {
+        goal.evidence = evidence as any;
+    }
+    goal.lastCheckedAt = new Date();
+    goal.updatedAt = new Date();
+    await goal.save();
+    return toGoalDto(goal.toObject());
+}
+
+export async function recordPeriodProgress(
+    userId: string,
+    goalId: string,
+    periodDeadlineMs: number,
+    progress: number,
+    evidence?: unknown,
+): Promise<GoalDtoResponse | null> {
+    if (!mongoose.isValidObjectId(goalId)) return null;
+
+    const goal = await Goal.findOne({ _id: goalId, user: new Types.ObjectId(userId) }).exec();
+    if (!goal) return null;
+
+    if (goal.status === 'completed') {
+        throw new GoalServiceError('Cannot update progress on completed goal', 'GOAL_COMPLETED');
+    }
+
+    if (progress < goal.progress) {
+        throw new GoalServiceError('Progress regression not allowed', 'PROGRESS_REGRESSION');
+    }
+
+    goal.progress = progress;
+    goal.lastCheckedAt = new Date();
+    goal.updatedAt = new Date();
+    if (evidence !== undefined) {
+        goal.evidence = evidence as any;
+    }
+
+    if (progress >= goal.targetValue) {
+        goal.lastSatisfiedPeriodDeadlineMs = periodDeadlineMs;
+        goal.status = 'active';
     }
 
     await goal.save();

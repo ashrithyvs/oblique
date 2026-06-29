@@ -9,6 +9,7 @@ data class GoalRequest(
     val targetValue: Int,
     val baselineValue: Int,
     val deadline: Long?,
+    val deadlineTimeOfDayMs: Long? = null,
     val title: String,
     val checkIntervalMs: Long = 3600000,
     val evidence: Map<String, Any>? = null,
@@ -23,7 +24,10 @@ data class GoalDto(
     val targetValue: Int,
     val baselineValue: Int,
     val status: String,
-    val deadline: Long?, // ✅ numeric
+    val deadline: Long?,
+    val deadlineTimeOfDayMs: Long? = null,
+    val lastSatisfiedPeriodDeadlineMs: Long? = null,
+    val isCurrentPeriodSatisfied: Boolean? = null,
     val completedAt: String?,
     val createdAt: String?,
     val unit: String,
@@ -53,6 +57,18 @@ interface GoalsApi {
 
     @PATCH("/api/goals/{id}/progress")
     suspend fun updateGoalProgress(
+        @Path("id") id: String,
+        @Body body: Map<String, @JvmSuppressWildcards Any>
+    ): GoalDto
+
+    @PATCH("/api/goals/{id}/baseline")
+    suspend fun setGoalBaseline(
+        @Path("id") id: String,
+        @Body body: Map<String, @JvmSuppressWildcards Any>
+    ): GoalDto
+
+    @PATCH("/api/goals/{id}/period-progress")
+    suspend fun recordPeriodProgress(
         @Path("id") id: String,
         @Body body: Map<String, @JvmSuppressWildcards Any>
     ): GoalDto

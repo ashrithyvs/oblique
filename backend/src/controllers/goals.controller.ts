@@ -2,14 +2,14 @@
 import { Response } from 'express';
 import { Types } from 'mongoose';
 import * as goalSvc from '../services/goals.service';
-import { completeGoalSchema, updateGoalProgressSchema } from '../utils/validators';
+import { completeGoalSchema, setGoalBaselineSchema, updateGoalProgressSchema, recordPeriodProgressSchema } from '../utils/validators';
 import { GoalServiceError } from '../services/goals.service';
 
 function mapServiceError(err: unknown, res: Response, context: string): Response | null {
     if (err instanceof GoalServiceError) {
         const status =
             err.code === 'NOT_FOUND' ? 404 :
-            err.code === 'GOAL_COMPLETED' || err.code === 'PROGRESS_REGRESSION' || err.code === 'NO_VALID_FIELDS' || err.code === 'INVALID_ID'
+            err.code === 'GOAL_COMPLETED' || err.code === 'PROGRESS_REGRESSION' || err.code === 'NO_VALID_FIELDS' || err.code === 'INVALID_ID' || err.code === 'BASELINE_LOCKED'
                 ? 400 : 500;
         return res.status(status).json({ message: err.message, code: err.code });
     }
@@ -104,6 +104,54 @@ export async function updateGoalProgress(req: any, res: Response) {
         if (mapped) return mapped;
         if (err?.name === 'ZodError') {
             return res.status(400).json({ message: 'Missing or invalid progress' });
+        }
+        return res.status(500).json({ message: err.message });
+    }
+}
+
+export async function setGoalBaseline(req: any, res: Response) {
+    try {
+        const id = req.params.id;
+        const parsed = setGoalBaselineSchema.parse(req.body ?? {});
+
+        const updated = await goalSvc.setGoalBaseline(
+            req.user._id,
+            id,
+            parsed.baselineValue,
+            parsed.platformUsername,
+            parsed.evidence,
+        );
+        if (!updated) return res.status(404).json({ message: 'Goal not found' });
+        return res.json(updated);
+    } catch (err: any) {
+        const mapped = mapServiceError(err, res, 'setGoalBaseline');
+        if (mapped) return mapped;
+        if (err?.name === 'ZodError') {
+            return res.status(400).json({ message: 'Missing or invalid baseline' });
+        }
+        return res.status(500).json({ message: err.message });
+    }
+}
+
+export async function recordPeriodProgress(req: any, res: Response) {
+    try {
+        const id = req.params.id;
+        const parsed = recordPeriodProgressSchema.parse(req.body ?? {});
+
+        const updated = await goalSvc.recordPeriodProgress(
+            req.user._id,
+            id,
+            parsed.periodDeadlineMs,
+            parsed.progress,
+            parsed.evidence,
+        );
+        if (!updated) return res.status(404).json({ message: 'Goal not found' });
+        return res.json(updated);
+    } catch (err: any) {
+        const mapped = mapServiceError(err, res, 'recordPeriodProgress');
+        if (mapped) return mapped;
+        if (err?.name === 'ZodError') {
+            return res.status(400).json({ message: 'Missing or invalid period progress' });
         }
         return res.status(500).json({ message: err.message });
     }

@@ -26,6 +26,8 @@ require(!apiHost.isNullOrBlank()) {
     "API_BASE_URL must be a valid URL with a host (e.g. http://10.0.2.2:3000/)"
 }
 
+val devMode = localProperties.getProperty("DEV_MODE")?.trim()?.equals("true", ignoreCase = true) == true
+
 val generatedNetworkSecurityDir = layout.buildDirectory.dir("generated/network_security_config")
 
 tasks.register("generateNetworkSecurityConfig") {
@@ -63,6 +65,7 @@ android {
         versionName = "1.0"
 
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
+        buildConfigField("boolean", "DEV_MODE", devMode.toString())
     }
 
     buildTypes {

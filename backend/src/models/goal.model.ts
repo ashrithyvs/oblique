@@ -13,6 +13,8 @@ export interface IGoal extends Document {
     progress: number;                // optional local progress snapshot
     status: 'active' | 'completed' | 'paused';
     deadline?: number | null;
+    deadlineTimeOfDayMs?: number | null;
+    lastSatisfiedPeriodDeadlineMs?: number | null;
     checkIntervalMs: number;         // how often to poll/check for completion
     lastCheckedAt?: Date | null;
     completedAt?: Date | null;
@@ -37,6 +39,8 @@ const GoalSchema = new Schema<IGoal>(
         status: { type: String, enum: ['active', 'completed', 'paused'], default: 'active' },
         checkIntervalMs: { type: Number, default: 3600000 }, // default 1 hour
         deadline: { type: Number, default: null },
+        deadlineTimeOfDayMs: { type: Number, default: null },
+        lastSatisfiedPeriodDeadlineMs: { type: Number, default: null },
         lastCheckedAt: { type: Date, default: null },
         completedAt: { type: Date, default: null },
         completedByDevice: { type: Boolean, default: false },

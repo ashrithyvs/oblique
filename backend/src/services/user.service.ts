@@ -122,7 +122,8 @@ export async function updateBlockedApps(userId: string, apps: string[]) {
 export const updatePreferences = async (
     userId: string,
     displayName?: string,
-    usernames?: Record<string, string>
+    usernames?: Record<string, string>,
+    deadlineBufferMs?: number,
 ) => {
     const user = await User.findById(userId);
     if (!user) throw new Error("User not found");
@@ -130,6 +131,11 @@ export const updatePreferences = async (
     // ✅ Update display name if provided
     if (displayName !== undefined) {
         user.displayName = displayName.trim() || null;
+    }
+
+    if (deadlineBufferMs !== undefined) {
+        const max = 3 * 60 * 60 * 1000;
+        user.deadlineBufferMs = Math.max(0, Math.min(max, deadlineBufferMs));
     }
 
     // ✅ Merge platform usernames safely

@@ -5,6 +5,7 @@ import android.util.Log
 import com.example.oblique_android.utils.NetworkUtils
 import com.example.oblique_android.utils.PlatformConstants
 import com.example.oblique_android.utils.ValidationConstants
+import com.example.oblique_android.utils.ValidationDevLogger
 import com.example.oblique_android.validation.ValidationResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -64,10 +65,85 @@ class LeetCodePlatformValidator(
         }
 
         val currentValue = result.totalSolved
-        return if (currentValue == context.goal.progress) {
-            PlatformValidationResult.NoChange(currentValue)
+        val computedProgress = context.goal.computedProgress(currentValue)
+        return if (computedProgress == context.goal.progress) {
+            PlatformValidationResult.NoChange(currentValue, result.rawEvidence)
         } else {
             PlatformValidationResult.Success(currentValue, result.rawEvidence)
+        }
+    }
+
+    override suspend fun verifyUser(username: String): PlatformUserVerification = withContext(Dispatchers.IO) {
+        if (username.isBlank()) {
+            return@withContext PlatformUserVerification.Invalid("Username is required")
+        }
+        if (context != null && !NetworkUtils.hasInternet(context)) {
+            return@withContext PlatformUserVerification.Error(
+                ValidationConstants.ERROR_NO_INTERNET,
+                "No internet connection",
+            )
+        }
+        try {
+            if (fetchMatchedUsername(username) != null) {
+                PlatformUserVerification.Valid
+            } else {
+                PlatformUserVerification.Invalid("LeetCode user not found")
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "verifyUser failed for ${redactUsername(username)}: ${e.message}")
+            PlatformUserVerification.Error(
+                ValidationConstants.ERROR_VERIFY_USER_FAILED,
+                e.message,
+            )
+        }
+    }
+
+    override     suspend fun fetchBaselineCount(
+        username: String,
+        windowStartMs: Long,
+        windowEndMs: Long,
+    ): Int? = fetchSolvedInWindow(username, windowStartMs, windowEndMs)?.totalSolved
+
+    suspend fun fetchTimestampedSubmissions(username: String): List<com.example.oblique_android.validation.TimestampedSubmission>? =
+        withContext(Dispatchers.IO) {
+            if (username.isBlank()) return@withContext null
+            if (context != null && !NetworkUtils.hasInternet(context)) return@withContext null
+            try {
+                fetchRecentSubmissions(username).map {
+                    com.example.oblique_android.validation.TimestampedSubmission(it.timestamp, it.titleSlug)
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "fetchTimestampedSubmissions failed: ${e.message}")
+                null
+            }
+        }
+
+    private fun fetchMatchedUsername(username: String): String? {
+        val query = """
+            query matchedUser(${'$'}username: String!) {
+              matchedUser(username: ${'$'}username) {
+                username
+              }
+            }
+        """.trimIndent()
+
+        val variables = JSONObject().apply { put("username", username) }
+        val payload = JSONObject().apply {
+            put("query", query)
+            put("variables", variables)
+        }.toString().toRequestBody(JSON)
+
+        val request = Request.Builder()
+            .url(BASE_URL)
+            .post(payload)
+            .addHeader("Accept", "application/json")
+            .build()
+
+        client.newCall(request).execute().use { res ->
+            val bodyStr = res.body?.string() ?: "{}"
+            if (!res.isSuccessful) throw IOException("HTTP ${res.code}")
+            val data = JSONObject(bodyStr).optJSONObject("data")
+            return data?.optJSONObject("matchedUser")?.optString("username")?.takeIf { it.isNotBlank() }
         }
     }
 
@@ -87,7 +163,12 @@ class LeetCodePlatformValidator(
                     return@withContext ValidationResult(
                         totalSolved = 0,
                         byDifficulty = emptyMap(),
-                        rawEvidence = mapOf("error" to ValidationConstants.ERROR_EMPTY_SUBMISSION_LIST),
+                        rawEvidence = mapOf(
+                            "platform" to platformKey,
+                            "from" to fromMs,
+                            "to" to toMs,
+                            "submissionCount" to 0,
+                        ),
                     )
                 }
 
@@ -125,7 +206,15 @@ class LeetCodePlatformValidator(
                         "slugsQueried" to slugSet.size,
                         "difficultyFetched" to slugToDifficulty.size,
                     ),
-                )
+                ).also { vr ->
+                    ValidationDevLogger.logExternalApi(
+                        method = "POST",
+                        url = BASE_URL,
+                        payload = """{"query":"recentAcSubmissionList","variables":{"username":"${redactUsername(username)}","limit":${PAGE_SIZE * MAX_SUBMISSION_PAGES}}}""",
+                        responseSummary = "solvedInWindow=$total submissionsFetched=${submissions.size} " +
+                            "(E:$easy M:$medium H:$hard) evidence=${vr.rawEvidence}",
+                    )
+                }
             } catch (e: Exception) {
                 lastError = e.message
                 Log.w(TAG, "Attempt ${attempt + 1}/$MAX_RETRIES failed for user=$redacted: ${e.message}")

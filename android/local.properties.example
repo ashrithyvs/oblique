@@ -7,3 +7,6 @@ sdk.dir=/path/to/Android/Sdk
 # Emulator → host machine: http://10.0.2.2:3000/
 # Physical device on same LAN: http://<your-machine-ip>:3000/
 API_BASE_URL=http://10.0.2.2:3000/
+
+# When true, manual goal validation has no 1-hour cooldown (debug builds only).
+DEV_MODE=false

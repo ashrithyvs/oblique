@@ -157,4 +157,18 @@ describe('user.service', () => {
     await userSvc.updatePreferences('u1', undefined, { duolingo: '' });
     expect(user.platformUsernames).toEqual({ leetcode: 'user' });
   });
+
+  test('updatePreferences clamps deadlineBufferMs to 3 hours', async () => {
+    const save = jest.fn().mockResolvedValue(undefined);
+    const user = {
+      displayName: 'Old',
+      platformUsernames: {},
+      deadlineBufferMs: 0,
+      save,
+    };
+    (User.findById as jest.Mock).mockResolvedValue(user);
+
+    await userSvc.updatePreferences('u1', undefined, undefined, 5 * 60 * 60 * 1000);
+    expect(user.deadlineBufferMs).toBe(3 * 60 * 60 * 1000);
+  });
 });

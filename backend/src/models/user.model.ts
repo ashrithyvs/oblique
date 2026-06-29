@@ -17,6 +17,7 @@ export interface IUser extends Document {
     providers?: IOAuthProvider[];
     icon?: Buffer | null;
     platformUsernames?: Record<string, string>;   // 👈 plain object
+    deadlineBufferMs?: number;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -38,6 +39,7 @@ const UserSchema = new Schema<IUser>({
     providers: { type: [OAuthProviderSchema], default: [] },
     icon: { type: Buffer, select: false },
     platformUsernames: { type: Object, default: {} },
+    deadlineBufferMs: { type: Number, default: 0, min: 0, max: 3 * 60 * 60 * 1000 },
 }, { timestamps: true });
 
 UserSchema.index({ email: 1 });

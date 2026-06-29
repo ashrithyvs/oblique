@@ -15,14 +15,16 @@ import com.example.oblique_android.validation.platform.PlatformValidationResult
 import com.example.oblique_android.validation.platform.PlatformValidatorRegistry
 import com.example.oblique_android.validation.platform.SyncOutcome
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
+import io.mockk.slot
 import io.mockk.unmockkAll
-import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.util.Calendar
@@ -63,9 +65,8 @@ class GoalValidationServiceTest {
         targetValue = 5,
         progress = 1,
         status = GoalStatusConstants.ACTIVE,
-        deadline = Calendar.getInstance().apply {
-            add(Calendar.HOUR, 2)
-        }.timeInMillis,
+        deadline = 0L,
+        deadlineTimeOfDayMs = 0L,
     )
 
     @Test
@@ -118,7 +119,9 @@ class GoalValidationServiceTest {
         every {
             PrefsUtils.getPlatformUsername(context, PlatformConstants.KEY_LEETCODE)
         } returns "user1"
-        coEvery { mockValidator.validate(any()) } returns PlatformValidationResult.NoChange(1)
+        every { PrefsUtils.getDeadlineBufferMs(context) } returns 0L
+        val ctxSlot = slot<PlatformValidationContext>()
+        coEvery { mockValidator.validate(capture(ctxSlot)) } returns PlatformValidationResult.NoChange(1)
 
         val svc = GoalValidationService(
             context = context,
@@ -129,8 +132,7 @@ class GoalValidationServiceTest {
 
         svc.validateGoalById("g1")
 
-        verify(exactly = 1) {
-            PrefsUtils.getPlatformUsername(context, PlatformConstants.KEY_LEETCODE)
-        }
+        assertEquals("user1", ctxSlot.captured.username)
+        coVerify(exactly = 1) { mockValidator.validate(any()) }
     }
 }

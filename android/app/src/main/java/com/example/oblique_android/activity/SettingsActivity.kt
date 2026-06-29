@@ -14,20 +14,16 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.oblique_android.R
 import com.example.oblique_android.adapters.AppsSettingsAdapter
 import com.example.oblique_android.adapters.GoalsSettingsAdapter
-import com.example.oblique_android.adapters.PlatformPrefsAdapter
 import com.example.oblique_android.models.Goal
 import com.example.oblique_android.models.GoalsViewModel
-import com.example.oblique_android.network.ApiClient
-import com.example.oblique_android.network.api.UserApi
-import com.example.oblique_android.network.request.UserPreferencesRequest
-import com.example.oblique_android.prefs.PlatformPref
-import com.example.oblique_android.utils.PlatformCatalog
 import com.example.oblique_android.repository.AppRepository
 import com.example.oblique_android.repository.AuthRepository
 import com.example.oblique_android.services.PINManager
 import com.example.oblique_android.services.Prefs
-import com.example.oblique_android.utils.PrefsUtils
+import com.example.oblique_android.ui.loading.LoadingOverlayController
+import com.example.oblique_android.ui.preferences.PlatformPreferencesFragment
 import com.example.oblique_android.utils.PermissionGuard
+import com.example.oblique_android.utils.PrefsUtils
 import com.example.oblique_android.utils.setupWindowInsets
 import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.Dispatchers
@@ -35,7 +31,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Calendar
 
-class SettingsActivity : AppCompatActivity() {
+class SettingsActivity : AppCompatActivity(), PlatformPreferencesFragment.Listener {
 
     private enum class Tab { GOALS, APPS, PREFERENCES }
 
@@ -55,18 +51,14 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var settingsTabLabel: TextView
     private lateinit var sectionHeaderRow: LinearLayout
     private lateinit var preferencesPanel: View
-    private lateinit var etDisplayName: EditText
-    private lateinit var rvPlatformPrefs: RecyclerView
-    private lateinit var btnSavePreferences: MaterialButton
     private lateinit var btnResetPin: MaterialButton
     private lateinit var btnSignOut: MaterialButton
 
     private lateinit var goalsAdapter: GoalsSettingsAdapter
     private lateinit var appsAdapter: AppsSettingsAdapter
-    private lateinit var platformPrefsAdapter: PlatformPrefsAdapter
     private lateinit var vm: GoalsViewModel
     private lateinit var authRepo: AuthRepository
-    private lateinit var loadingOverlay: View
+    private lateinit var loadingOverlay: LoadingOverlayController
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,8 +66,8 @@ class SettingsActivity : AppCompatActivity() {
         setupWindowInsets(R.id.rootSettings)
         Prefs.init(this)
         authRepo = AuthRepository(this)
-        loadingOverlay = findViewById(R.id.loadingOverlay)
-        loadingOverlay.visibility = View.VISIBLE
+        loadingOverlay = LoadingOverlayController.bind(findViewById(R.id.settingsContainer))
+        loadingOverlay.show(getString(R.string.loading_checking_goals))
 
         bindViews()
         setupGoalsList()
@@ -110,9 +102,6 @@ class SettingsActivity : AppCompatActivity() {
         settingsTabLabel = findViewById(R.id.settingsTabLabel)
         sectionHeaderRow = findViewById(R.id.sectionHeaderRow)
         preferencesPanel = findViewById(R.id.preferencesPanel)
-        etDisplayName = findViewById(R.id.etDisplayName)
-        rvPlatformPrefs = findViewById(R.id.rvPlatformPrefs)
-        btnSavePreferences = findViewById(R.id.btnSavePreferences)
         btnResetPin = findViewById(R.id.btnResetPin)
         btnSignOut = findViewById(R.id.btnSignOut)
 
@@ -160,21 +149,20 @@ class SettingsActivity : AppCompatActivity() {
             } catch (_: Exception) {
                 Toast.makeText(this@SettingsActivity, R.string.failed_load_apps, Toast.LENGTH_SHORT).show()
             } finally {
-                loadingOverlay.visibility = View.GONE
+                loadingOverlay.hide()
             }
         }
     }
 
     private fun setupPreferencesTab() {
-        etDisplayName.setText(PrefsUtils.getDisplayName(this).orEmpty())
-
-        val platforms = PlatformCatalog.all.map {
-            PlatformPref(it.key, it.displayName, it.iconRes)
+        if (supportFragmentManager.findFragmentById(R.id.platformPrefsContainer) == null) {
+            supportFragmentManager.beginTransaction()
+                .replace(
+                    R.id.platformPrefsContainer,
+                    PlatformPreferencesFragment.newInstance(PlatformPreferencesFragment.MODE_SETTINGS),
+                )
+                .commit()
         }
-        platformPrefsAdapter = PlatformPrefsAdapter(this, platforms)
-        rvPlatformPrefs.layoutManager = LinearLayoutManager(this)
-        rvPlatformPrefs.adapter = platformPrefsAdapter
-        rvPlatformPrefs.isNestedScrollingEnabled = false
     }
 
     private fun setupTabs() {
@@ -212,8 +200,6 @@ class SettingsActivity : AppCompatActivity() {
             }
         }
 
-        btnSavePreferences.setOnClickListener { savePreferences() }
-
         btnResetPin.setOnClickListener { startResetPinFlow() }
 
         btnSignOut.setOnClickListener {
@@ -238,47 +224,17 @@ class SettingsActivity : AppCompatActivity() {
         )
     }
 
-    private fun savePreferences() {
-        val displayName = etDisplayName.text.toString().trim()
-        val usernames = platformPrefsAdapter.getUsernames()
+    override fun onPreferencesActionStarted() {
+        loadingOverlay.show(getString(R.string.loading_saving_preferences))
+    }
 
-        if (displayName.isEmpty()) {
-            Toast.makeText(this, R.string.display_name_required, Toast.LENGTH_SHORT).show()
-            return
-        }
+    override fun onPreferencesSaved(displayName: String, usernames: Map<String, String>) {
+        loadingOverlay.hide()
+    }
 
-        PrefsUtils.saveDisplayName(this, displayName)
-        platformPrefsAdapter.saveUsernames()
-
-        lifecycleScope.launch {
-            try {
-                val request = UserPreferencesRequest(
-                    displayName = displayName,
-                    usernames = usernames
-                )
-                val updatedUser = ApiClient.getClient(this@SettingsActivity)
-                    .create(UserApi::class.java)
-                    .updatePreferences(request)
-
-                for ((platform, uname) in usernames) {
-                    if (uname.isNotBlank()) {
-                        PrefsUtils.savePlatformUsername(this@SettingsActivity, platform, uname)
-                    }
-                }
-
-                Toast.makeText(
-                    this@SettingsActivity,
-                    getString(R.string.preferences_saved, updatedUser.user.displayName ?: displayName),
-                    Toast.LENGTH_SHORT
-                ).show()
-            } catch (e: Exception) {
-                Toast.makeText(
-                    this@SettingsActivity,
-                    R.string.preferences_save_failed,
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-        }
+    override fun onPreferencesActionFailed(message: String) {
+        loadingOverlay.hide()
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
     private fun performSignOut() {

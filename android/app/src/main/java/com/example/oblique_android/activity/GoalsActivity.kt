@@ -141,6 +141,7 @@ class GoalsActivity : AppCompatActivity(), PlatformsAdapter.PlatformClickListene
                 targetValue = target,
                 baselineValue = 0,
                 deadline = selectedDeadlineEpoch,
+                deadlineTimeOfDayMs = selectedDeadlineMsOfDay.takeIf { it >= 0 },
                 title = "${gt.title} on $platform",
                 checkIntervalMs = 3600000L
             )

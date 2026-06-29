@@ -39,7 +39,7 @@ class LoginActivity : AppCompatActivity() {
             if (outcome.success) {
                 lifecycleScope.launch {
                     val next = OnboardingRouter.nextSuspend(this@LoginActivity, validateToken = false)
-                    startActivity(Intent(this@LoginActivity, next))
+                    startActivity(OnboardingRouter.navigationIntent(this@LoginActivity, next))
                     finish()
                 }
             } else {

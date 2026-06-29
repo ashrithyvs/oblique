@@ -12,4 +12,7 @@ class DuolingoPlatformValidator : PlatformGoalValidator {
             "Duolingo validation is not yet implemented",
         )
     }
+
+    override suspend fun verifyUser(username: String): PlatformUserVerification =
+        PlatformUserVerification.NotSupported("Duolingo verification is not yet implemented")
 }

@@ -37,6 +37,7 @@ function makeGoalDoc(overrides: Record<string, unknown> = {}) {
     title: 'Test goal',
     platform: 'leetcode',
     unit: 'problems',
+    platformUsername: null as string | null,
     evidence: null,
     lastCheckedAt: null,
     save,
@@ -45,12 +46,13 @@ function makeGoalDoc(overrides: Record<string, unknown> = {}) {
       title: 'Test goal',
       platform: 'leetcode',
       unit: 'problems',
-      baselineValue: 0,
+      baselineValue: (doc as any).baselineValue,
       targetValue: 5,
       progress: (doc as any).progress,
       status: (doc as any).status,
       lastCheckedAt: (doc as any).lastCheckedAt,
       evidence: (doc as any).evidence,
+      checkIntervalMs: 3600000,
     }),
     ...overrides,
   };
@@ -128,6 +130,48 @@ describe('goals.service', () => {
     expect(goalDoc.lastCheckedAt).toBeInstanceOf(Date);
     expect(goalDoc.evidence).toEqual(evidence);
     expect(goalDoc.progress).toBe(3);
+  });
+
+  test('setGoalBaseline updates baseline when progress is zero', async () => {
+    const goalDoc = makeGoalDoc({ progress: 0, baselineValue: 0 });
+    (Goal.findOne as jest.Mock).mockReturnValue({
+      exec: jest.fn().mockResolvedValue(goalDoc),
+    });
+
+    const result = await goalSvc.setGoalBaseline(
+      userId,
+      goalId,
+      5,
+      'leetcode_user',
+      { source: 'onboarding' },
+    );
+
+    expect(goalDoc.baselineValue).toBe(5);
+    expect(goalDoc.platformUsername).toBe('leetcode_user');
+    expect(goalDoc.save).toHaveBeenCalled();
+    expect(result?.baselineValue).toBe(5);
+  });
+
+  test('setGoalBaseline rejects when progress is non-zero', async () => {
+    const goalDoc = makeGoalDoc({ progress: 1 });
+    (Goal.findOne as jest.Mock).mockReturnValue({
+      exec: jest.fn().mockResolvedValue(goalDoc),
+    });
+
+    await expect(goalSvc.setGoalBaseline(userId, goalId, 5)).rejects.toMatchObject({
+      code: 'BASELINE_LOCKED',
+    });
+  });
+
+  test('setGoalBaseline rejects completed goal', async () => {
+    const goalDoc = makeGoalDoc({ status: 'completed', progress: 0 });
+    (Goal.findOne as jest.Mock).mockReturnValue({
+      exec: jest.fn().mockResolvedValue(goalDoc),
+    });
+
+    await expect(goalSvc.setGoalBaseline(userId, goalId, 5)).rejects.toMatchObject({
+      code: 'GOAL_COMPLETED',
+    });
   });
 
   test('markComplete is idempotent for GoalCheckHistory', async () => {
@@ -303,6 +347,19 @@ describe('goals.service', () => {
 
     const result = await goalSvc.markComplete(userId, goalId, new Date(), { via: 'manual' });
     expect(result.status).toBe('completed');
+  });
+
+  test('recordPeriodProgress sets lastSatisfiedPeriodDeadlineMs and keeps goal active', async () => {
+    const goalDoc = makeGoalDoc({ progress: 1, targetValue: 2, status: 'active' });
+    (Goal.findOne as jest.Mock).mockReturnValue({
+      exec: jest.fn().mockResolvedValue(goalDoc),
+    });
+
+    const result = await goalSvc.recordPeriodProgress(userId, goalId, 1_700_000_000_000, 2);
+    expect(goalDoc.progress).toBe(2);
+    expect(goalDoc.lastSatisfiedPeriodDeadlineMs).toBe(1_700_000_000_000);
+    expect(goalDoc.status).toBe('active');
+    expect(result?.isCurrentPeriodSatisfied).toBe(true);
   });
 });
 

@@ -31,6 +31,25 @@ class GoalProgressSyncerTest {
     }
 
     @Test
+    fun sync_returnsNoChangeWhenBaselineAdjustedProgressUnchanged() = runTest {
+        val g = goal(progress = 2).copy(baselineValue = 3)
+        val outcome = syncer.sync(g, currentValue = 5)
+        assertTrue(outcome is SyncOutcome.NoChange)
+        coVerify(exactly = 0) { repo.updateGoalProgress(any(), any(), any()) }
+    }
+
+    @Test
+    fun sync_updatesWhenBaselineAdjustedProgressChanges() = runTest {
+        val g = goal(progress = 0).copy(baselineValue = 3)
+        val updated = g.copy(progress = 2)
+        coEvery { repo.updateGoalProgress("g1", 5, any()) } returns updated
+
+        val outcome = syncer.sync(g, currentValue = 5)
+        assertTrue(outcome is SyncOutcome.ProgressUpdated)
+        coVerify { repo.updateGoalProgress("g1", 5, any()) }
+    }
+
+    @Test
     fun sync_updatesProgressViaRepository() = runTest {
         val updated = goal(progress = 3)
         coEvery { repo.updateGoalProgress("g1", 3, any()) } returns updated
@@ -56,5 +75,26 @@ class GoalProgressSyncerTest {
 
         val outcome = syncer.sync(goal(), currentValue = 3)
         assertTrue(outcome is SyncOutcome.Error)
+    }
+
+    @Test
+    fun syncPeriod_updatesViaRecordPeriodProgress() = runTest {
+        val g = goal(progress = 0, target = 2)
+        val updated = g.copy(progress = 1)
+        coEvery { repo.recordPeriodProgress("g1", 1000L, 1, any()) } returns updated
+
+        val outcome = syncer.syncPeriod(g, periodDeadlineMs = 1000L, progress = 1)
+        assertTrue(outcome is SyncOutcome.ProgressUpdated)
+        coVerify { repo.recordPeriodProgress("g1", 1000L, 1, any()) }
+    }
+
+    @Test
+    fun syncPeriod_marksPeriodSatisfiedWhenTargetMet() = runTest {
+        val g = goal(progress = 1, target = 2)
+        val updated = g.copy(progress = 2, lastSatisfiedPeriodDeadlineMs = 1000L)
+        coEvery { repo.recordPeriodProgress("g1", 1000L, 2, any()) } returns updated
+
+        val outcome = syncer.syncPeriod(g, periodDeadlineMs = 1000L, progress = 2)
+        assertTrue(outcome is SyncOutcome.PeriodSatisfied)
     }
 }

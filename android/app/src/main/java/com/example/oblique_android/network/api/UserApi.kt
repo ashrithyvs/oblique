@@ -12,6 +12,7 @@ data class UserDto(
     val name: String?,
     val displayName: String? = null,
     val platformUsernames: Map<String, String>? = null,
+    val deadlineBufferMs: Long? = null,
     val hasPin: Boolean?,
     val blockedApps: List<String>?,
     val goals: List<GoalDto>?

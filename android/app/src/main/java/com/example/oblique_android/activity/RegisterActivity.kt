@@ -42,7 +42,7 @@ class RegisterActivity : AppCompatActivity() {
             if (outcome.success) {
                 lifecycleScope.launch {
                     val next = OnboardingRouter.nextSuspend(this@RegisterActivity, validateToken = false)
-                    startActivity(Intent(this@RegisterActivity, next))
+                    startActivity(OnboardingRouter.navigationIntent(this@RegisterActivity, next))
                     finish()
                 }
             } else {

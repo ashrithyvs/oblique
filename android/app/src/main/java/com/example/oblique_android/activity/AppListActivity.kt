@@ -86,7 +86,7 @@ class AppListActivity : AppCompatActivity() {
                     Prefs.setAppSelectionDone(true)
                     Log.d("AppListActivity", "Synced blocked apps: $updated")
                     val next = OnboardingRouter.afterApps(this@AppListActivity)
-                    startActivity(Intent(this@AppListActivity, next))
+                    startActivity(OnboardingRouter.navigationIntent(this@AppListActivity, next))
                     finish()
                 } catch (e: Exception) {
                     Log.e("AppListActivity", "Failed syncing blocked apps", e)

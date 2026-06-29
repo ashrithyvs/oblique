@@ -8,6 +8,7 @@ object Prefs {
     private const val PREFS_NAME = "oblique_prefs"
     private const val KEY_ONBOARDING_DONE = "onboarding_done"
     private const val KEY_APP_SELECTION_DONE = "app_selection_done"
+    private const val KEY_PLATFORM_SETUP_DONE = "platform_setup_done"
     private const val KEY_MIGRATED_BLOCKED_APPS = "migrated_blocked_apps_v1"
 
     private lateinit var prefs: SharedPreferences
@@ -21,6 +22,7 @@ object Prefs {
         prefs = appContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         migrateBlockedAppsIfNeeded()
         migrateAppSelectionIfNeeded()
+        migratePlatformSetupIfNeeded()
     }
 
     private fun migrateBlockedAppsIfNeeded() {
@@ -43,11 +45,21 @@ object Prefs {
     fun isAppSelectionDone(): Boolean = prefs.getBoolean(KEY_APP_SELECTION_DONE, false)
     fun setAppSelectionDone(done: Boolean) = prefs.edit().putBoolean(KEY_APP_SELECTION_DONE, done).apply()
 
+    fun isPlatformSetupDone(): Boolean = prefs.getBoolean(KEY_PLATFORM_SETUP_DONE, false)
+    fun setPlatformSetupDone(done: Boolean) = prefs.edit().putBoolean(KEY_PLATFORM_SETUP_DONE, done).apply()
+
     private fun migrateAppSelectionIfNeeded() {
         if (prefs.contains(KEY_APP_SELECTION_DONE)) return
         // Users who already finished PIN setup completed app selection in a prior version.
         if (PINManager.isPinSet(appContext)) {
             prefs.edit().putBoolean(KEY_APP_SELECTION_DONE, true).apply()
+        }
+    }
+
+    private fun migratePlatformSetupIfNeeded() {
+        if (prefs.contains(KEY_PLATFORM_SETUP_DONE)) return
+        if (PINManager.isPinSet(appContext) && isAppSelectionDone()) {
+            prefs.edit().putBoolean(KEY_PLATFORM_SETUP_DONE, true).apply()
         }
     }
 

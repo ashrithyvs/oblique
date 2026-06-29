@@ -20,7 +20,7 @@ class SplashActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 val next = OnboardingRouter.nextSuspend(this@SplashActivity, validateToken = true)
-                startActivity(Intent(this@SplashActivity, next))
+                startActivity(OnboardingRouter.navigationIntent(this@SplashActivity, next))
             } catch (e: AEADBadTagException) {
                 Log.e("SplashActivity", "Corrupted encrypted prefs, resetting auth...", e)
                 TokenManager.getInstance(this@SplashActivity).clear()

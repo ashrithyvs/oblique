@@ -94,7 +94,7 @@ class PermissionsActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             val next = OnboardingRouter.nextSuspend(this@PermissionsActivity, validateToken = false)
-            startActivity(Intent(this@PermissionsActivity, next))
+            startActivity(OnboardingRouter.navigationIntent(this@PermissionsActivity, next))
             finish()
         }
     }

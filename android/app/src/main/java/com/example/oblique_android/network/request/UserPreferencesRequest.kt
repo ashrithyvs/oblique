@@ -3,5 +3,6 @@ package com.example.oblique_android.network.request
 
 data class UserPreferencesRequest(
     val displayName: String?,
-    val usernames:Map<String, String>? = null
+    val usernames: Map<String, String>? = null,
+    val deadlineBufferMs: Long? = null,
 )

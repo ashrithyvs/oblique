@@ -96,4 +96,37 @@
     <string name="manual_validation_progress_updated">Progress updated!</string>
     <string name="manual_validation_no_progress">No new progress detected</string>
 
+    <string name="display_name_label">Display Name</string>
+    <string name="display_name_hint">Your name</string>
+    <string name="platform_usernames_label">Platform Usernames</string>
+    <string name="platform_usernames_optional">Optional — add usernames for platforms you use</string>
+    <string name="platform_usernames_required">Add usernames for your goal platforms</string>
+    <string name="deadline_buffer_label">Deadline grace period</string>
+    <string name="deadline_buffer_value">%1$d hour(s) after deadline</string>
+    <string name="period_due_by">Due by %1$s</string>
+    <string name="period_grace_until">Grace until %1$s</string>
+    <string name="period_unlocked_until">Unlocked until %1$s</string>
+    <string name="period_complete">Today\'s goal complete</string>
+    <string name="dev_simulate_plus_hour">Simulate +1h</string>
+    <string name="continue_setup">Continue</string>
+    <string name="platform_setup_title">Platform setup</string>
+    <string name="platform_setup_subtitle">Link your accounts for goal tracking</string>
+
+    <string name="loading_saving_preferences">Saving preferences</string>
+    <string name="loading_checking_leetcode">Checking LeetCode account</string>
+    <string name="loading_checking_duolingo">Checking Duolingo account</string>
+    <string name="loading_checking_platform">Checking %1$s account</string>
+    <string name="loading_setting_up_baseline">Setting up baseline</string>
+    <string name="loading_almost_done">Almost done</string>
+    <string name="loading_checking_goals">Checking goals</string>
+    <string name="loading_fetching_progress">Fetching progress</string>
+    <string name="loading_updating_progress">Updating progress</string>
+
+    <string name="baseline_username_required">Username required for %1$s</string>
+    <string name="baseline_no_validator">No validator for %1$s</string>
+    <string name="baseline_invalid_window">Could not determine goal window</string>
+    <string name="baseline_fetch_failed">Could not fetch baseline for %1$s</string>
+    <string name="baseline_setup_failed">Platform setup failed: %1$s</string>
+    <string name="baseline_setup_complete">Platform setup complete</string>
+
 </resources>

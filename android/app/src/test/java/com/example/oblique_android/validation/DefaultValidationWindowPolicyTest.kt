@@ -33,7 +33,7 @@ class DefaultValidationWindowPolicyTest {
     }
 
     @Test
-    fun window_withDeadline_usesDeadlineDayStart() {
+    fun window_withDeadline_onSameDayAfterDeadlineTime_usesNowAsEnd() {
         val deadline = Calendar.getInstance().apply {
             set(2026, Calendar.JUNE, 26, 18, 0, 0)
             set(Calendar.MILLISECOND, 0)
@@ -53,7 +53,21 @@ class DefaultValidationWindowPolicyTest {
         }.timeInMillis
 
         assertEquals(expectedStart, start)
-        assertEquals(deadline, end)
+        assertEquals(now, end)
+    }
+
+    @Test
+    fun window_withDeadline_beforeDeadlineDay_returnsNull() {
+        val deadline = Calendar.getInstance().apply {
+            set(2026, Calendar.JUNE, 28, 18, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+        val now = Calendar.getInstance().apply {
+            set(2026, Calendar.JUNE, 27, 12, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+
+        assertNull(policy.window(deadline, now))
     }
 
     @Test
@@ -69,5 +83,9 @@ class DefaultValidationWindowPolicyTest {
 
     private fun assertNotNull(value: Any?) {
         org.junit.Assert.assertNotNull(value)
+    }
+
+    private fun assertNull(value: Any?) {
+        org.junit.Assert.assertNull(value)
     }
 }

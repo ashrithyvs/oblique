@@ -8,7 +8,9 @@ import android.content.Intent
 import android.os.*
 import android.util.Log
 import com.example.oblique_android.R
+import com.example.oblique_android.gating.GoalGateManager
 import com.example.oblique_android.utils.TempUnlockManager
+import kotlinx.coroutines.runBlocking
 
 class MonitoringService : Service() {
 
@@ -41,7 +43,16 @@ class MonitoringService : Service() {
             Log.d(TAG, "Foreground app: $foregroundApp")
 
             if (foregroundApp != null && blockedApps.contains(foregroundApp)) {
-                if (!TempUnlockManager.isTempUnlocked(this@MonitoringService, foregroundApp)) {
+                val goalsGateOpen = runBlocking {
+                    GoalGateManager(this@MonitoringService).shouldBlockApps().not()
+                }
+                if (goalsGateOpen) {
+                    Log.d(TAG, "Skipping $foregroundApp (goals satisfied until next deadline+buffer)")
+                    if (currentBlockedApp != null) {
+                        stopService(Intent(this@MonitoringService, OverlayService::class.java))
+                        currentBlockedApp = null
+                    }
+                } else if (!TempUnlockManager.isTempUnlocked(this@MonitoringService, foregroundApp)) {
                     if (currentBlockedApp != foregroundApp) {
                         currentBlockedApp = foregroundApp
                         Log.d(TAG, "Blocking $foregroundApp")

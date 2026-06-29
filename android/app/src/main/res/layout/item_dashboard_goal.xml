@@ -46,6 +46,15 @@
                 android:textStyle="bold"
                 android:textColor="@color/text_primary" />
 
+            <TextView
+                android:id="@+id/tvGoalPeriodStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textSize="12sp"
+                android:textColor="@color/text_muted"
+                android:visibility="gone" />
+
             <!-- Progress row -->
             <LinearLayout
                 android:layout_width="match_parent"

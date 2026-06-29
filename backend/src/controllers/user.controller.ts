@@ -32,6 +32,7 @@ export async function getCurrentUser(req: any, res: Response) {
             name: userDoc.name,
             displayName: userDoc.displayName ?? userDoc.name ?? null,
             platformUsernames: userDoc.platformUsernames || {},
+            deadlineBufferMs: userDoc.deadlineBufferMs ?? 0,
             hasPin: !!userDoc.hashedPin,
             blockedApps: userDoc.blockedApps || [],
             goals: goals.map(g => ({
@@ -127,12 +128,13 @@ export const updatePreferences = async (req: Request, res: Response) => {
             return res.status(401).json({ message: "Unauthorized" });
         }
 
-        const { displayName, usernames } = req.body || {};
+        const { displayName, usernames, deadlineBufferMs } = req.body || {};
 
         const updatedUser = await userSvc.updatePreferences(
             userId,
             displayName,
-            usernames || {}
+            usernames || {},
+            deadlineBufferMs,
         );
 
         return res.json({
@@ -141,6 +143,7 @@ export const updatePreferences = async (req: Request, res: Response) => {
                 id: updatedUser._id,
                 displayName: updatedUser.displayName ?? updatedUser.name ?? null,
                 platformUsernames: updatedUser.platformUsernames || {},
+                deadlineBufferMs: updatedUser.deadlineBufferMs ?? 0,
             },
         });
     } catch (err: any) {

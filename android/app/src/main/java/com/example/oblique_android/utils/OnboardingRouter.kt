@@ -1,6 +1,7 @@
 package com.example.oblique_android.utils
 
 import android.content.Context
+import android.content.Intent
 import android.util.Log
 import com.example.oblique_android.activity.AppListActivity
 import com.example.oblique_android.activity.DashboardActivity
@@ -8,6 +9,7 @@ import com.example.oblique_android.activity.GoalsActivity
 import com.example.oblique_android.activity.LoginActivity
 import com.example.oblique_android.activity.PermissionsActivity
 import com.example.oblique_android.activity.PinSetupActivity
+import com.example.oblique_android.activity.UserPreferencesActivity
 import com.example.oblique_android.activity.WelcomeActivity
 import com.example.oblique_android.network.ApiClient
 import com.example.oblique_android.network.api.UserApi
@@ -15,6 +17,7 @@ import com.example.oblique_android.prefs.TokenManager
 import com.example.oblique_android.repository.GoalsRepository
 import com.example.oblique_android.services.PINManager
 import com.example.oblique_android.services.Prefs
+import com.example.oblique_android.ui.preferences.PlatformPreferencesFragment
 import com.example.oblique_android.utils.PrefsUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -24,7 +27,7 @@ import retrofit2.HttpException
  * Single source of truth for onboarding / post-auth navigation.
  *
  * Flow:
- * 1. Fresh install: Welcome -> Permissions -> Auth -> Goals -> App list -> PIN -> Dashboard
+ * 1. Fresh install: Welcome -> Permissions -> Auth -> Goals -> App list -> Platform setup -> PIN -> Dashboard
  * 2. Returning user: Splash resolves the first incomplete step
  */
 object OnboardingRouter {
@@ -81,11 +84,27 @@ object OnboardingRouter {
 
     fun afterApps(context: Context): Class<*> {
         Prefs.init(context)
+        return UserPreferencesActivity::class.java
+    }
+
+    fun afterPlatformSetup(context: Context): Class<*> {
+        Prefs.init(context)
         return if (needsPinSetup(context)) PinSetupActivity::class.java
         else DashboardActivity::class.java
     }
 
     fun afterPin(context: Context): Class<*> = DashboardActivity::class.java
+
+    fun navigationIntent(context: Context, target: Class<*>): Intent {
+        return Intent(context, target).apply {
+            if (target == UserPreferencesActivity::class.java && !Prefs.isPlatformSetupDone()) {
+                putExtra(
+                    UserPreferencesActivity.EXTRA_MODE,
+                    PlatformPreferencesFragment.MODE_ONBOARDING,
+                )
+            }
+        }
+    }
 
     private suspend fun resolvePostAuth(context: Context): Class<*> {
         return try {
@@ -95,6 +114,7 @@ object OnboardingRouter {
             when {
                 goals.isEmpty() -> GoalsActivity::class.java
                 !Prefs.isAppSelectionDone() -> AppListActivity::class.java
+                !Prefs.isPlatformSetupDone() -> UserPreferencesActivity::class.java
                 needsPinSetup(context) -> PinSetupActivity::class.java
                 else -> DashboardActivity::class.java
             }
@@ -107,6 +127,7 @@ object OnboardingRouter {
     private fun resolvePostAuthOffline(context: Context): Class<*> {
         return when {
             !Prefs.isAppSelectionDone() -> AppListActivity::class.java
+            !Prefs.isPlatformSetupDone() -> UserPreferencesActivity::class.java
             needsPinSetup(context) -> PinSetupActivity::class.java
             else -> DashboardActivity::class.java
         }

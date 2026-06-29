@@ -9,5 +9,6 @@ data class UserPreferencesResponse(
 data class UpdatedUser(
     val id: String,
     val displayName: String?,
-    val platformUsernames: Map<String, String>?
+    val platformUsernames: Map<String, String>?,
+    val deadlineBufferMs: Long? = null,
 )

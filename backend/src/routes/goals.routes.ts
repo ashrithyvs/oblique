@@ -28,6 +28,8 @@ router.post('/:id/complete', completeLimiter, ctrl.completeGoal);
 router.delete('/:id', ctrl.deleteGoal);
 
 router.patch('/:id/progress', progressLimiter, ctrl.updateGoalProgress);
+router.patch('/:id/baseline', ctrl.setGoalBaseline);
+router.patch('/:id/period-progress', progressLimiter, ctrl.recordPeriodProgress);
 
 router.put('/:id', ctrl.updateGoal); // ✅ NEW ROUTE
 

@@ -10,11 +10,17 @@ data class Goal(
     var platform: String = "",
     var unit: String = "",
     var targetValue: Int = 0,
+    var baselineValue: Int = 0,
     var progress: Int = 0,
     var createdAt: Long = System.currentTimeMillis(),
     var deadline: Long = 0L,
-    var status: String = "active"
+    var deadlineTimeOfDayMs: Long = 0L,
+    var lastSatisfiedPeriodDeadlineMs: Long = 0L,
+    var status: String = "active",
 ) {
+    fun computedProgress(currentValue: Int): Int =
+        (currentValue - baselineValue).coerceAtLeast(0)
+
     fun toJson(): JSONObject {
         val o = JSONObject()
         o.put("id", id)
@@ -56,6 +62,8 @@ data class Goal(
 
         fun fromDto(dto: GoalDto): Goal {
             val deadlineMs = parseDeadline(dto.deadline)
+            val timeOfDay = dto.deadlineTimeOfDayMs?.takeIf { it > 0 }
+                ?: deriveTimeOfDayFromDeadline(deadlineMs)
             val progressValue = when (dto.status.lowercase(Locale.ROOT)) {
                 "completed" -> dto.targetValue
                 else -> dto.progress.coerceAtLeast(0)
@@ -66,11 +74,25 @@ data class Goal(
                 platform = dto.platform,
                 unit = dto.unit.ifBlank { "unknown" },
                 targetValue = dto.targetValue,
+                baselineValue = dto.baselineValue.coerceAtLeast(0),
                 progress = progressValue,
                 createdAt = System.currentTimeMillis(),
                 deadline = deadlineMs,
-                status = dto.status
+                deadlineTimeOfDayMs = timeOfDay,
+                lastSatisfiedPeriodDeadlineMs = dto.lastSatisfiedPeriodDeadlineMs ?: 0L,
+                status = dto.status,
             )
+        }
+
+        private fun deriveTimeOfDayFromDeadline(deadlineMs: Long): Long {
+            if (deadlineMs <= 0L) return 0L
+            val cal = Calendar.getInstance().apply { timeInMillis = deadlineMs }
+            return (
+                cal.get(Calendar.HOUR_OF_DAY) * 3_600_000L +
+                    cal.get(Calendar.MINUTE) * 60_000L +
+                    cal.get(Calendar.SECOND) * 1_000L +
+                    cal.get(Calendar.MILLISECOND)
+                )
         }
     }
 }

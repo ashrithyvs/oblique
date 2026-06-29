@@ -17,10 +17,14 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.example.oblique_android.R
+import com.example.oblique_android.BuildConfig
 import com.example.oblique_android.models.Goal
 import com.example.oblique_android.models.GoalsViewModel
 import com.example.oblique_android.services.MonitoringService
 import com.example.oblique_android.services.Prefs
+import com.example.oblique_android.ui.goals.GoalPeriodUiHelper
+import com.example.oblique_android.ui.loading.LoadingOverlayController
+import com.example.oblique_android.utils.AppTime
 import com.example.oblique_android.utils.BitmapUtils
 import com.example.oblique_android.utils.GoalStatusConstants
 import com.example.oblique_android.utils.PermissionGuard
@@ -33,6 +37,7 @@ import com.example.oblique_android.validation.GoalValidationScheduleManager
 import com.example.oblique_android.validation.GoalValidationService
 import com.example.oblique_android.validation.ManualValidationLimiter
 import com.example.oblique_android.validation.ValidationOutcome
+import com.example.oblique_android.validation.platform.GoalPeriodPolicy
 import kotlinx.coroutines.launch
 
 class DashboardActivity : AppCompatActivity() {
@@ -52,6 +57,7 @@ class DashboardActivity : AppCompatActivity() {
     private lateinit var vm: GoalsViewModel
     private lateinit var scheduleManager: GoalValidationScheduleManager
     private lateinit var validationService: GoalValidationService
+    private lateinit var loadingOverlay: LoadingOverlayController
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,7 +77,24 @@ class DashboardActivity : AppCompatActivity() {
         vm = ViewModelProvider(this)[GoalsViewModel::class.java]
         scheduleManager = GoalValidationScheduleManager(this)
         validationService = GoalValidationService(this)
+        loadingOverlay = LoadingOverlayController.bind(findViewById(R.id.dashboardRoot))
         Prefs.init(this)
+        AppTime.init(this)
+
+        if (BuildConfig.DEV_MODE) {
+            findViewById<Button?>(R.id.btnDevSimulateHour)?.apply {
+                visibility = View.VISIBLE
+                setOnClickListener {
+                    AppTime.advanceDevTimeMs(this@DashboardActivity, 3_600_000L)
+                    vm.allGoals.value?.let { updateGoalsUI(it) }
+                    Toast.makeText(
+                        this@DashboardActivity,
+                        getString(R.string.dev_simulate_plus_hour),
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                }
+            }
+        }
 
         btnSettings.setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
@@ -108,42 +131,62 @@ class DashboardActivity : AppCompatActivity() {
             }
 
             lifecycleScope.launch {
-                val username = PrefsUtils.getPlatformUsername(
-                    this@DashboardActivity,
-                    PlatformConstants.KEY_LEETCODE,
-                )
-                if (username.isNullOrBlank()) {
+                loadingOverlay.show(getString(R.string.loading_checking_goals))
+                val goals = vm.allGoals.value.orEmpty()
+                    .filter { it.status == GoalStatusConstants.ACTIVE }
+                if (goals.isEmpty()) {
+                    loadingOverlay.hide()
                     Toast.makeText(
                         this@DashboardActivity,
-                        getString(R.string.manual_validation_no_username),
+                        getString(R.string.manual_validation_no_progress),
                         Toast.LENGTH_SHORT,
                     ).show()
                     return@launch
                 }
 
-                val goals = vm.allGoals.value.orEmpty()
                 var anyUpdated = false
+                var validatedAny = false
 
                 for (goal in goals) {
-                    if (PlatformConstants.normalizePlatform(goal.platform) == PlatformConstants.KEY_LEETCODE &&
-                        goal.status == GoalStatusConstants.ACTIVE
-                    ) {
-                        when (validationService.validateGoal(goal, username)) {
-                            is ValidationOutcome.Updated,
-                            is ValidationOutcome.Completed -> anyUpdated = true
-                            else -> {}
-                        }
+                    val platformKey = PlatformConstants.normalizePlatform(goal.platform)
+                    val username = PrefsUtils.getPlatformUsername(this@DashboardActivity, platformKey)
+                    if (username.isNullOrBlank()) continue
+
+                    validatedAny = true
+                    loadingOverlay.updateStatus(
+                        when (platformKey) {
+                            PlatformConstants.KEY_LEETCODE -> getString(R.string.loading_fetching_progress)
+                            else -> getString(R.string.loading_checking_platform, goal.platform)
+                        },
+                    )
+
+                    when (validationService.validateGoal(goal, username)) {
+                        is ValidationOutcome.Updated,
+                        is ValidationOutcome.Completed -> anyUpdated = true
+                        else -> {}
                     }
                 }
 
-                limiter.markTriggered()
                 if (anyUpdated) {
+                    loadingOverlay.updateStatus(getString(R.string.loading_updating_progress))
+                    vm.refreshDashboard()
+                }
+
+                loadingOverlay.hide()
+                limiter.markTriggered()
+
+                if (!validatedAny) {
+                    Toast.makeText(
+                        this@DashboardActivity,
+                        getString(R.string.manual_validation_no_username),
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                } else if (anyUpdated) {
                     Toast.makeText(
                         this@DashboardActivity,
                         getString(R.string.manual_validation_progress_updated),
                         Toast.LENGTH_SHORT,
                     ).show()
-                    vm.refreshDashboard()
                 } else {
                     Toast.makeText(
                         this@DashboardActivity,
@@ -202,6 +245,9 @@ class DashboardActivity : AppCompatActivity() {
     private fun updateGoalsUI(goals: List<Goal>) {
         containerGoals.removeAllViews()
         val inflater = LayoutInflater.from(this)
+        val bufferMs = PrefsUtils.getDeadlineBufferMs(this)
+        val nowMs = AppTime.nowMs()
+        val periodPolicy = GoalPeriodPolicy()
 
         if (goals.isEmpty()) {
             val tv = TextView(this).apply {
@@ -221,6 +267,7 @@ class DashboardActivity : AppCompatActivity() {
 
             val ivIcon = view.findViewById<ImageView>(R.id.ivGoalIcon)
             val tvTitle = view.findViewById<TextView>(R.id.tvGoalTitle)
+            val tvPeriodStatus = view.findViewById<TextView>(R.id.tvGoalPeriodStatus)
             val tvProgress = view.findViewById<TextView>(R.id.tvGoalProgress)
 
             val progressContainer = view.findViewById<ViewGroup>(R.id.progressContainer)
@@ -229,6 +276,7 @@ class DashboardActivity : AppCompatActivity() {
 
             val target = if (g.targetValue > 0) g.targetValue else 1
             val currentProgress = g.progress.coerceAtMost(target)
+            val periodSatisfied = periodPolicy.isCurrentPeriodSatisfied(g, bufferMs, nowMs)
 
             val unitLabel = when (g.unit.lowercase()) {
                 "minutes" -> "minutes"
@@ -238,6 +286,14 @@ class DashboardActivity : AppCompatActivity() {
 
             tvTitle.text = "${g.platform} • ${g.targetValue} $unitLabel"
             tvProgress.text = "$currentProgress/$target"
+
+            val statusText = GoalPeriodUiHelper.formatPeriodStatus(this, g, bufferMs, nowMs)
+            if (statusText.isNotBlank()) {
+                tvPeriodStatus.text = statusText
+                tvPeriodStatus.visibility = View.VISIBLE
+            } else {
+                tvPeriodStatus.visibility = View.GONE
+            }
 
             ivIcon.setImageResource(PlatformCatalog.iconFor(g.platform))
 
@@ -264,7 +320,7 @@ class DashboardActivity : AppCompatActivity() {
                     }
                 }
 
-                if (currentProgress >= target) {
+                if (periodSatisfied) {
                     doneCount++
                     glowView.alpha = 0.35f
                     val pulse = ObjectAnimator.ofFloat(glowView, "alpha", 0.35f, 0.9f, 0.35f).apply {

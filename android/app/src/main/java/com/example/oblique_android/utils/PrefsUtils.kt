@@ -38,7 +38,11 @@ object PrefsUtils {
     private const val PREFS_USER = "user_prefs"
     private const val KEY_PKGS = "pkgs"
     private const val KEY_DISPLAY_NAME = "display_name"
+    private const val KEY_DEADLINE_BUFFER_MS = "deadline_buffer_ms"
+    private const val KEY_VALIDATION_TIME_OFFSET_MS = "validation_time_offset_ms"
     private const val KEY_USERNAMES_PREFIX = "platform_username_" // stored as platform_username_leetcode
+
+    const val MAX_DEADLINE_BUFFER_MS = 3 * 60 * 60 * 1000L
 
     // ---------- Blocked apps ----------
     fun saveBlockedSet(context: Context, pkgs: Set<String>) {
@@ -64,6 +68,32 @@ object PrefsUtils {
     fun getDisplayName(context: Context): String? {
         return context.getSharedPreferences(PREFS_USER, Context.MODE_PRIVATE)
             .getString(KEY_DISPLAY_NAME, null)
+    }
+
+    fun saveDeadlineBufferMs(context: Context, bufferMs: Long) {
+        val clamped = bufferMs.coerceIn(0L, MAX_DEADLINE_BUFFER_MS)
+        context.getSharedPreferences(PREFS_USER, Context.MODE_PRIVATE)
+            .edit()
+            .putLong(KEY_DEADLINE_BUFFER_MS, clamped)
+            .apply()
+    }
+
+    fun getDeadlineBufferMs(context: Context): Long {
+        return context.getSharedPreferences(PREFS_USER, Context.MODE_PRIVATE)
+            .getLong(KEY_DEADLINE_BUFFER_MS, 0L)
+            .coerceIn(0L, MAX_DEADLINE_BUFFER_MS)
+    }
+
+    fun saveValidationTimeOffsetMs(context: Context, offsetMs: Long) {
+        context.getSharedPreferences(PREFS_USER, Context.MODE_PRIVATE)
+            .edit()
+            .putLong(KEY_VALIDATION_TIME_OFFSET_MS, offsetMs)
+            .apply()
+    }
+
+    fun getValidationTimeOffsetMs(context: Context): Long {
+        return context.getSharedPreferences(PREFS_USER, Context.MODE_PRIVATE)
+            .getLong(KEY_VALIDATION_TIME_OFFSET_MS, 0L)
     }
 
     fun clearUserPrefs(context: Context) {

@@ -13,6 +13,7 @@ jest.mock('../../../src/services/goals.service', () => {
     getGoalForUser: jest.fn(),
     updateGoalProgress: jest.fn(),
     updateGoalForUser: jest.fn(),
+    setGoalBaseline: jest.fn(),
   };
 });
 
@@ -214,6 +215,35 @@ describe('goals.controller', () => {
     const res = createResponse();
 
     await goalCtrl.updateGoalProgress(req as any, res as any);
+    expect(res.statusCode).toBe(400);
+  });
+
+  test('setGoalBaseline returns updated goal', async () => {
+    (goalSvc.setGoalBaseline as jest.Mock).mockResolvedValue({ id: 'g1', baselineValue: 5 });
+    const req = createRequest({
+      user: { _id: 'u1' },
+      params: { id: '507f1f77bcf86cd799439011' },
+      body: { baselineValue: 5, platformUsername: 'user1' },
+    });
+    const res = createResponse();
+
+    await goalCtrl.setGoalBaseline(req as any, res as any);
+    expect(goalSvc.setGoalBaseline).toHaveBeenCalledWith('u1', '507f1f77bcf86cd799439011', 5, 'user1', undefined);
+    expect(res._getJSONData().baselineValue).toBe(5);
+  });
+
+  test('setGoalBaseline maps BASELINE_LOCKED to 400', async () => {
+    (goalSvc.setGoalBaseline as jest.Mock).mockRejectedValue(
+      new GoalServiceError('Baseline locked', 'BASELINE_LOCKED'),
+    );
+    const req = createRequest({
+      user: { _id: 'u1' },
+      params: { id: '507f1f77bcf86cd799439011' },
+      body: { baselineValue: 5 },
+    });
+    const res = createResponse();
+
+    await goalCtrl.setGoalBaseline(req as any, res as any);
     expect(res.statusCode).toBe(400);
   });
 
